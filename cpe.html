@@ -454,7 +454,7 @@ function doSearch(q){
 window.addEventListener('DOMContentLoaded',()=>{
   const con=document.getElementById('main-con');
   con.innerHTML='<div style="text-align:center;padding:80px 0;color:rgba(255,255,255,.5);font-size:1.3rem">⏳ กำลังโหลดข้อมูล…</div>';
-  fetch('https://script.google.com/macros/s/AKfycbxLT5vp4HUm-HkuYaBrS9FJsm-ldAjNwwE6sVCP53fg4c-i79HgFzA3fkmwj5SxtlJU/exec?type=cpe')
+  fetch('https://script.google.com/macros/s/AKfycbxLT5vp4HUm-HkuYaBrS9FJsm-ldAjNwwE6sVCP53fg4c-i79HgFzA3fkmwj5SxtlJU/exec?type=cpe&_t='+Date.now())
     .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
     .then(data=>{
       TREE_DATA=data.children||[];
