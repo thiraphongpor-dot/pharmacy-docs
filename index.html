@@ -92,9 +92,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;
 .c-cpe:hover,.c-proj:hover,.c-admin:hover{background:rgba(255,255,255,.07)}
 /* Card banner */
 .card-banner{padding:38px 28px 28px;position:relative;overflow:hidden;min-height:185px;display:flex;flex-direction:column;justify-content:flex-end}
-.banner-nebula{position:absolute;inset:0}
-.banner-nebula::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;background:radial-gradient(ellipse,rgba(var(--bn-rgb),.22) 0%,transparent 65%);border-radius:50%}
-.banner-nebula::after{content:'';position:absolute;bottom:-30px;left:-20px;width:160px;height:160px;background:radial-gradient(ellipse,rgba(var(--bn-rgb),.1) 0%,transparent 65%);border-radius:50%}
+.banner-nebula{display:none}
 .banner-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(var(--bn-rgb),.06) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--bn-rgb),.06) 1px,transparent 1px);background-size:30px 30px}
 .card-banner-icon{font-size:3rem;margin-bottom:14px;position:relative;z-index:1;
   animation:iconFloat var(--fd,4.5s) ease-in-out var(--fdelay,0s) infinite;
@@ -313,8 +311,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.card').forEach(card=>{
     card.style.setProperty('--fd',(4+Math.random()*2.5)+'s');
     card.style.setProperty('--fdelay',(Math.random()*1.5)+'s');
-    card.addEventListener('mousemove',e=>{const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;card.style.setProperty('--mx',x);card.style.setProperty('--my',y);card.style.transform=`perspective(1000px) rotateX(${(y-.5)*-9}deg) rotateY(${(x-.5)*10}deg) scale(1.02)`;});
-    card.addEventListener('mouseleave',()=>{card.style.transition='transform .5s ease, border-color .3s, box-shadow .3s';card.style.transform='';setTimeout(()=>card.style.transition='',550);});
+    card.addEventListener('mouseenter',()=>{card.style.transition='transform .2s ease';card.style.transform='scale(1.01)';});
+    card.addEventListener('mouseleave',()=>{card.style.transition='transform .35s ease';card.style.transform='';});
     card.addEventListener('click',e=>{const r=card.getBoundingClientRect(),rpl=document.createElement('span'),sz=Math.max(r.width,r.height)*2.4,rgb=card.classList.contains('c-cpe')?'168,85,247':'6,182,212';rpl.style.cssText=`position:absolute;pointer-events:none;border-radius:50%;width:${sz}px;height:${sz}px;left:${e.clientX-r.left-sz/2}px;top:${e.clientY-r.top-sz/2}px;background:rgba(${rgb},.13);transform:scale(0);animation:rpl .6s ease-out forwards;z-index:10`;card.appendChild(rpl);setTimeout(()=>rpl.remove(),650);});
   });
   document.querySelectorAll('.card').forEach((c,i)=>{c.style.opacity='0';setTimeout(()=>{c.style.transition='opacity .45s ease, transform .45s ease';c.style.opacity='1';c.style.transform='';setTimeout(()=>c.style.transition='',500);},i*100+400);});
