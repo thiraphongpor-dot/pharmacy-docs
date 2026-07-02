@@ -604,9 +604,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <!-- ผู้อนุมัติ (คณบดี) -->
       <div class="sig-card">
         <div class="sig-title">ผู้อนุมัติ (คณบดี)</div>
-        <div style="width:100%;margin-top:auto">
+        <!-- preview block -->
+        <div id="dean-preview-block" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;gap:6px;padding:16px 0">
+          <div style="font-size:.72rem;color:var(--sub);letter-spacing:.04em;margin-bottom:4px">ตัวอย่างที่จะแสดงใน PDF</div>
+          <div style="width:56px;height:1px;background:rgba(139,92,246,.25);margin-bottom:2px"></div>
+          <div id="dean-prev-name" style="font-size:.82rem;color:var(--fg);font-weight:500;text-align:center;line-height:1.5;word-break:break-all"></div>
+          <div id="dean-prev-pos" style="font-size:.78rem;color:var(--sub);text-align:center;line-height:1.5"></div>
+          <div id="dean-prev-acting" style="font-size:.78rem;color:var(--sub);text-align:center;display:none">คณบดีคณะเภสัชศาสตร์</div>
+        </div>
+        <hr class="sig-card-divider">
+        <div style="width:100%">
           <label>เลือกผู้อนุมัติ</label>
-          <select id="f-dean-select" style="width:100%">
+          <select id="f-dean-select" style="width:100%" onchange="updateDeanPreview()">
             <option value="0">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์ — คณบดีคณะเภสัชศาสตร์</option>
             <option value="1">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกร ณัฐธัญ เจริญศรีวิไลวัฒน์ — รองคณบดีฝ่ายบริหาร รักษาการแทน</option>
             <option value="2">รองศาสตราจารย์ ดร. เภสัชกรบุญดิศย์ วงศ์ศักดิ์ — รองคณบดีฝ่ายวิจัย นวัตกรรม และบัณฑิตศึกษา รักษาการแทน</option>
@@ -809,6 +818,19 @@ function loadFormData(p){
   updateBudgetTotal();
   // Load signature image
   setSigPreview('sig1', p.sig1Image||'');
+  updateDeanPreview();
+}
+
+function updateDeanPreview(){
+  const sel = document.getElementById('f-dean-select');
+  if(!sel) return;
+  const d = DEAN_LIST[+sel.value] || DEAN_LIST[0];
+  const nameEl = document.getElementById('dean-prev-name');
+  const posEl = document.getElementById('dean-prev-pos');
+  const actEl = document.getElementById('dean-prev-acting');
+  if(nameEl) nameEl.textContent = '(' + d.name + ')';
+  if(posEl) posEl.textContent = d.pos;
+  if(actEl) actEl.style.display = d.acting ? '' : 'none';
 }
 
 function setSigPreview(id, dataUrl){
