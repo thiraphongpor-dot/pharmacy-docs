@@ -151,6 +151,36 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .btn-table:hover{border-color:#a78bfa;color:#a78bfa}
 .btn-table-del{border-color:rgba(239,68,68,.2);color:#f87171}
 .btn-table-del:hover{background:rgba(239,68,68,.15)}
+/* Dynamic list rows */
+.dyn-list{display:flex;flex-direction:column;gap:6px}
+.dyn-row{display:flex;align-items:center;gap:8px}
+.dyn-row input[type=text]{flex:1;padding:8px 12px;background:rgba(255,255,255,.05);
+  border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);font-size:.9rem}
+.dyn-row input[type=text]:focus{outline:none;border-color:#7c3aed}
+.dyn-row input[type=number]{width:90px;padding:8px 10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);font-size:.9rem}
+.dyn-row input[type=number]:focus{outline:none;border-color:#7c3aed}
+.dyn-row .row-num{color:var(--sub);font-size:.82rem;min-width:22px;text-align:right}
+.dyn-row .btn-del-row{padding:4px 10px;border:1px solid rgba(239,68,68,.25);
+  background:rgba(239,68,68,.08);color:#f87171;border-radius:6px;cursor:pointer;
+  font-size:.75rem;flex-shrink:0;transition:var(--tr)}
+.dyn-row .btn-del-row:hover{background:rgba(239,68,68,.2)}
+/* Phase / KPI blocks */
+.phase-block,.kpi-block{border:1px solid var(--brdw);border-radius:10px;padding:14px 16px;margin-bottom:12px;background:rgba(255,255,255,.015)}
+.phase-title,.kpi-label{font-weight:700;font-size:.9rem;color:#c4b5fd;margin-bottom:10px}
+.sub-list{padding-left:4px}
+.btn-phase{margin-top:8px}
+/* Targets table */
+#targets-list{width:100%}
+.target-header{display:grid;grid-template-columns:1fr 110px 38px;gap:8px;margin-bottom:4px;
+  font-size:.75rem;color:var(--sub);padding:0 2px}
+.target-row{display:grid;grid-template-columns:1fr 110px 38px;gap:8px;align-items:center;margin-bottom:6px}
+.target-row input[type=text]{padding:8px 12px;background:rgba(255,255,255,.05);
+  border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);font-size:.9rem}
+.target-row input[type=text]:focus{outline:none;border-color:#7c3aed}
+.target-row input[type=number]{width:100%;padding:8px 10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);font-size:.9rem;text-align:center}
+.target-row input[type=number]:focus{outline:none;border-color:#7c3aed}
 /* Pre-filled section */
 .prefilled{background:rgba(255,255,255,.02);border:1px solid var(--brdw);border-radius:9px;padding:14px;
   font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.9}
@@ -360,9 +390,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <!-- ข้อ 8: วัตถุประสงค์ -->
   <div class="fsec">
     <div class="fsec-title">๘. วัตถุประสงค์</div>
-    <div class="form-group full"><label>8.1</label><input type="text" id="f-obj1" placeholder="วัตถุประสงค์ข้อที่ 1"></div>
-    <div class="form-group full" style="margin-top:10px"><label>8.2</label><input type="text" id="f-obj2" placeholder="วัตถุประสงค์ข้อที่ 2"></div>
-    <div class="form-group full" style="margin-top:10px"><label>8.3</label><input type="text" id="f-obj3" placeholder="วัตถุประสงค์ข้อที่ 3"></div>
+    <div id="objectives-list" class="dyn-list"></div>
+    <button class="btn-table" style="margin-top:10px" onclick="addDynItem('objectives-list','วัตถุประสงค์ของโครงการ...')">＋ เพิ่มวัตถุประสงค์</button>
   </div>
 
   <!-- ข้อ 9: หน่วยงาน -->
@@ -374,9 +403,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <!-- ข้อ 10: ผู้รับผิดชอบ -->
   <div class="fsec">
     <div class="fsec-title">๑๐. ผู้รับผิดชอบโครงการ</div>
-    <div class="form-group full"><label>ผู้รับผิดชอบหลัก</label><input type="text" id="f-coord1" placeholder="ชื่อ-นามสกุล ตำแหน่ง"></div>
-    <div class="form-group full" style="margin-top:10px"><label>ผู้รับผิดชอบร่วม (ถ้ามี)</label><input type="text" id="f-coord2" placeholder="ชื่อ-นามสกุล ตำแหน่ง"></div>
-    <div class="form-group full" style="margin-top:10px"><label>ผู้รับผิดชอบร่วม (ถ้ามี)</label><input type="text" id="f-coord3" placeholder="ชื่อ-นามสกุล ตำแหน่ง"></div>
+    <div id="coordinators-list" class="dyn-list"></div>
+    <button class="btn-table" style="margin-top:10px" onclick="addDynItem('coordinators-list','ชื่อ-นามสกุล ตำแหน่ง...')">＋ เพิ่มผู้รับผิดชอบ</button>
   </div>
 
   <!-- ข้อ 11: ระยะเวลา -->
@@ -397,23 +425,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <!-- ข้อ 13: กลุ่มเป้าหมาย -->
   <div class="fsec">
     <div class="fsec-title">๑๓. กลุ่มเป้าหมายและจำนวน</div>
-    <div class="form-row" style="margin-bottom:10px">
-      <div class="form-group" style="flex:3"><label>๑๓.๑ กลุ่มเป้าหมายที่ 1</label><input type="text" id="f-target1" placeholder="เช่น นิสิต นักศึกษา ประชาชน..."></div>
-      <div class="form-group" style="flex:1;min-width:100px"><label>จำนวน (คน)</label><input type="number" id="f-target1n" min="0" placeholder="0"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group" style="flex:3"><label>๑๓.๒ กลุ่มเป้าหมายที่ 2</label><input type="text" id="f-target2" placeholder="เช่น บุคลากร..."></div>
-      <div class="form-group" style="flex:1;min-width:100px"><label>จำนวน (คน)</label><input type="number" id="f-target2n" min="0" placeholder="0"></div>
+    <div id="targets-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <button class="btn-table" onclick="addTargetRow()">＋ เพิ่มกลุ่มเป้าหมาย</button>
+      <span style="font-size:.82rem;color:var(--sub)">รวมทั้งสิ้น: <strong id="target-total" style="color:#34d399">0</strong> คน</span>
     </div>
   </div>
 
   <!-- ข้อ 14: ผลที่คาดว่าจะได้รับ -->
   <div class="fsec">
     <div class="fsec-title">๑๔. ผลที่คาดว่าจะได้รับ</div>
-    <div class="form-group full"><label>๑๔.๑</label><input type="text" id="f-res1" placeholder="ผลที่คาดว่าจะได้รับ ข้อที่ 1"></div>
-    <div class="form-group full" style="margin-top:10px"><label>๑๔.๒</label><input type="text" id="f-res2" placeholder="ผลที่คาดว่าจะได้รับ ข้อที่ 2"></div>
-    <div class="form-group full" style="margin-top:10px"><label>๑๔.๓</label><input type="text" id="f-res3" placeholder="ผลที่คาดว่าจะได้รับ ข้อที่ 3"></div>
-    <div class="form-group full" style="margin-top:10px"><label>๑๔.๔</label><input type="text" id="f-res4" placeholder="ผลที่คาดว่าจะได้รับ ข้อที่ 4"></div>
+    <div id="results-list" class="dyn-list"></div>
+    <button class="btn-table" style="margin-top:10px" onclick="addDynItem('results-list','ผลที่คาดว่าจะได้รับ...')">＋ เพิ่มข้อ</button>
   </div>
 
   <!-- ข้อ 15: วิธีประเมินผล -->
@@ -423,23 +446,27 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <p>๑๕.๑ ประเมินจำนวนผู้เข้าร่วมโครงการ</p>
       <p>๑๕.๒ ประเมินความพึงพอใจของผู้เข้าร่วมโครงการ</p>
     </div>
-    <div class="form-group full" style="margin-top:12px"><label>๑๕.๓ วิธีการประเมินผลเพิ่มเติม</label><input type="text" id="f-eval3" placeholder="วิธีประเมินผลเพิ่มเติม (ถ้ามี)"></div>
+    <div id="evals-list" class="dyn-list" style="margin-top:10px"></div>
+    <button class="btn-table" style="margin-top:10px" onclick="addDynItem('evals-list','วิธีการประเมินผลเพิ่มเติม...')">＋ เพิ่มวิธีประเมิน</button>
   </div>
 
   <!-- ข้อ 16: วิธีดำเนินโครงการ -->
   <div class="fsec">
     <div class="fsec-title">๑๖. วิธีดำเนินโครงการ</div>
-    <div class="prefilled">
-      <p><strong>๑๖.๑ ขั้นเตรียมการ</strong></p>
-      <p style="padding-left:1.5em">๑๖.๑.๑ ประชุมปรึกษาหารือผู้ที่เกี่ยวข้องกับการจัดทำโครงการครั้งนี้</p>
-      <p style="padding-left:1.5em">๑๖.๑.๒ กำหนดวัน เวลา สถานที่และค่าใช้จ่ายในการจัดทำโครงการโดยระบุหน้าที่ความรับผิดชอบอย่างชัดเจน</p>
-      <p style="padding-left:1.5em">๑๖.๑.๓ นำเสนอโครงการต่อคณบดีคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</p>
-      <p><strong>๑๖.๒ ขั้นดำเนินการ</strong></p>
-      <p style="padding-left:1.5em">๑๖.๒.๑ ดำเนินการตามวัน เวลา สถานที่ ที่กำหนดไว้ขั้นต้น</p>
-      <p style="padding-left:1.5em">๑๖.๒.๒ ดำเนินการตรวจสอบเพื่อความเรียบร้อยของการดำเนินโครงการ</p>
-      <p><strong>๑๖.๓ ขั้นสรุปผล</strong></p>
-      <p style="padding-left:1.5em">๑๖.๓.๑ ประชุมผู้ที่มีส่วนเกี่ยวข้องในโครงการนี้เพื่อสรุปโครงการ</p>
-      <p style="padding-left:1.5em">๑๖.๓.๒ เสนอแนะข้อคิดเห็นที่มีต่อโครงการเพื่อเป็นแนวทางการปรับปรุงแก้ไขในการจัดโครงการครั้งต่อไป</p>
+    <div class="phase-block">
+      <div class="phase-title">๑๖.๑ ขั้นเตรียมการ</div>
+      <div id="phase1-list" class="dyn-list sub-list"></div>
+      <button class="btn-table btn-phase" onclick="addPhaseItem(1,'')">＋ เพิ่มรายการ</button>
+    </div>
+    <div class="phase-block">
+      <div class="phase-title">๑๖.๒ ขั้นดำเนินการ</div>
+      <div id="phase2-list" class="dyn-list sub-list"></div>
+      <button class="btn-table btn-phase" onclick="addPhaseItem(2,'')">＋ เพิ่มรายการ</button>
+    </div>
+    <div class="phase-block">
+      <div class="phase-title">๑๖.๓ ขั้นสรุปผล</div>
+      <div id="phase3-list" class="dyn-list sub-list"></div>
+      <button class="btn-table btn-phase" onclick="addPhaseItem(3,'')">＋ เพิ่มรายการ</button>
     </div>
   </div>
 
@@ -456,14 +483,16 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <!-- ข้อ 18: เป้าหมายผลผลิต -->
   <div class="fsec">
     <div class="fsec-title">๑๘. เป้าหมายผลผลิต</div>
-    <div class="prefilled" style="margin-bottom:12px">
-      <p><strong>ตัวชี้วัดปริมาณ :</strong> ๑. จำนวนผู้เข้าร่วมโครงการไม่น้อยกว่าร้อยละ ๘๐</p>
+    <div class="kpi-block">
+      <div class="kpi-label">ตัวชี้วัดปริมาณ :</div>
+      <div id="kpi-qty-list" class="dyn-list sub-list"></div>
+      <button class="btn-table btn-phase" onclick="addDynItem('kpi-qty-list','ตัวชี้วัดปริมาณ...')">＋ เพิ่ม</button>
     </div>
-    <div class="form-group full"><label>ตัวชี้วัดปริมาณ ๒. (เพิ่มเติม)</label><input type="text" id="f-kpi-qty2" placeholder="ตัวชี้วัดปริมาณเพิ่มเติม..."></div>
-    <div class="prefilled" style="margin:12px 0">
-      <p><strong>ตัวชี้วัดคุณภาพ :</strong> ๑. ค่าเฉลี่ยความพึงพอใจของผู้เข้าร่วมโครงการ ไม่น้อยกว่า ๓.๕๑</p>
+    <div class="kpi-block">
+      <div class="kpi-label">ตัวชี้วัดคุณภาพ :</div>
+      <div id="kpi-qual-list" class="dyn-list sub-list"></div>
+      <button class="btn-table btn-phase" onclick="addDynItem('kpi-qual-list','ตัวชี้วัดคุณภาพ...')">＋ เพิ่ม</button>
     </div>
-    <div class="form-group full"><label>ตัวชี้วัดคุณภาพ ๒. (เพิ่มเติม)</label><input type="text" id="f-kpi-qual2" placeholder="ตัวชี้วัดคุณภาพเพิ่มเติม..."></div>
     <div class="prefilled" style="margin-top:12px">
       <p><strong>ตัวชี้วัดเวลา :</strong> โครงการแล้วเสร็จตามระยะเวลาที่กำหนด</p>
       <p><strong>ตัวชี้วัดเชิงต้นทุน :</strong> ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด</p>
@@ -556,12 +585,15 @@ function newProjectTemplate(){
     sdg5:false,sdg6:false,sdg7:false,sdg8:false,sdg9:false,
     sdg10:false,sdg11:false,sdg12:false,sdg13:false,sdg14:false,
     sdg15:false,sdg16:false,sdg17:false,
-    rationale:'', obj1:'', obj2:'', obj3:'',
-    dept:'', coord1:'', coord2:'', coord3:'',
+    rationale:'',
+    objectives:[],
+    dept:'', coordinators:[],
     startDate:'', endDate:'', location:'',
-    target1:'', target1n:'', target2:'', target2n:'',
-    res1:'', res2:'', res3:'', res4:'',
-    eval3:'', kpiQty2:'', kpiQual2:'',
+    targets:[],
+    results:[],
+    evals:[],
+    phase1Items:[], phase2Items:[], phase3Items:[],
+    kpiQty:[], kpiQual:[],
     schedule:[], budget:[],
     budgetSource:'', budgetPlan:'', budgetWork:'', budgetType:'', budgetTotalText:'',
     report1:'', report2:'',
@@ -632,12 +664,9 @@ function showForm(id){
 function loadFormData(p){
   // Text fields
   const tf = {
-    'f-projectName':'projectName','f-obj1':'obj1','f-obj2':'obj2','f-obj3':'obj3',
-    'f-dept':'dept','f-coord1':'coord1','f-coord2':'coord2','f-coord3':'coord3',
+    'f-projectName':'projectName',
+    'f-dept':'dept',
     'f-startDate':'startDate','f-endDate':'endDate','f-location':'location',
-    'f-target1':'target1','f-target1n':'target1n','f-target2':'target2','f-target2n':'target2n',
-    'f-res1':'res1','f-res2':'res2','f-res3':'res3','f-res4':'res4',
-    'f-eval3':'eval3','f-kpi-qty2':'kpiQty2','f-kpi-qual2':'kpiQual2',
     'f-budget-source':'budgetSource','f-budget-plan':'budgetPlan',
     'f-budget-work':'budgetWork','f-budget-type':'budgetType',
     'f-budget-total-text':'budgetTotalText',
@@ -661,6 +690,31 @@ function loadFormData(p){
    'sdg0','sdg1','sdg2','sdg3','sdg4','sdg5','sdg6','sdg7','sdg8','sdg9',
    'sdg10','sdg11','sdg12','sdg13','sdg14','sdg15','sdg16','sdg17'
   ].forEach(k=>{ const el=document.getElementById('f-'+k); if(el) el.checked=!!p[k]; });
+  // Dynamic lists
+  renderDynList('objectives-list', p.objectives||[], 'วัตถุประสงค์ของโครงการ...');
+  renderDynList('coordinators-list', p.coordinators||[], 'ชื่อ-นามสกุล ตำแหน่ง...');
+  renderTargetList(p.targets||[]);
+  renderDynList('results-list', p.results||[], 'ผลที่คาดว่าจะได้รับ...');
+  renderDynList('evals-list', p.evals||[], 'วิธีการประเมินผลเพิ่มเติม...');
+  renderPhaseList(1, p.phase1Items&&p.phase1Items.length ? p.phase1Items : [
+    'ประชุมปรึกษาหารือผู้ที่เกี่ยวข้องกับการจัดทำโครงการครั้งนี้',
+    'กำหนดวัน เวลา สถานที่และค่าใช้จ่ายในการจัดทำโครงการโดยระบุหน้าที่ความรับผิดชอบอย่างชัดเจน',
+    'นำเสนอโครงการต่อคณบดีคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา'
+  ]);
+  renderPhaseList(2, p.phase2Items&&p.phase2Items.length ? p.phase2Items : [
+    'ดำเนินการตามวัน เวลา สถานที่ ที่กำหนดไว้ขั้นต้น',
+    'ดำเนินการตรวจสอบเพื่อความเรียบร้อยของการดำเนินโครงการ'
+  ]);
+  renderPhaseList(3, p.phase3Items&&p.phase3Items.length ? p.phase3Items : [
+    'ประชุมผู้ที่มีส่วนเกี่ยวข้องในโครงการนี้เพื่อสรุปโครงการ',
+    'เสนอแนะข้อคิดเห็นที่มีต่อโครงการเพื่อเป็นแนวทางการปรับปรุงแก้ไขในการจัดโครงการครั้งต่อไป'
+  ]);
+  renderDynList('kpi-qty-list', p.kpiQty&&p.kpiQty.length ? p.kpiQty : [
+    'จำนวนผู้เข้าร่วมโครงการไม่น้อยกว่า ร้อยละ ๘๐'
+  ], 'ตัวชี้วัดปริมาณ...');
+  renderDynList('kpi-qual-list', p.kpiQual&&p.kpiQual.length ? p.kpiQual : [
+    'ค่าเฉลี่ยความพึงพอใจของผู้เข้าร่วมโครงการ ไม่น้อยกว่า ๓.๕๑'
+  ], 'ตัวชี้วัดคุณภาพ...');
   // Schedule table
   renderScheduleTable(p.schedule||[]);
   // Budget table
@@ -672,12 +726,9 @@ function getFormData(){
   const p = {...currentProject, updatedAt: new Date().toISOString()};
   // Text fields
   const tf = {
-    'f-projectName':'projectName','f-obj1':'obj1','f-obj2':'obj2','f-obj3':'obj3',
-    'f-dept':'dept','f-coord1':'coord1','f-coord2':'coord2','f-coord3':'coord3',
+    'f-projectName':'projectName',
+    'f-dept':'dept',
     'f-startDate':'startDate','f-endDate':'endDate','f-location':'location',
-    'f-target1':'target1','f-target1n':'target1n','f-target2':'target2','f-target2n':'target2n',
-    'f-res1':'res1','f-res2':'res2','f-res3':'res3','f-res4':'res4',
-    'f-eval3':'eval3','f-kpi-qty2':'kpiQty2','f-kpi-qual2':'kpiQual2',
     'f-budget-source':'budgetSource','f-budget-plan':'budgetPlan',
     'f-budget-work':'budgetWork','f-budget-type':'budgetType',
     'f-budget-total-text':'budgetTotalText',
@@ -701,6 +752,17 @@ function getFormData(){
    'sdg0','sdg1','sdg2','sdg3','sdg4','sdg5','sdg6','sdg7','sdg8','sdg9',
    'sdg10','sdg11','sdg12','sdg13','sdg14','sdg15','sdg16','sdg17'
   ].forEach(k=>{ const el=document.getElementById('f-'+k); if(el) p[k]=el.checked; });
+  // Dynamic lists
+  p.objectives = getDynItems('objectives-list');
+  p.coordinators = getDynItems('coordinators-list');
+  p.targets = getTargetData();
+  p.results = getDynItems('results-list');
+  p.evals = getDynItems('evals-list');
+  p.phase1Items = getPhaseItems(1);
+  p.phase2Items = getPhaseItems(2);
+  p.phase3Items = getPhaseItems(3);
+  p.kpiQty = getDynItems('kpi-qty-list');
+  p.kpiQual = getDynItems('kpi-qual-list');
   // Tables
   p.schedule = getScheduleData();
   p.budget = getBudgetData();
@@ -715,6 +777,105 @@ function saveForm(){
   if(idx>=0) projects[idx]=p; else projects.unshift(p);
   saveProjects(projects);
   showToast('✓ บันทึกโครงการสำเร็จ','ok');
+}
+
+// ═══════════════════════════════════════════
+// DYNAMIC LIST HELPERS  (sections 8,10,13,14,15,16,18)
+// ═══════════════════════════════════════════
+function addDynItem(listId, placeholder, value=''){
+  const list = document.getElementById(listId);
+  const idx = list.children.length + 1;
+  const div = document.createElement('div');
+  div.className = 'dyn-row';
+  div.innerHTML = `<span class="row-num">${idx}.</span>
+    <input type="text" value="${value.replace(/"/g,'&quot;')}" placeholder="${placeholder}">
+    <button class="btn-del-row" onclick="this.parentElement.remove();renumberDynList('${listId}')">✕</button>`;
+  list.appendChild(div);
+}
+function renumberDynList(listId){
+  const list = document.getElementById(listId);
+  if(!list) return;
+  [...list.querySelectorAll('.row-num')].forEach((span,i)=>span.textContent=(i+1)+'.');
+}
+function getDynItems(listId){
+  const list = document.getElementById(listId);
+  if(!list) return [];
+  return [...list.querySelectorAll('input[type=text]')].map(i=>i.value).filter(v=>v.trim());
+}
+function renderDynList(listId, items, placeholder){
+  const list = document.getElementById(listId);
+  if(!list) return;
+  list.innerHTML='';
+  if(items && items.length){
+    items.forEach(v=>addDynItem(listId, placeholder, v));
+  }
+}
+
+// Target rows (name + count)
+function addTargetRow(data){
+  const list = document.getElementById('targets-list');
+  const idx = list.querySelectorAll('.target-row').length + 1;
+  if(idx===1 && !list.querySelector('.target-header')){
+    const hdr = document.createElement('div');
+    hdr.className='target-header';
+    hdr.innerHTML='<span>กลุ่มเป้าหมาย</span><span style="text-align:center">จำนวน (คน)</span><span></span>';
+    list.insertBefore(hdr, list.firstChild);
+  }
+  const div = document.createElement('div');
+  div.className='target-row';
+  div.innerHTML=`<input type="text" value="${(data&&data.name)||''}" placeholder="เช่น นิสิต นักศึกษา ประชาชน...">
+    <input type="number" min="0" value="${(data&&data.count)||''}" placeholder="0" oninput="updateTargetTotal()">
+    <button class="btn-del-row" onclick="this.parentElement.remove();updateTargetTotal()">✕</button>`;
+  list.appendChild(div);
+  updateTargetTotal();
+}
+function getTargetData(){
+  return [...document.querySelectorAll('#targets-list .target-row')].map(row=>{
+    const inputs=row.querySelectorAll('input');
+    return {name:inputs[0].value, count:inputs[1].value};
+  }).filter(r=>r.name||r.count);
+}
+function renderTargetList(items){
+  const list=document.getElementById('targets-list');
+  if(!list) return;
+  list.innerHTML='';
+  if(items && items.length) items.forEach(r=>addTargetRow(r));
+  else addTargetRow();
+  updateTargetTotal();
+}
+function updateTargetTotal(){
+  let total=0;
+  document.querySelectorAll('#targets-list input[type=number]').forEach(inp=>{ total+=parseInt(inp.value||0)||0; });
+  const el=document.getElementById('target-total');
+  if(el) el.textContent=total.toLocaleString('th-TH');
+}
+
+// Phase items (section 16)
+function addPhaseItem(phaseNum, value){
+  const list=document.getElementById('phase'+phaseNum+'-list');
+  const idx=list.children.length+1;
+  const div=document.createElement('div');
+  div.className='dyn-row';
+  div.innerHTML=`<span class="row-num">${idx}.</span>
+    <input type="text" value="${(value||'').replace(/"/g,'&quot;')}" placeholder="รายละเอียดขั้นตอน...">
+    <button class="btn-del-row" onclick="this.parentElement.remove();renumberPhase(${phaseNum})">✕</button>`;
+  list.appendChild(div);
+}
+function renumberPhase(phaseNum){
+  const list=document.getElementById('phase'+phaseNum+'-list');
+  if(!list) return;
+  [...list.querySelectorAll('.row-num')].forEach((s,i)=>s.textContent=(i+1)+'.');
+}
+function getPhaseItems(phaseNum){
+  const list=document.getElementById('phase'+phaseNum+'-list');
+  if(!list) return [];
+  return [...list.querySelectorAll('input[type=text]')].map(i=>i.value).filter(v=>v.trim());
+}
+function renderPhaseList(phaseNum, items){
+  const list=document.getElementById('phase'+phaseNum+'-list');
+  if(!list) return;
+  list.innerHTML='';
+  if(items && items.length) items.forEach(v=>addPhaseItem(phaseNum,v));
 }
 
 // ═══════════════════════════════════════════
@@ -808,6 +969,10 @@ function printDocument(p){
 }
 
 function chk(v){ return v ? '☑' : '☐'; }
+function toThai(n){
+  const t=['','๑','๒','๓','๔','๕','๖','๗','๘','๙','๑๐','๑๑','๑๒','๑๓','๑๔','๑๕','๑๖','๑๗','๑๘','๑๙','๒๐'];
+  return t[n]||String(n);
+}
 function fmtDate(d){ if(!d) return ''; const dt=new Date(d); return `${dt.getDate()} ${['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][dt.getMonth()]} ${dt.getFullYear()+543}`; }
 
 function buildPrintHTML(p){
@@ -867,53 +1032,41 @@ table th{font-weight:700;text-align:center;background:#f0f0f0}
 <div class="indent1">${chk(p.sdg14)} ๑๔. ${chk(p.sdg15)} ๑๕. ${chk(p.sdg16)} ๑๖. ${chk(p.sdg17)} ๑๗.</div></div>
 <div class="sec"><span class="sec-title">๗. หลักการและเหตุผล</span><br><div class="indent1">${(p.rationale||'').replace(/\n/g,'<br>')}</div></div>
 <div class="sec"><span class="sec-title">๘. วัตถุประสงค์</span>
-${p.obj1?`<div class="indent1">8.1 ${p.obj1}</div>`:''}
-${p.obj2?`<div class="indent1">8.๒ ${p.obj2}</div>`:''}
-${p.obj3?`<div class="indent1">8.3 ${p.obj3}</div>`:''}
+${(p.objectives||[]).map((o,i)=>`<div class="indent1">${toThai(i+1)}. ${o}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๙. หน่วยงานที่รับผิดชอบ</span>&emsp;${p.dept||''}</div>
 <div class="sec"><span class="sec-title">๑๐. ผู้รับผิดชอบโครงการ</span>
-${p.coord1?`<div class="indent1">${p.coord1}</div>`:''}
-${p.coord2?`<div class="indent1">${p.coord2}</div>`:''}
-${p.coord3?`<div class="indent1">${p.coord3}</div>`:''}
+${(p.coordinators||[]).map(c=>`<div class="indent1">${c}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๑. ระยะเวลาดำเนินการ</span>&emsp;${fmtDate(p.startDate)} – ${fmtDate(p.endDate)}</div>
 <div class="sec"><span class="sec-title">๑๒. สถานที่ดำเนินงาน</span>&emsp;${p.location||''}</div>
 <div class="sec"><span class="sec-title">๑๓. กลุ่มเป้าหมายและจำนวน</span>
-${p.target1?`<div class="indent1">๑๓.๑ ${p.target1} จำนวน ${p.target1n||'...'} คน</div>`:''}
-${p.target2?`<div class="indent1">๑๓.๒ ${p.target2} จำนวน ${p.target2n||'...'} คน</div>`:''}
-<div class="indent1">รวมทั้งสิ้น ${(parseInt(p.target1n||0)+parseInt(p.target2n||0)).toString()} คน</div>
+${(p.targets||[]).map((t,i)=>`<div class="indent1">๑๓.${toThai(i+1)} ${t.name} จำนวน ${t.count||'...'} คน</div>`).join('')}
+<div class="indent1">รวมทั้งสิ้น ${(p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH')} คน</div>
 </div>
 <div class="sec"><span class="sec-title">๑๔. ผลที่คาดว่าจะได้รับ</span>
-${p.res1?`<div class="indent1">๑๔.๑ ${p.res1}</div>`:''}
-${p.res2?`<div class="indent1">๑๔.๒ ${p.res2}</div>`:''}
-${p.res3?`<div class="indent1">๑๔.๓ ${p.res3}</div>`:''}
-${p.res4?`<div class="indent1">๑๔.๔ ${p.res4}</div>`:''}
+${(p.results||[]).map((r,i)=>`<div class="indent1">๑๔.${toThai(i+1)} ${r}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๕. วิธีการประเมินผลโครงการ</span>
 <div class="indent1">๑๕.๑ ประเมินจำนวนผู้เข้าร่วมโครงการ</div>
 <div class="indent1">๑๕.๒ ประเมินความพึงพอใจของผู้เข้าร่วมโครงการ</div>
-${p.eval3?`<div class="indent1">๑๕.๓ ${p.eval3}</div>`:''}
+${(p.evals||[]).map((e,i)=>`<div class="indent1">๑๕.${toThai(i+3)} ${e}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๖. วิธีดำเนินโครงการ</span>
 <div class="indent1"><strong>๑๖.๑ ขั้นเตรียมการ</strong></div>
-<div class="indent2">๑๖.๑.๑ ประชุมปรึกษาหารือผู้ที่เกี่ยวข้องกับการจัดทำโครงการครั้งนี้</div>
-<div class="indent2">๑๖.๑.๒ กำหนดวัน เวลา สถานที่และค่าใช้จ่ายในการจัดทำโครงการ</div>
-<div class="indent2">๑๖.๑.๓ นำเสนอโครงการต่อคณบดีคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div>
+${(p.phase1Items||[]).map((item,i)=>`<div class="indent2">๑๖.๑.${toThai(i+1)} ${item}</div>`).join('')}
 <div class="indent1"><strong>๑๖.๒ ขั้นดำเนินการ</strong></div>
-<div class="indent2">๑๖.๒.๑ ดำเนินการตามวัน เวลา สถานที่ ที่กำหนดไว้ขั้นต้น</div>
-<div class="indent2">๑๖.๒.๒ ดำเนินการตรวจสอบเพื่อความเรียบร้อยของการดำเนินโครงการ</div>
+${(p.phase2Items||[]).map((item,i)=>`<div class="indent2">๑๖.๒.${toThai(i+1)} ${item}</div>`).join('')}
 <div class="indent1"><strong>๑๖.๓ ขั้นสรุปผล</strong></div>
-<div class="indent2">๑๖.๓.๑ ประชุมผู้ที่มีส่วนเกี่ยวข้องในโครงการนี้เพื่อสรุปโครงการ</div>
-<div class="indent2">๑๖.๓.๒ เสนอแนะข้อคิดเห็นที่มีต่อโครงการเพื่อเป็นแนวทางการปรับปรุงแก้ไขในการจัดโครงการครั้งต่อไป</div>
+${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+1)} ${item}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๗. กำหนดการโครงการ</span>
 <table><tr><th style="width:35%">เวลา</th><th>กิจกรรม</th></tr>${schedRows||'<tr><td>&nbsp;</td><td>&nbsp;</td></tr>'}</table></div>
 <div class="sec"><span class="sec-title">๑๘. เป้าหมายผลผลิต</span>
-<div class="indent1"><strong>ตัวชี้วัดปริมาณ</strong> : ๑. จำนวนผู้เข้าร่วมโครงการไม่น้อยกว่า ร้อยละ ๘๐</div>
-${p.kpiQty2?`<div class="indent2">๒. ${p.kpiQty2}</div>`:''}
-<div class="indent1"><strong>ตัวชี้วัดคุณภาพ</strong> : ๑. ค่าเฉลี่ยความพึงพอใจของผู้เข้าร่วมโครงการ ไม่น้อยกว่า ๓.๕๑</div>
-${p.kpiQual2?`<div class="indent2">๒. ${p.kpiQual2}</div>`:''}
+<div class="indent1"><strong>ตัวชี้วัดปริมาณ</strong> :</div>
+${(p.kpiQty||[]).map((k,i)=>`<div class="indent2">${toThai(i+1)}. ${k}</div>`).join('')}
+<div class="indent1"><strong>ตัวชี้วัดคุณภาพ</strong> :</div>
+${(p.kpiQual||[]).map((k,i)=>`<div class="indent2">${toThai(i+1)}. ${k}</div>`).join('')}
 <div class="indent1"><strong>ตัวชี้วัดเวลา</strong> : โครงการแล้วเสร็จตามระยะเวลาที่กำหนด</div>
 <div class="indent1"><strong>ตัวชี้วัดเชิงต้นทุน</strong> : ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}</div>
 </div>
@@ -1048,42 +1201,36 @@ async function buildWordDoc(p){
     ...((p.rationale||'').split('\n').map(line=>para(line,{indent:{left:360}}))),
     // 8
     heading('๘. วัตถุประสงค์'),
-    ...[p.obj1,p.obj2,p.obj3].filter(Boolean).map((o,i)=>para(`${['8.1','8.๒','8.3'][i]} ${o}`,{indent:{left:360}})),
+    ...(p.objectives||[]).map((o,i)=>para(`${toThai(i+1)}. ${o}`,{indent:{left:360}})),
     // 9
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('๙. หน่วยงานที่รับผิดชอบ',{bold:true}),run(`\t${p.dept||''}`)]}),
     // 10
     heading('๑๐. ผู้รับผิดชอบโครงการ'),
-    ...[p.coord1,p.coord2,p.coord3].filter(Boolean).map(c=>para(c,{indent:{left:360}})),
+    ...(p.coordinators||[]).map(c=>para(c,{indent:{left:360}})),
     // 11
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('๑๑. ระยะเวลาดำเนินการ',{bold:true}),run(`\t${fmtDate(p.startDate)||'วันที่......เดือน......พ.ศ....'} – ${fmtDate(p.endDate)||'วันที่......เดือน......พ.ศ....'}`)]}),
     // 12
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('๑๒. สถานที่ดำเนินงาน',{bold:true}),run(`\t${p.location||''}`)]}),
     // 13
     heading('๑๓. กลุ่มเป้าหมายและจำนวน'),
-    ...[p.target1?para(`\t๑๓.๑ ${p.target1} จำนวน ${p.target1n||'...'} คน`):null,
-        p.target2?para(`\t๑๓.๒ ${p.target2} จำนวน ${p.target2n||'...'} คน`):null,
-        para(`\t\tรวมทั้งสิ้น ${(parseInt(p.target1n||0)+parseInt(p.target2n||0)).toString()} คน`)
-    ].filter(Boolean),
+    ...(p.targets||[]).map((t,i)=>para(`\t๑๓.${toThai(i+1)} ${t.name} จำนวน ${t.count||'...'} คน`)),
+    para(`\t\tรวมทั้งสิ้น ${(p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH')} คน`),
     // 14
     heading('๑๔. ผลที่คาดว่าจะได้รับ'),
-    ...[p.res1,p.res2,p.res3,p.res4].filter(Boolean).map((r,i)=>para(`\t๑๔.${i+1} ${r}`)),
+    ...(p.results||[]).map((r,i)=>para(`\t๑๔.${toThai(i+1)} ${r}`)),
     // 15
     heading('๑๕. วิธีการประเมินผลโครงการ'),
     para('\t๑๕.๑ ประเมินจำนวนผู้เข้าร่วมโครงการ'),
     para('\t๑๕.๒ ประเมินความพึงพอใจของผู้เข้าร่วมโครงการ'),
-    ...(p.eval3?[para(`\t๑๕.๓ ${p.eval3}`)]:[]),
+    ...(p.evals||[]).map((e,i)=>para(`\t๑๕.${toThai(i+3)} ${e}`)),
     // 16
     heading('๑๖. วิธีดำเนินโครงการ'),
     para('\t๑๖.๑ ขั้นเตรียมการ',{bold:true}),
-    para('\t\t๑๖.๑.๑ ประชุมปรึกษาหารือผู้ที่เกี่ยวข้องกับการจัดทำโครงการครั้งนี้'),
-    para('\t\t๑๖.๑.๒ กำหนดวัน เวลา สถานที่และค่าใช้จ่ายในการจัดทำโครงการ'),
-    para('\t\t๑๖.๑.๓ นำเสนอโครงการต่อคณบดีคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา'),
+    ...(p.phase1Items||[]).map((item,i)=>para(`\t\t๑๖.๑.${toThai(i+1)} ${item}`)),
     para('\t๑๖.๒ ขั้นดำเนินการ',{bold:true}),
-    para('\t\t๑๖.๒.๑ ดำเนินการตามวัน เวลา สถานที่ ที่กำหนดไว้ขั้นต้น'),
-    para('\t\t๑๖.๒.๒ ดำเนินการตรวจสอบเพื่อความเรียบร้อยของการดำเนินโครงการ'),
+    ...(p.phase2Items||[]).map((item,i)=>para(`\t\t๑๖.๒.${toThai(i+1)} ${item}`)),
     para('\t๑๖.๓ ขั้นสรุปผล',{bold:true}),
-    para('\t\t๑๖.๓.๑ ประชุมผู้ที่มีส่วนเกี่ยวข้องในโครงการนี้เพื่อสรุปโครงการ'),
-    para('\t\t๑๖.๓.๒ เสนอแนะข้อคิดเห็นที่มีต่อโครงการเพื่อเป็นแนวทางการปรับปรุงแก้ไขในการจัดโครงการครั้งต่อไป'),
+    ...(p.phase3Items||[]).map((item,i)=>para(`\t\t๑๖.๓.${toThai(i+1)} ${item}`)),
     // 17 กำหนดการ
     heading('๑๗. กำหนดการโครงการ'),
     new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:tblBorders,rows:[
@@ -1096,10 +1243,10 @@ async function buildWordDoc(p){
     blank(),
     // 18
     heading('๑๘. เป้าหมายผลผลิต'),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดปริมาณ',{bold:true}),run('\t:\t๑. จำนวนผู้เข้าร่วมโครงการไม่น้อยกว่า ร้อยละ ๘๐')]}),
-    ...(p.kpiQty2?[para(`\t\t\t\t๒. ${p.kpiQty2}`)]:[]),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดคุณภาพ',{bold:true}),run('\t:\t๑. ค่าเฉลี่ยความพึงพอใจของผู้เข้าร่วมโครงการ ไม่น้อยกว่า ๓.๕๑')]}),
-    ...(p.kpiQual2?[para(`\t\t\t\t๒. ${p.kpiQual2}`)]:[]),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดปริมาณ',{bold:true}),run('\t: ')]}),
+    ...(p.kpiQty||[]).map((k,i)=>para(`\t\t${toThai(i+1)}. ${k}`)),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดคุณภาพ',{bold:true}),run('\t: ')]}),
+    ...(p.kpiQual||[]).map((k,i)=>para(`\t\t${toThai(i+1)}. ${k}`)),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเวลา',{bold:true}),run('\t\t:\tโครงการแล้วเสร็จตามระยะเวลาที่กำหนด')]}),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเชิงต้นทุน',{bold:true}),run(`\t:\tค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}`)]}),
     // 19
