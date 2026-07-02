@@ -1249,9 +1249,9 @@ ${(p.kpiQual||[]).map((k,i)=>`<div class="indent2">${toThai(i+1)}. ${k}</div>`).
 </div>
 <div class="sig-wrap">
   ${p.sig1Image?`<div style="display:flex;align-items:flex-end;justify-content:center;margin-bottom:0;min-height:195pt"><img src="${p.sig1Image}" style="max-height:195pt;max-width:480pt;object-fit:contain"></div>`:'<div style="min-height:195pt"></div>'}
-  (${p.sig1Name||'................................................................'})<br>
-  ตำแหน่ง${p.sig1Pos||'................................................................'}<br>
-  ผู้รับผิดชอบโครงการ
+  <div style="white-space:nowrap">(${p.sig1Name||'................................................................'})</div>
+  <div style="white-space:nowrap">ตำแหน่ง${p.sig1Pos||'................................................................'}</div>
+  <div>ผู้รับผิดชอบโครงการ</div>
 </div>
 <div style="margin-left:40%;text-align:center;margin-top:40pt">
   <div><strong>อนุมัติ</strong></div>
