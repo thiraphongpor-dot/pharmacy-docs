@@ -605,10 +605,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div class="sig-card">
         <div class="sig-title">ผู้อนุมัติ (คณบดี)</div>
         <div style="width:100%;margin-top:auto">
-          <label>ชื่อ-นามสกุล (พร้อมคำนำหน้าตำแหน่ง)</label>
-          <input type="text" id="f-dean-name" placeholder="เช่น ผู้ช่วยศาสตราจารย์ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์" style="margin-bottom:8px">
-          <label>ตำแหน่ง</label>
-          <input type="text" id="f-dean-pos" placeholder="เช่น คณบดีคณะเภสัชศาสตร์">
+          <label>เลือกผู้อนุมัติ</label>
+          <select id="f-dean-select" style="width:100%">
+            <option value="0">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์ — คณบดีคณะเภสัชศาสตร์</option>
+            <option value="1">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกร ณัฐธัญ เจริญศรีวิไลวัฒน์ — รองคณบดีฝ่ายบริหาร รักษาการแทน</option>
+            <option value="2">รองศาสตราจารย์ ดร. เภสัชกรบุญดิศย์ วงศ์ศักดิ์ — รองคณบดีฝ่ายวิจัย นวัตกรรม และบัณฑิตศึกษา รักษาการแทน</option>
+            <option value="3">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง นปภัช รัตนะชิตธวัช — รองคณบดีฝ่ายวิชาการ รักษาการแทน</option>
+            <option value="4">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง เนตรชนก เจียงสืบชาติวีระ — รองคณบดีฝ่ายวางแผนและพัฒนาบุคลากร รักษาการแทน</option>
+          </select>
         </div>
       </div>
 
@@ -664,9 +668,17 @@ function newProjectTemplate(){
     budgetSource:'', budgetPlan:'', budgetWork:'', budgetType:'', budgetTotalText:'',
     r1Day:'', r1Month:'', r1Year:'', r2Day:'', r2Month:'', r2Year:'',
     sig1Name:'', sig1Pos:'', sig1Image:'',
-    deanName:'ผู้ช่วยศาสตราจารย์ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์', deanPos:'คณบดีคณะเภสัชศาสตร์'
+    deanIdx:0, deanName:'ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์', deanPos:'คณบดีคณะเภสัชศาสตร์', deanActing:false
   };
 }
+
+const DEAN_LIST = [
+  {name:'ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์', pos:'คณบดีคณะเภสัชศาสตร์', acting:false},
+  {name:'ผู้ช่วยศาสตราจารย์ ดร. เภสัชกร ณัฐธัญ เจริญศรีวิไลวัฒน์', pos:'รองคณบดีฝ่ายบริหาร รักษาการแทน', acting:true},
+  {name:'รองศาสตราจารย์ ดร. เภสัชกรบุญดิศย์ วงศ์ศักดิ์', pos:'รองคณบดีฝ่ายวิจัย นวัตกรรม และบัณฑิตศึกษา รักษาการแทน', acting:true},
+  {name:'ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง นปภัช รัตนะชิตธวัช', pos:'รองคณบดีฝ่ายวิชาการ รักษาการแทน', acting:true},
+  {name:'ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง เนตรชนก เจียงสืบชาติวีระ', pos:'รองคณบดีฝ่ายวางแผนและพัฒนาบุคลากร รักษาการแทน', acting:true}
+];
 
 let currentProject = null;
 
@@ -739,12 +751,15 @@ function loadFormData(p){
     'f-budget-total-text':'budgetTotalText',
     'f-r1-day':'r1Day','f-r1-year':'r1Year','f-r2-day':'r2Day','f-r2-year':'r2Year',
     'f-plan-year':'planYear',
-    'f-sig1-name':'sig1Name','f-sig1-pos':'sig1Pos','f-dean-name':'deanName','f-dean-pos':'deanPos','f-rationale':'rationale'
+    'f-sig1-name':'sig1Name','f-sig1-pos':'sig1Pos','f-rationale':'rationale'
   };
   for(const [id,key] of Object.entries(tf)){
     const el = document.getElementById(id);
     if(el) el.value = p[key]||'';
   }
+  // Dean select
+  const dSel = document.getElementById('f-dean-select');
+  if(dSel) dSel.value = p.deanIdx != null ? String(p.deanIdx) : '0';
   // Report month selects
   const mSel1 = document.getElementById('f-r1-month');
   if(mSel1) mSel1.value = p.r1Month||'';
@@ -853,12 +868,20 @@ function getFormData(){
     'f-budget-total-text':'budgetTotalText',
     'f-r1-day':'r1Day','f-r1-year':'r1Year','f-r2-day':'r2Day','f-r2-year':'r2Year',
     'f-plan-year':'planYear',
-    'f-sig1-name':'sig1Name','f-sig1-pos':'sig1Pos','f-dean-name':'deanName','f-dean-pos':'deanPos','f-rationale':'rationale'
+    'f-sig1-name':'sig1Name','f-sig1-pos':'sig1Pos','f-rationale':'rationale'
   };
   for(const [id,key] of Object.entries(tf)){
     const el = document.getElementById(id);
     if(el) p[key] = el.value;
   }
+  // Dean dropdown
+  const dSel = document.getElementById('f-dean-select');
+  const dIdx = dSel ? +dSel.value : 0;
+  p.deanIdx = dIdx;
+  const dean = DEAN_LIST[dIdx] || DEAN_LIST[0];
+  p.deanName = dean.name;
+  p.deanPos = dean.pos;
+  p.deanActing = dean.acting;
   // Radio
   // Report months
   const mG1 = document.getElementById('f-r1-month'); if(mG1) p.r1Month = mG1.value;
@@ -1263,6 +1286,7 @@ ${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+
   <div><strong>อนุมัติ</strong></div>
   <div style="margin-top:90pt;white-space:nowrap">(${p.deanName||'....................................................................'})</div>
   <div style="white-space:nowrap">${p.deanPos||'คณบดีคณะเภสัชศาสตร์'}</div>
+  ${p.deanActing ? '<div style="white-space:nowrap">คณบดีคณะเภสัชศาสตร์</div>' : ''}
 </div>
 </div></body></html>`;
   const [_head, _body] = _html.split('<body>');
@@ -1480,6 +1504,7 @@ async function buildWordDoc(p){
     blank(),blank(),blank(),blank(),blank(),blank(),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},alignment:AlignmentType.CENTER,children:[run(`(${p.deanName||'.....................................................................'})`)]}),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},alignment:AlignmentType.CENTER,children:[run(p.deanPos||'คณบดีคณะเภสัชศาสตร์')]}),
+    ...(p.deanActing ? [new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},alignment:AlignmentType.CENTER,children:[run('คณบดีคณะเภสัชศาสตร์')]})] : []),
   ];
 
   // Fix para() calls with run as first arg
