@@ -659,7 +659,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <div class="toast" id="toast"></div>
 
 <!-- docx.js for Word export -->
-<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+<script type="module">
+  import * as docxLib from 'https://esm.sh/docx@8.5.0';
+  window.docx = docxLib;
+</script>
 <script>
 // ═══════════════════════════════════════════
 // DATA LAYER — LocalStorage
