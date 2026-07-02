@@ -309,8 +309,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div class="form-group">
         <label>2.2 การบรรจุในแผน</label>
         <div class="check-grid">
-          <label class="check-item"><input type="radio" name="type22" value="inPlan" id="f-type22-in"> <span>โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 2568</span></label>
-          <label class="check-item"><input type="radio" name="type22" value="outPlan" id="f-type22-out"> <span>โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 2568</span></label>
+          <label class="check-item"><input type="radio" name="type22" value="inPlan" id="f-type22-in"> <span>โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</span></label>
+          <label class="check-item"><input type="radio" name="type22" value="outPlan" id="f-type22-out"> <span>โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</span></label>
         </div>
       </div>
     </div>
@@ -1124,12 +1124,13 @@ function toThai(n){
   const t=['','๑','๒','๓','๔','๕','๖','๗','๘','๙','๑๐','๑๑','๑๒','๑๓','๑๔','๑๕','๑๖','๑๗','๑๘','๑๙','๒๐'];
   return t[n]||String(n);
 }
-function fmtDate(d){ if(!d) return ''; const dt=new Date(d); return `${dt.getDate()} ${['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][dt.getMonth()]} ${dt.getFullYear()+543}`; }
+function thDigits(s){ return String(s||'').replace(/[0-9]/g,d=>'๐๑๒๓๔๕๖๗๘๙'[+d]); }
+function fmtDate(d){ if(!d) return ''; const dt=new Date(d); return `${thDigits(dt.getDate())} ${['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][dt.getMonth()]} ${thDigits(dt.getFullYear()+543)}`; }
 
 function buildPrintHTML(p){
   const total = (p.budget||[]).reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
   const schedRows = (p.schedule||[]).map(r=>`<tr><td>${r.time||''}</td><td>${(r.activity||'').replace(/\n/g,'<br>')}</td></tr>`).join('');
-  const budgRows = (p.budget||[]).map(r=>`<tr><td>${(r.item||'').replace(/\n/g,'<br>')}</td><td style="text-align:right">${parseFloat(r.amount||0).toLocaleString('th-TH',{minimumFractionDigits:2})}</td></tr>`).join('');
+  const budgRows = (p.budget||[]).map(r=>`<tr><td>${(r.item||'').replace(/\n/g,'<br>')}</td><td style="text-align:right">${thDigits(parseFloat(r.amount||0).toLocaleString('th-TH',{minimumFractionDigits:2}))}</td></tr>`).join('');
   return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
 <title>โครงการ${p.projectName||''}</title>
 <style>
@@ -1138,10 +1139,10 @@ body{font-family:'Sarabun','TH SarabunIT9','TH Sarabun New',sans-serif;font-size
   margin:0;padding:0;color:#000}
 .page{width:21cm;min-height:29.7cm;margin:0 auto;padding:1.5cm 2.5cm 0.8cm;background:#fff}
 h2{text-align:center;font-size:18pt;margin:0;font-weight:700}
-.sec{margin-bottom:6pt}
-.sec-title{font-weight:700}
-.indent1{padding-left:2em}
-.indent2{padding-left:4em}
+.sec{margin-bottom:16pt}
+.sec-title{font-weight:700;display:inline-block;margin-bottom:2pt}
+.indent1{padding-left:2em;margin-bottom:2pt}
+.indent2{padding-left:4em;margin-bottom:2pt}
 .chk-row{display:flex;gap:0.25em;padding-left:2em}
 .chk-prefix{flex-shrink:0;white-space:nowrap}
 .chk-text{flex:1}
@@ -1153,13 +1154,13 @@ table th{font-weight:700;text-align:center;background:#f0f0f0}
 </style></head><body><div class="page">
 <h2>โครงการ${p.projectName||'...........................................................................................................................'}  </h2>
 <h2>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</h2>
-<h2>ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. 2568</h2>
+<h2>ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘</h2>
 <br>
 <div class="sec"><span class="sec-title">๑. ชื่อโครงการ</span>&emsp;โครงการ${p.projectName||''}</div>
 <div class="sec"><span class="sec-title">๒. ประเภทโครงการ</span>
 <div class="indent1">${chk(p.type21==='continuous')} โครงการต่อเนื่อง &emsp;&emsp; ${chk(p.type21==='new')} โครงการใหม่</div>
-<div class="indent1">${chk(p.type22==='inPlan')} โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 2568</div>
-<div class="indent1">${chk(p.type22==='outPlan')} โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 2568</div></div>
+<div class="indent1">${chk(p.type22==='inPlan')} โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</div>
+<div class="indent1">${chk(p.type22==='outPlan')} โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</div></div>
 <div class="sec"><span class="sec-title">3. ความสอดคล้องกับยุทธศาสตร์มหาวิทยาลัยบูรพา ปีงบประมาณ พ.ศ. ๒๕๖๘ – ๒๕๗๑</span>
 <div class="indent1">${chk(p.buu1)} ยุทธศาสตร์ 1 การพัฒนาคนคุณภาพ</div>
 <div class="indent1">${chk(p.buu2)} ยุทธศาสตร์ ๒ การพัฒนาความรู้ผ่านการวิจัยและการสร้างนวัตกรรมฯ</div>
@@ -1209,8 +1210,8 @@ ${(p.coordinators||[]).map(c=>`<div class="indent1">${c}</div>`).join('')}
 <div class="sec"><span class="sec-title">๑๑. ระยะเวลาดำเนินการ</span>&emsp;${fmtDate(p.startDate)} – ${fmtDate(p.endDate)}</div>
 <div class="sec"><span class="sec-title">๑๒. สถานที่ดำเนินงาน</span>&emsp;${p.location||''}</div>
 <div class="sec"><span class="sec-title">๑๓. กลุ่มเป้าหมายและจำนวน</span>
-${(p.targets||[]).map((t,i)=>`<div class="indent1">๑๓.${toThai(i+1)} ${t.name} จำนวน ${t.count||'...'} คน</div>`).join('')}
-<div class="indent1">รวมทั้งสิ้น ${(p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH')} คน</div>
+${(p.targets||[]).map((t,i)=>`<div class="indent1">๑๓.${toThai(i+1)} ${t.name} จำนวน ${thDigits(t.count||'...')} คน</div>`).join('')}
+<div class="indent1">รวมทั้งสิ้น ${thDigits((p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH'))} คน</div>
 </div>
 <div class="sec"><span class="sec-title">๑๔. ผลที่คาดว่าจะได้รับ</span>
 ${(p.results||[]).map((r,i)=>`<div class="indent1">๑๔.${toThai(i+1)} ${r}</div>`).join('')}
@@ -1231,21 +1232,19 @@ ${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+
 <div class="sec"><span class="sec-title">๑๗. กำหนดการโครงการ</span>
 <table><tr><th style="width:35%">เวลา</th><th>กิจกรรม</th></tr>${schedRows||'<tr><td>&nbsp;</td><td>&nbsp;</td></tr>'}</table></div>
 <div class="sec"><span class="sec-title">๑๘. เป้าหมายผลผลิต</span>
-<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดปริมาณ</strong> :</div>
-${(p.kpiQty||[]).map((k)=>`<div class="indent2">${k}</div>`).join('')}
-<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดคุณภาพ</strong> :</div>
-${(p.kpiQual||[]).map((k)=>`<div class="indent2">${k}</div>`).join('')}
+<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดปริมาณ</strong> : ${(p.kpiQty||[]).join(' ')}</div>
+<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดคุณภาพ</strong> : ${(p.kpiQual||[]).join(' ')}</div>
 <div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดเวลา</strong> : โครงการแล้วเสร็จตามระยะเวลาที่กำหนด</div>
-<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดเชิงต้นทุน</strong> : ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}</div>
+<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดเชิงต้นทุน</strong> : ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนดไว้</div>
 </div>
 <div class="sec"><span class="sec-title">๑๙. รายละเอียดงบประมาณของโครงการ</span>
-<div>ใช้งบประมาณดำเนินการจากเงิน ${p.budgetSource||'...............'} แผนงาน ${p.budgetPlan||'...............'} งาน ${p.budgetWork||'...............'} หมวดเงิน ${p.budgetType||'...............'} เป็นจำนวนเงิน ${total.toLocaleString('th-TH',{minimumFractionDigits:2})} บาท (${p.budgetTotalText||'..............................................'})</div>
-<table><tr><th>รายการ</th><th style="width:150pt;text-align:right">จำนวนเงิน (บาท)</th></tr>${budgRows}<tr><td style="font-weight:700">รวมทั้งสิ้น</td><td style="font-weight:700;text-align:right">${total.toLocaleString('th-TH',{minimumFractionDigits:2})}</td></tr><tr><td colspan="2">(${p.budgetTotalText||'..............................................................บาทถ้วน'})</td></tr></table>
+<div>ใช้งบประมาณดำเนินการจากเงิน ${p.budgetSource||'...............'} แผนงาน ${p.budgetPlan||'...............'} งาน ${p.budgetWork||'...............'} หมวดเงิน ${p.budgetType||'...............'} เป็นจำนวนเงิน ${thDigits(total.toLocaleString('th-TH',{minimumFractionDigits:2}))} บาท (${p.budgetTotalText||'..............................................'})</div>
+<table><tr><th>รายการ</th><th style="width:150pt;text-align:right">จำนวนเงิน (บาท)</th></tr>${budgRows}<tr><td style="font-weight:700">รวมทั้งสิ้น</td><td style="font-weight:700;text-align:right">${thDigits(total.toLocaleString('th-TH',{minimumFractionDigits:2}))}</td></tr><tr><td colspan="2">(${p.budgetTotalText||'..............................................................บาทถ้วน'})</td></tr></table>
 </div>
-<div class="sec"><span class="sec-title">๒๐. การรายงานผลการจัดกิจกรรม (ไม่เกิน 15 วัน นับถัดจากวันที่สิ้นสุดการดำเนินงาน)</span>
+<div class="sec"><span class="sec-title">๒๐. การรายงานผลการจัดกิจกรรม (ไม่เกิน ๑๕ วัน นับถัดจากวันที่สิ้นสุดการดำเนินงาน)</span>
 <div style="display:grid;grid-template-columns:max-content max-content;gap:2pt 16pt;padding-left:2em">
-  <span>๒๐.๑ รายงานผลการจัดกิจกรรม</span><span style="white-space:nowrap">วันที่ ${p.r1Day||'.......'} ${p.r1Month||'...........'} พ.ศ. 25${p.r1Year||'.....'}</span>
-  <span>๒๐.๒ ส่งแบบฟอร์มรายงานผลการจัดกิจกรรมและการใช้เงิน</span><span style="white-space:nowrap">วันที่ ${p.r2Day||'.......'} ${p.r2Month||'...........'} พ.ศ. 25${p.r2Year||'.....'}</span>
+  <span>๒๐.๑ รายงานผลการจัดกิจกรรม</span><span style="white-space:nowrap">วันที่ ${thDigits(p.r1Day)||'.......'} ${p.r1Month||'...........'} พ.ศ. ๒๕${thDigits(p.r1Year)||'.....'}</span>
+  <span>๒๐.๒ ส่งแบบฟอร์มรายงานผลการจัดกิจกรรมและการใช้เงิน</span><span style="white-space:nowrap">วันที่ ${thDigits(p.r2Day)||'.......'} ${p.r2Month||'...........'} พ.ศ. ๒๕${thDigits(p.r2Year)||'.....'}</span>
 </div>
 </div>
 <div class="sig-wrap">
@@ -1332,15 +1331,15 @@ async function buildWordDoc(p){
     // Header
     para([run(`โครงการ${p.projectName||'…………………………………………………………………………'}`,{bold:true,size:SZH})],{center:true}),
     para([run('คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา',{bold:true,size:SZH})],{center:true}),
-    para([run('ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. 2568',{bold:true,size:SZH})],{center:true}),
+    para([run('ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘',{bold:true,size:SZH})],{center:true}),
     blank(),
     // 1
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('๑. ชื่อโครงการ',{bold:true}),run(`\t\tโครงการ${p.projectName||''}`)]}),
     // 2
     heading('๒. ประเภทโครงการ'),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type21==='continuous'),run('โครงการต่อเนื่อง\t\t'),chkR(p.type21==='new'),run('โครงการใหม่')]}),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='inPlan'),run('โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 2568')]}),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='outPlan'),run('โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 2568')]}),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='inPlan'),run('โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘')]}),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='outPlan'),run('โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘')]}),
     // 3
     heading('3. ความสอดคล้องกับยุทธศาสตร์มหาวิทยาลัยบูรพา ปีงบประมาณ พ.ศ. ๒๕๖๘ – ๒๕๗๑'),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.buu1),run('ยุทธศาสตร์ 1 การพัฒนาคนคุณภาพ')]}),
@@ -1429,12 +1428,10 @@ async function buildWordDoc(p){
     blank(),
     // 18
     heading('๑๘. เป้าหมายผลผลิต'),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดปริมาณ',{bold:true}),run('\t: ')]}),
-    ...(p.kpiQty||[]).map((k)=>para(`\t\t${k}`)),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดคุณภาพ',{bold:true}),run('\t: ')]}),
-    ...(p.kpiQual||[]).map((k)=>para(`\t\t${k}`)),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดปริมาณ',{bold:true}),run(`\t: ${(p.kpiQty||[]).join(' ')}`)]}),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดคุณภาพ',{bold:true}),run(`\t: ${(p.kpiQual||[]).join(' ')}`)]}),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเวลา',{bold:true}),run('\t\t:\tโครงการแล้วเสร็จตามระยะเวลาที่กำหนด')]}),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเชิงต้นทุน',{bold:true}),run(`\t:\tค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}`)]}),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเชิงต้นทุน',{bold:true}),run('\t:\tค่าใช้จ่ายไม่เกินงบประมาณที่กำหนดไว้')]}),
     // 19
     heading('๑๙. รายละเอียดงบประมาณของโครงการ'),
     para(`ใช้งบประมาณดำเนินการจากเงิน ${p.budgetSource||'...............'} แผนงาน ${p.budgetPlan||'...............'} งาน ${p.budgetWork||'...............'} หมวดเงิน ${p.budgetType||'...............'} เป็นจำนวนเงิน ${total.toLocaleString('th-TH',{minimumFractionDigits:2})} บาท (${p.budgetTotalText||'...................................'})`),
