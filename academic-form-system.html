@@ -1230,12 +1230,12 @@ ${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+
 <div class="sec"><span class="sec-title">๑๗. กำหนดการโครงการ</span>
 <table><tr><th style="width:35%">เวลา</th><th>กิจกรรม</th></tr>${schedRows||'<tr><td>&nbsp;</td><td>&nbsp;</td></tr>'}</table></div>
 <div class="sec"><span class="sec-title">๑๘. เป้าหมายผลผลิต</span>
-<div class="indent1"><strong>ตัวชี้วัดปริมาณ</strong> :</div>
-${(p.kpiQty||[]).map((k,i)=>`<div class="indent2">${toThai(i+1)}. ${k}</div>`).join('')}
-<div class="indent1"><strong>ตัวชี้วัดคุณภาพ</strong> :</div>
-${(p.kpiQual||[]).map((k,i)=>`<div class="indent2">${toThai(i+1)}. ${k}</div>`).join('')}
-<div class="indent1"><strong>ตัวชี้วัดเวลา</strong> : โครงการแล้วเสร็จตามระยะเวลาที่กำหนด</div>
-<div class="indent1"><strong>ตัวชี้วัดเชิงต้นทุน</strong> : ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}</div>
+<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดปริมาณ</strong> :</div>
+${(p.kpiQty||[]).map((k)=>`<div class="indent2">${k}</div>`).join('')}
+<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดคุณภาพ</strong> :</div>
+${(p.kpiQual||[]).map((k)=>`<div class="indent2">${k}</div>`).join('')}
+<div class="indent1" style="white-space:nowrap"><strong>ตัวชี้วัดเวลา</strong> : โครงการแล้วเสร็จตามระยะเวลาที่กำหนด</div>
+<div class="indent1"><strong style="white-space:nowrap">ตัวชี้วัดเชิงต้นทุน</strong> : ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}</div>
 </div>
 <div class="sec"><span class="sec-title">๑๙. รายละเอียดงบประมาณของโครงการ</span>
 <div>ใช้งบประมาณดำเนินการจากเงิน ${p.budgetSource||'...............'} แผนงาน ${p.budgetPlan||'...............'} งาน ${p.budgetWork||'...............'} หมวดเงิน ${p.budgetType||'...............'} เป็นจำนวนเงิน ${total.toLocaleString('th-TH',{minimumFractionDigits:2})} บาท (${p.budgetTotalText||'..............................................'})</div>
@@ -1429,9 +1429,9 @@ async function buildWordDoc(p){
     // 18
     heading('๑๘. เป้าหมายผลผลิต'),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดปริมาณ',{bold:true}),run('\t: ')]}),
-    ...(p.kpiQty||[]).map((k,i)=>para(`\t\t${toThai(i+1)}. ${k}`)),
+    ...(p.kpiQty||[]).map((k)=>para(`\t\t${k}`)),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดคุณภาพ',{bold:true}),run('\t: ')]}),
-    ...(p.kpiQual||[]).map((k,i)=>para(`\t\t${toThai(i+1)}. ${k}`)),
+    ...(p.kpiQual||[]).map((k)=>para(`\t\t${k}`)),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเวลา',{bold:true}),run('\t\t:\tโครงการแล้วเสร็จตามระยะเวลาที่กำหนด')]}),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},children:[run('\tตัวชี้วัดเชิงต้นทุน',{bold:true}),run(`\t:\tค่าใช้จ่ายไม่เกินงบประมาณที่กำหนด ${p.budgetTotalText?`(${p.budgetTotalText})`:''}`)]}),
     // 19
