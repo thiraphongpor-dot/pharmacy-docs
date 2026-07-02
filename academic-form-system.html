@@ -220,6 +220,23 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   color:var(--txt);font-family:var(--font);font-size:.92rem;padding:7px 10px;width:100%;outline:none;transition:var(--tr);box-sizing:border-box;text-align:center}
 .sig-card input[type=text]:focus{border-color:rgba(139,92,246,.45)}
 .sig-card-divider{width:60%;border:none;border-top:1px solid rgba(139,92,246,.2);margin:4px 0}
+/* Custom dean dropdown */
+.dean-dd{position:relative;width:100%}
+.dean-dd-trigger{width:100%;box-sizing:border-box;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:10px;padding:10px 32px 10px 10px;cursor:pointer;text-align:center;position:relative;transition:border-color .2s,background .2s;color:var(--fg);white-space:normal;word-break:break-word}
+.dean-dd-trigger:hover,.dean-dd.open .dean-dd-trigger{border-color:rgba(139,92,246,.55);background:rgba(139,92,246,.13)}
+.dean-dd-sel-name{font-size:.8rem;color:var(--fg);font-weight:500;line-height:1.5}
+.dean-dd-sel-pos{font-size:.7rem;color:var(--sub);margin-top:2px;line-height:1.4}
+.dean-dd-arrow{position:absolute;right:10px;top:12px;color:rgba(139,92,246,.7);transition:transform .2s;font-size:.75rem}
+.dean-dd.open .dean-dd-arrow{transform:rotate(180deg)}
+.dean-dd-menu{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:#1a1730;border:1px solid rgba(139,92,246,.35);border-radius:10px;overflow:hidden;display:none;z-index:200;box-shadow:0 -10px 36px rgba(0,0,0,.5)}
+.dean-dd.open .dean-dd-menu{display:block}
+.dean-dd-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(139,92,246,.1);transition:background .15s;text-align:center}
+.dean-dd-item:last-child{border-bottom:none}
+.dean-dd-item:hover{background:rgba(139,92,246,.18)}
+.dean-dd-item.active{background:rgba(139,92,246,.22)}
+.dean-dd-item-name{font-size:.8rem;color:var(--fg);font-weight:500;line-height:1.5}
+.dean-dd-item-pos{font-size:.7rem;color:var(--sub);margin-top:2px}
+.dean-dd-item-acting{font-size:.7rem;color:rgba(139,92,246,.75);margin-top:2px}
 @media(max-width:640px){.sig-cols{grid-template-columns:1fr}}
 .sig-title{font-size:.82rem;color:#a78bfa;font-weight:700;margin-bottom:12px}
 .sig-upload-zone{border:1.5px dashed var(--brdw);border-radius:8px;padding:12px;margin-bottom:10px;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:var(--tr)}
@@ -615,13 +632,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
         <hr class="sig-card-divider">
         <div style="width:100%">
           <label>เลือกผู้อนุมัติ</label>
-          <select id="f-dean-select" style="width:100%" onchange="updateDeanPreview()">
-            <option value="0">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง ณัฎฐิณี ธีรกุลกิตติพงศ์ — คณบดีคณะเภสัชศาสตร์</option>
-            <option value="1">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกร ณัฐธัญ เจริญศรีวิไลวัฒน์ — รองคณบดีฝ่ายบริหาร รักษาการแทน</option>
-            <option value="2">รองศาสตราจารย์ ดร. เภสัชกรบุญดิศย์ วงศ์ศักดิ์ — รองคณบดีฝ่ายวิจัย นวัตกรรม และบัณฑิตศึกษา รักษาการแทน</option>
-            <option value="3">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง นปภัช รัตนะชิตธวัช — รองคณบดีฝ่ายวิชาการ รักษาการแทน</option>
-            <option value="4">ผู้ช่วยศาสตราจารย์ ดร. เภสัชกรหญิง เนตรชนก เจียงสืบชาติวีระ — รองคณบดีฝ่ายวางแผนและพัฒนาบุคลากร รักษาการแทน</option>
-          </select>
+          <input type="hidden" id="f-dean-select" value="0">
+          <div class="dean-dd" id="dean-dropdown">
+            <button type="button" class="dean-dd-trigger" onclick="toggleDeanDD(event)">
+              <div class="dean-dd-sel-name" id="dean-dd-sel-name"></div>
+              <div class="dean-dd-sel-pos" id="dean-dd-sel-pos"></div>
+              <span class="dean-dd-arrow">▾</span>
+            </button>
+            <div class="dean-dd-menu" id="dean-dd-menu"></div>
+          </div>
         </div>
       </div>
 
@@ -766,9 +785,11 @@ function loadFormData(p){
     const el = document.getElementById(id);
     if(el) el.value = p[key]||'';
   }
-  // Dean select
+  // Dean dropdown
   const dSel = document.getElementById('f-dean-select');
-  if(dSel) dSel.value = p.deanIdx != null ? String(p.deanIdx) : '0';
+  const dIdx = p.deanIdx != null ? +p.deanIdx : 0;
+  if(dSel) dSel.value = String(dIdx);
+  initDeanDropdown(dIdx);
   // Report month selects
   const mSel1 = document.getElementById('f-r1-month');
   if(mSel1) mSel1.value = p.r1Month||'';
@@ -820,6 +841,41 @@ function loadFormData(p){
   setSigPreview('sig1', p.sig1Image||'');
   updateDeanPreview();
 }
+
+function initDeanDropdown(idx){
+  idx = idx != null ? idx : +(document.getElementById('f-dean-select')?.value||0);
+  // render menu items
+  const menu = document.getElementById('dean-dd-menu');
+  if(menu){
+    menu.innerHTML = DEAN_LIST.map((d,i)=>`
+      <div class="dean-dd-item${i===idx?' active':''}" onclick="selectDean(${i})">
+        <div class="dean-dd-item-name">${d.name}</div>
+        <div class="dean-dd-item-pos">${d.pos}</div>
+        ${d.acting?`<div class="dean-dd-item-acting">คณบดีคณะเภสัชศาสตร์</div>`:''}
+      </div>`).join('');
+  }
+  // update trigger label
+  const d = DEAN_LIST[idx] || DEAN_LIST[0];
+  const nameEl = document.getElementById('dean-dd-sel-name');
+  const posEl = document.getElementById('dean-dd-sel-pos');
+  if(nameEl) nameEl.textContent = d.name;
+  if(posEl) posEl.textContent = d.pos;
+}
+function toggleDeanDD(e){
+  e.stopPropagation();
+  document.getElementById('dean-dropdown').classList.toggle('open');
+}
+function selectDean(idx){
+  const hidden = document.getElementById('f-dean-select');
+  if(hidden) hidden.value = String(idx);
+  document.getElementById('dean-dropdown').classList.remove('open');
+  initDeanDropdown(idx);
+  updateDeanPreview();
+}
+document.addEventListener('click', function(e){
+  const dd = document.getElementById('dean-dropdown');
+  if(dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
 
 function updateDeanPreview(){
   const sel = document.getElementById('f-dean-select');
