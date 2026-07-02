@@ -1137,7 +1137,7 @@ function buildPrintHTML(p){
   const total = (p.budget||[]).reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
   const schedRows = (p.schedule||[]).map(r=>`<tr><td>${r.time||''}</td><td>${(r.activity||'').replace(/\n/g,'<br>')}</td></tr>`).join('');
   const budgRows = (p.budget||[]).map(r=>`<tr><td>${(r.item||'').replace(/\n/g,'<br>')}</td><td style="text-align:right">${parseFloat(r.amount||0).toLocaleString('th-TH',{minimumFractionDigits:2})}</td></tr>`).join('');
-  return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+  const _html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
 <title>โครงการ${p.projectName||''}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
@@ -1265,6 +1265,7 @@ ${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+
   <div style="white-space:nowrap">${p.deanPos||'คณบดีคณะเภสัชศาสตร์'}</div>
 </div>
 </div></body></html>`;
+  return _html.replace(/(?<=>)[^<]+(?=<)/g, t => t.replace(/[0-9]/g, d => '๐๑๒๓๔๕๖๗๘๙'[+d]));
 }
 
 // ═══════════════════════════════════════════
