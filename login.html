@@ -249,12 +249,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;
 
 .cloud-h-svg{position:absolute;top:0;left:0;width:100%;height:70px;z-index:2;pointer-events:none;display:none}
 @media(max-width:640px){
+  body{padding:14px;align-items:flex-start;overflow-y:auto}
   .card{flex-direction:column;min-height:auto}
-  .left{width:100%;min-width:0;padding:40px 28px}
+  .left{width:100%;min-width:0;padding:26px 22px;box-shadow:0 4px 28px rgba(0,0,0,.4)}
   .right{display:flex;flex:none}
   .cloud-svg{display:none}
   .cloud-h-svg{display:block}
-  .right-inner{padding:78px 28px 32px}
+  .right-inner{padding:62px 22px 22px}
+  .right-icon{width:46px;height:46px}
+  .right-title{font-size:1.15rem;margin-bottom:6px}
+  .right-desc{font-size:.75rem;margin-bottom:10px}
+  .logo-wrap{margin-bottom:14px}
+  .title{margin-bottom:2px}
+  .subtitle{margin-bottom:14px}
+  .divider{margin-bottom:12px}
+  .google-btn-wrap{margin-bottom:10px}
 }
 </style>
 <script src="auth.js"></script>
