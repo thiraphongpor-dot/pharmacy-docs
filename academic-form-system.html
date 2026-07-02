@@ -309,8 +309,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       <div class="form-group">
         <label>2.2 การบรรจุในแผน</label>
         <div class="check-grid">
-          <label class="check-item"><input type="radio" name="type22" value="inPlan" id="f-type22-in"> <span>โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</span></label>
-          <label class="check-item"><input type="radio" name="type22" value="outPlan" id="f-type22-out"> <span>โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</span></label>
+          <label class="check-item"><input type="radio" name="type22" value="inPlan" id="f-type22-in"> <span>โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์</span></label>
+          <label class="check-item"><input type="radio" name="type22" value="outPlan" id="f-type22-out"> <span>โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์</span></label>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+          <span style="font-size:.88rem;color:var(--sub)">ปีงบประมาณ พ.ศ. ๒๕</span>
+          <input type="number" id="f-plan-year" min="60" max="99" placeholder="68" style="width:4.5em;padding:5px 8px;background:rgba(255,255,255,.05);border:1px solid var(--brdw);border-radius:7px;color:var(--txt);font-family:var(--font);font-size:.9rem;text-align:center;outline:none">
         </div>
       </div>
     </div>
@@ -638,7 +642,7 @@ function newProjectTemplate(){
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    projectName:'', type21:'', type22:'',
+    projectName:'', type21:'', type22:'', planYear:'68',
     buu1:false, buu2:false, buu3:false, buu4:false,
     m1:false, m2:false, m3:false, m4:false,
     edpex1:false,edpex2:false,edpex3:false,edpex4:false,
@@ -734,6 +738,7 @@ function loadFormData(p){
     'f-budget-work':'budgetWork','f-budget-type':'budgetType',
     'f-budget-total-text':'budgetTotalText',
     'f-r1-day':'r1Day','f-r1-year':'r1Year','f-r2-day':'r2Day','f-r2-year':'r2Year',
+    'f-plan-year':'planYear',
     'f-sig1-name':'sig1Name','f-sig1-pos':'sig1Pos','f-dean-name':'deanName','f-dean-pos':'deanPos','f-rationale':'rationale'
   };
   for(const [id,key] of Object.entries(tf)){
@@ -847,6 +852,7 @@ function getFormData(){
     'f-budget-work':'budgetWork','f-budget-type':'budgetType',
     'f-budget-total-text':'budgetTotalText',
     'f-r1-day':'r1Day','f-r1-year':'r1Year','f-r2-day':'r2Day','f-r2-year':'r2Year',
+    'f-plan-year':'planYear',
     'f-sig1-name':'sig1Name','f-sig1-pos':'sig1Pos','f-dean-name':'deanName','f-dean-pos':'deanPos','f-rationale':'rationale'
   };
   for(const [id,key] of Object.entries(tf)){
@@ -1159,8 +1165,8 @@ table th{font-weight:700;text-align:center;background:#f0f0f0}
 <div class="sec"><span class="sec-title">๑. ชื่อโครงการ</span>&emsp;โครงการ${p.projectName||''}</div>
 <div class="sec"><span class="sec-title">๒. ประเภทโครงการ</span>
 <div class="indent1">${chk(p.type21==='continuous')} โครงการต่อเนื่อง &emsp;&emsp; ${chk(p.type21==='new')} โครงการใหม่</div>
-<div class="indent1">${chk(p.type22==='inPlan')} โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</div>
-<div class="indent1">${chk(p.type22==='outPlan')} โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘</div></div>
+<div class="indent1">${chk(p.type22==='inPlan')} โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕${thDigits(p.planYear||'๖๘')}</div>
+<div class="indent1">${chk(p.type22==='outPlan')} โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕${thDigits(p.planYear||'๖๘')}</div></div>
 <div class="sec"><span class="sec-title">3. ความสอดคล้องกับยุทธศาสตร์มหาวิทยาลัยบูรพา ปีงบประมาณ พ.ศ. ๒๕๖๘ – ๒๕๗๑</span>
 <div class="indent1">${chk(p.buu1)} ยุทธศาสตร์ 1 การพัฒนาคนคุณภาพ</div>
 <div class="indent1">${chk(p.buu2)} ยุทธศาสตร์ ๒ การพัฒนาความรู้ผ่านการวิจัยและการสร้างนวัตกรรมฯ</div>
@@ -1338,8 +1344,8 @@ async function buildWordDoc(p){
     // 2
     heading('๒. ประเภทโครงการ'),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type21==='continuous'),run('โครงการต่อเนื่อง\t\t'),chkR(p.type21==='new'),run('โครงการใหม่')]}),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='inPlan'),run('โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘')]}),
-    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='outPlan'),run('โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕๖๘')]}),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='inPlan'),run(`โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕${p.planYear||'๖๘'}`)]}),
+    new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.type22==='outPlan'),run(`โครงการนอกแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. ๒๕${p.planYear||'๖๘'}`)]}),
     // 3
     heading('3. ความสอดคล้องกับยุทธศาสตร์มหาวิทยาลัยบูรพา ปีงบประมาณ พ.ศ. ๒๕๖๘ – ๒๕๗๑'),
     new Paragraph({spacing:{after:40,line:340,lineRule:'auto'},indent:{left:360},children:[chkR(p.buu1),run('ยุทธศาสตร์ 1 การพัฒนาคนคุณภาพ')]}),
