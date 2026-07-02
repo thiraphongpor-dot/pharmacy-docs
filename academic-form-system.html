@@ -1275,7 +1275,7 @@ table th{font-weight:700;text-align:center;background:#f0f0f0}
 .sig-wrap{margin-top:20pt;margin-left:40%;text-align:center}
 @media print{body{margin:0}@page{size:A4;margin:0}}
 </style></head><body><div class="page">
-${LOGO_B64?`<div style="text-align:center;margin-top:-1.5cm;margin-bottom:8pt"><img src="${LOGO_B64}" style="width:4.5cm;height:4.5cm;object-fit:contain"></div>`:''}
+${LOGO_B64?`<div style="text-align:center;margin-top:-1.5cm;margin-bottom:8pt"><img src="${LOGO_B64}" style="width:3cm;height:3cm;object-fit:contain"></div>`:''}
 <h2>โครงการ${p.projectName||'...........................................................................................................................'}  </h2>
 <h2>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</h2>
 <h2>ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. 2568</h2>
@@ -1430,10 +1430,11 @@ async function buildWordDoc(p){
       alignment: opts.center ? AlignmentType.CENTER : opts.right ? AlignmentType.RIGHT : AlignmentType.LEFT,
       indent: opts.indent ? {left: opts.indent*360} : undefined,
       spacing: {after:40, line:340, lineRule:'auto'},
+      keepNext: opts.keepNext || false,
       children
     });
   }
-  function blank(){ return para('',{size:SZS}); }
+  function blank(keepNext=false){ return para('',{size:SZS,keepNext}); }
   function heading(text){ return para(text,{bold:true}); }
   function chkR(val){ return run(val?'☑ ':'☐ '); }
 
@@ -1463,7 +1464,7 @@ async function buildWordDoc(p){
       spacing:{after:80},
       children:[new ImageRun({
         data:Uint8Array.from(atob(LOGO_B64.split(',')[1]),c=>c.charCodeAt(0)),
-        transformation:{width:170,height:170},
+        transformation:{width:113,height:113},
         type:'png'
       })]
     })] : []),
@@ -1593,7 +1594,7 @@ async function buildWordDoc(p){
     heading('๒๐. การรายงานผลการจัดกิจกรรม (ไม่เกิน 15 วัน นับถัดจากวันที่สิ้นสุดการดำเนินงาน)'),
     para(`\t๒๐.๑ รายงานผลการจัดกิจกรรม\t\t\tวันที่ ${p.r1Day||'.......'} ${p.r1Month||'...........'} พ.ศ. 25${p.r1Year||'.....'}`),
     para(`\t๒๐.๒ ส่งแบบฟอร์มรายงานผลการจัดกิจกรรมและการใช้เงิน\tวันที่ ${p.r2Day||'.......'} ${p.r2Month||'...........'} พ.ศ. 25${p.r2Year||'.....'}`),
-    blank(),blank(),
+    blank(true),blank(true),
     // Signatures — right-aligned block using 2-col table (left empty, right sig)
     new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:{top:{style:'none'},bottom:{style:'none'},left:{style:'none'},right:{style:'none'},insideH:{style:'none'},insideV:{style:'none'}},rows:[
       new TableRow({children:[
