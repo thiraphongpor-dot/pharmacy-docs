@@ -573,7 +573,7 @@ let currentProject = null;
 // DASHBOARD
 // ═══════════════════════════════════════════
 function showDashboard(){
-  document.getElementById('page-dashboard').style.display='';
+  document.getElementById('page-dashboard').style.display='block';
   document.getElementById('page-form').style.display='none';
   renderProjectList();
 }
@@ -623,7 +623,7 @@ function showForm(id){
   }
   loadFormData(currentProject);
   document.getElementById('page-dashboard').style.display='none';
-  document.getElementById('page-form').style.display='';
+  document.getElementById('page-form').style.display='block';
   window.scrollTo(0,0);
 }
 
