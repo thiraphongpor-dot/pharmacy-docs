@@ -96,6 +96,24 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .empty-state{text-align:center;padding:60px 20px;color:var(--sub)}
 .empty-state .es-icon{font-size:3rem;margin-bottom:16px;opacity:.4}
 .empty-state p{font-size:.92rem}
+/* ADMIN / USER BADGE */
+.user-badge{display:flex;align-items:center;gap:8px;padding:5px 14px;border-radius:20px;
+  background:rgba(255,255,255,.05);border:1px solid var(--brdw);font-size:.78rem;color:var(--sub);white-space:nowrap}
+.user-badge .ub-name{color:var(--txt);font-weight:600}
+.user-badge .ub-role{font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:700}
+.ub-role.admin{background:rgba(204,255,0,.15);color:#CCFF00;border:1px solid rgba(204,255,0,.3)}
+.ub-role.user{background:rgba(34,211,238,.1);color:#22d3ee;border:1px solid rgba(34,211,238,.25)}
+.btn-logout{padding:5px 12px;border-radius:10px;background:rgba(239,68,68,.1);color:#f87171;
+  border:1px solid rgba(239,68,68,.2);font-size:.75rem;cursor:pointer;font-family:var(--font);transition:var(--tr)}
+.btn-logout:hover{background:rgba(239,68,68,.25)}
+.btn-admin-toggle{display:none;padding:6px 14px;border-radius:10px;
+  background:rgba(139,92,246,.12);color:#a78bfa;border:1px solid rgba(139,92,246,.3);
+  font-size:.78rem;cursor:pointer;font-family:var(--font);transition:var(--tr);white-space:nowrap}
+.btn-admin-toggle:hover{background:rgba(139,92,246,.25)}
+.proj-owner-tag{font-size:.72rem;color:var(--sub);margin-bottom:8px;font-family:var(--mono)}
+.form-owner-notice{display:none;padding:8px 14px;border-radius:10px;
+  background:rgba(204,255,0,.08);border:1px solid rgba(204,255,0,.25);
+  color:#CCFF00;font-size:.8rem;margin-bottom:14px}
 /* ── FORM PAGE ── */
 #page-form{display:none}
 .form-header{display:flex;align-items:center;gap:14px;margin-bottom:24px}
@@ -273,8 +291,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <h1>ระบบแบบฟอร์มบริการวิชาการ</h1>
     <p>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</p>
   </div>
-  <button class="btn-home" onclick="showDashboard()">🏠 หน้าหลัก</button>
-  <button class="btn-home" onclick="location.href='index.html'" style="margin-left:6px">← กลับหน้าแรก</button>
+  <div id="user-badge-nav"></div>
+  <button class="btn-home" onclick="showDashboard()" style="margin-left:6px">🏠 หน้าหลัก</button>
+  <button class="btn-home" onclick="location.href='index.html'" style="margin-left:4px">← กลับหน้าแรก</button>
 </nav>
 
 <!-- ══════ DASHBOARD ══════ -->
@@ -282,13 +301,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <div class="container">
   <div class="hero">
     <h2>📋 แบบฟอร์มโครงการบริการวิชาการ</h2>
-    <p>กรอกข้อมูล บันทึก และส่งออกเป็นไฟล์ Word / PDF • ข้อมูลถูกจัดเก็บในเบราว์เซอร์ของคุณ</p>
+    <div id="dashboard-hero-text"></div>
   </div>
   <div class="toolbar">
     <div class="search-box">
       <span style="color:var(--sub)">🔍</span>
       <input type="text" id="search-input" placeholder="ค้นหาโครงการ..." oninput="renderProjectList()">
     </div>
+    <button id="admin-toggle-btn" class="btn-admin-toggle" onclick="toggleAdminView()">👥 ดูทั้งหมด</button>
     <button class="btn-new" onclick="showForm(null)">＋ สร้างโครงการใหม่</button>
   </div>
   <div id="project-list"></div>
@@ -302,6 +322,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <button class="btn-back" onclick="showDashboard()">← กลับ</button>
     <div class="form-title" id="form-page-title">สร้างโครงการใหม่</div>
   </div>
+  <div id="form-owner-badge" class="form-owner-notice"></div>
 
   <!-- ข้อ 1: ชื่อโครงการ -->
   <div class="fsec">
@@ -665,12 +686,38 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 </script>
 <script>
 // ═══════════════════════════════════════════
-// DATA LAYER — LocalStorage
+// DATA LAYER — LocalStorage (per-user)
 // ═══════════════════════════════════════════
-const DB_KEY = 'pharma_form_projects_v2';
+let currentUser = null;          // set at init from auth.js getUser()
+let currentProjectOwner = null;  // email of the user whose project is being edited/viewed
 
-function getProjects(){ return JSON.parse(localStorage.getItem(DB_KEY)||'[]'); }
-function saveProjects(arr){ localStorage.setItem(DB_KEY,JSON.stringify(arr)); }
+function getUserDbKey(email){
+  return 'pharma_projects_' + (email||'').toLowerCase().replace(/[^a-z0-9@._-]/g,'_');
+}
+function getProjects(email){
+  const key = getUserDbKey(email || (currentUser&&currentUser.email) || '');
+  return JSON.parse(localStorage.getItem(key)||'[]');
+}
+function saveProjects(arr, email){
+  const e = email || (currentUser&&currentUser.email) || '';
+  localStorage.setItem(getUserDbKey(e), JSON.stringify(arr));
+  if(e) _registerUser(e);
+}
+function _registerUser(email){
+  const reg = getAllUserEmails();
+  if(!reg.includes(email)){ reg.push(email); localStorage.setItem('pharma_user_registry', JSON.stringify(reg)); }
+}
+function getAllUserEmails(){
+  return JSON.parse(localStorage.getItem('pharma_user_registry')||'[]');
+}
+function getAllProjects(){
+  const emails = getAllUserEmails();
+  const all = [];
+  emails.forEach(email => {
+    getProjects(email).forEach(p => all.push({...p, _ownerEmail: email}));
+  });
+  return all.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+}
 
 function newProjectTemplate(){
   return {
@@ -712,6 +759,7 @@ const DEAN_LIST = [
 ];
 
 let currentProject = null;
+let adminViewAll = true; // admin toggle: true = show all users, false = show own projects only
 let LOGO_B64 = null;
 fetch('logo-pharm.png').then(r=>r.blob()).then(blob=>{
   const rd=new FileReader();
@@ -725,36 +773,85 @@ fetch('logo-pharm.png').then(r=>r.blob()).then(blob=>{
 function showDashboard(){
   document.getElementById('page-dashboard').style.display='block';
   document.getElementById('page-form').style.display='none';
+  renderDashboardHeader();
+  renderProjectList();
+}
+
+function renderDashboardHeader(){
+  const admin = currentUser && isAdmin(currentUser);
+  const heroEl = document.getElementById('dashboard-hero-text');
+  if(heroEl){
+    if(admin){
+      const allEmails = getAllUserEmails();
+      const allProjs = getAllProjects();
+      heroEl.innerHTML = `<p style="font-size:.88rem;color:var(--sub)">
+        ⚡ Admin · เห็นข้อมูลทั้งระบบ &nbsp;|&nbsp;
+        <span style="color:#22d3ee">${allEmails.length} ผู้ใช้</span> &nbsp;|&nbsp;
+        <span style="color:#a78bfa">${allProjs.length} โครงการทั้งหมด</span>
+      </p>`;
+      const toggleEl = document.getElementById('admin-toggle-btn');
+      if(toggleEl){
+        toggleEl.textContent = adminViewAll ? '👤 ดูเฉพาะของฉัน' : '👥 ดูทั้งหมด';
+        toggleEl.style.display='inline-flex';
+      }
+    } else {
+      heroEl.innerHTML = `<p style="font-size:.88rem;color:var(--sub)">กรอกข้อมูล บันทึก และส่งออกเป็นไฟล์ Word / PDF • ข้อมูลถูกจัดเก็บในเบราว์เซอร์ของคุณ</p>`;
+      const toggleEl = document.getElementById('admin-toggle-btn');
+      if(toggleEl) toggleEl.style.display='none';
+    }
+  }
+}
+
+function toggleAdminView(){
+  adminViewAll = !adminViewAll;
+  renderDashboardHeader();
   renderProjectList();
 }
 
 function renderProjectList(){
   const q = (document.getElementById('search-input').value||'').toLowerCase();
-  const projects = getProjects().filter(p=> !q || p.projectName.toLowerCase().includes(q));
+  const admin = currentUser && isAdmin(currentUser);
+  let projects;
+  if(admin && adminViewAll){
+    projects = getAllProjects().filter(p=> !q || (p.projectName||'').toLowerCase().includes(q) || (p._ownerEmail||'').toLowerCase().includes(q));
+  } else {
+    projects = getProjects().filter(p=> !q || (p.projectName||'').toLowerCase().includes(q));
+    projects = projects.map(p=>({...p, _ownerEmail: currentUser&&currentUser.email}));
+  }
   const el = document.getElementById('project-list');
   if(!projects.length){
     el.innerHTML=`<div class="empty-state"><div class="es-icon">📋</div><p>${q?'ไม่พบโครงการที่ค้นหา':'ยังไม่มีโครงการ กดปุ่ม "สร้างโครงการใหม่" เพื่อเริ่มต้น'}</p></div>`;
     return;
   }
+  const isAdminUser = admin && adminViewAll;
   el.innerHTML=`<div class="project-grid">${projects.map(p=>{
     const d = new Date(p.updatedAt);
     const dd = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
+    const owner = p._ownerEmail||'';
+    const ownerShort = owner.split('@')[0];
+    const isMine = owner === (currentUser&&currentUser.email);
+    const ownerTag = (isAdminUser && !isMine)
+      ? `<div class="proj-owner-tag">👤 ${ownerShort}</div>`
+      : (isAdminUser ? `<div class="proj-owner-tag" style="color:var(--green)">👤 ของฉัน</div>` : '');
+    const safeOwner = owner.replace(/'/g,"\\'");
     return `<div class="proj-card">
       <div class="proj-card-title">${p.projectName||'(ไม่มีชื่อโครงการ)'}</div>
       <div class="proj-card-meta">บันทึกล่าสุด: ${dd}</div>
+      ${ownerTag}
       <div class="proj-card-actions">
-        <button class="btn-sm btn-edit" onclick="showForm('${p.id}')">✏️ แก้ไข</button>
-        <button class="btn-sm btn-word" onclick="exportWordById('${p.id}')">📄 Word</button>
-        <button class="btn-sm btn-pdf" onclick="exportPDFById('${p.id}')">🖨️ PDF</button>
-        <button class="btn-sm btn-del" onclick="deleteProject('${p.id}')">🗑️</button>
+        <button class="btn-sm btn-edit" onclick="showForm('${p.id}','${safeOwner}')">✏️ แก้ไข</button>
+        <button class="btn-sm btn-word" onclick="exportWordById('${p.id}','${safeOwner}')">📄 Word</button>
+        <button class="btn-sm btn-pdf" onclick="exportPDFById('${p.id}','${safeOwner}')">🖨️ PDF</button>
+        <button class="btn-sm btn-del" onclick="deleteProject('${p.id}','${safeOwner}')">🗑️</button>
       </div>
     </div>`;
   }).join('')}</div>`;
 }
 
-function deleteProject(id){
+function deleteProject(id, ownerEmail){
   if(!confirm('ลบโครงการนี้?')) return;
-  saveProjects(getProjects().filter(p=>p.id!==id));
+  const email = ownerEmail || (currentUser&&currentUser.email);
+  saveProjects(getProjects(email).filter(p=>p.id!==id), email);
   renderProjectList();
   showToast('ลบโครงการแล้ว','ok');
 }
@@ -762,14 +859,27 @@ function deleteProject(id){
 // ═══════════════════════════════════════════
 // FORM — SHOW / LOAD / SAVE
 // ═══════════════════════════════════════════
-function showForm(id){
-  const projects = getProjects();
+function showForm(id, ownerEmail){
+  const email = ownerEmail || (currentUser&&currentUser.email);
+  currentProjectOwner = email;
+  const projects = getProjects(email);
   if(id){
     currentProject = projects.find(p=>p.id===id) || newProjectTemplate();
     document.getElementById('form-page-title').textContent='แก้ไขโครงการ';
   } else {
     currentProject = newProjectTemplate();
     document.getElementById('form-page-title').textContent='สร้างโครงการใหม่';
+  }
+  // Show form-owner badge if admin editing someone else's project
+  const admin = currentUser && isAdmin(currentUser);
+  const ownerBadgeEl = document.getElementById('form-owner-badge');
+  if(ownerBadgeEl){
+    if(admin && email !== (currentUser&&currentUser.email)){
+      ownerBadgeEl.textContent = `⚡ กำลังแก้ไขข้อมูลของ: ${email}`;
+      ownerBadgeEl.style.display='block';
+    } else {
+      ownerBadgeEl.style.display='none';
+    }
   }
   loadFormData(currentProject);
   document.getElementById('page-dashboard').style.display='none';
@@ -1004,10 +1114,11 @@ function getFormData(){
 function saveForm(){
   const p = getFormData();
   currentProject = p;
-  const projects = getProjects();
+  const email = currentProjectOwner || (currentUser&&currentUser.email);
+  const projects = getProjects(email);
   const idx = projects.findIndex(x=>x.id===p.id);
   if(idx>=0) projects[idx]=p; else projects.unshift(p);
-  saveProjects(projects);
+  saveProjects(projects, email);
   showToast('✓ บันทึกโครงการสำเร็จ','ok');
 }
 
@@ -1224,8 +1335,9 @@ function exportPDF(){
   const p = getFormData();
   printDocument(p);
 }
-function exportPDFById(id){
-  const p = getProjects().find(x=>x.id===id);
+function exportPDFById(id, ownerEmail){
+  const email = ownerEmail || (currentUser&&currentUser.email);
+  const p = getProjects(email).find(x=>x.id===id);
   if(p) printDocument(p);
 }
 function printDocument(p){
@@ -1397,8 +1509,11 @@ async function exportWord(){
   saveForm();
   await exportWordById(currentProject.id);
 }
-async function exportWordById(id){
-  const p = id===currentProject?.id ? getFormData() : getProjects().find(x=>x.id===id);
+async function exportWordById(id, ownerEmail){
+  const email = ownerEmail || (currentUser&&currentUser.email);
+  const p = id===currentProject?.id && email===(currentProjectOwner||(currentUser&&currentUser.email))
+    ? getFormData()
+    : getProjects(email).find(x=>x.id===id);
   if(!p){ showToast('ไม่พบข้อมูลโครงการ','err'); return; }
   try{
     await buildWordDoc(p);
@@ -1673,7 +1788,44 @@ function toggleSDGItem(){
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-showDashboard();
+(function initAuth(){
+  currentUser = getUser();
+  if(!currentUser){ location.replace('login.html'); return; }
+  // Migrate old shared DB key → per-user key (one-time migration)
+  const OLD_KEY = 'pharma_form_projects_v2';
+  try{
+    const oldRaw = localStorage.getItem(OLD_KEY);
+    if(oldRaw){
+      const oldProjects = JSON.parse(oldRaw);
+      if(oldProjects.length > 0){
+        const existing = getProjects(currentUser.email);
+        const existingIds = new Set(existing.map(p=>p.id));
+        const toMigrate = oldProjects.filter(p=>!existingIds.has(p.id));
+        if(toMigrate.length > 0) saveProjects([...existing,...toMigrate], currentUser.email);
+      }
+      localStorage.removeItem(OLD_KEY);
+    }
+  }catch(e){ console.warn('Migration error:',e); }
+  // Register this user in the registry
+  _registerUser(currentUser.email);
+  // Render user badge in navbar
+  const badgeEl = document.getElementById('user-badge-nav');
+  if(badgeEl){
+    const admin = isAdmin(currentUser);
+    const roleLabel = admin ? '⚡ ADMIN' : '◉ USER';
+    const roleClass = admin ? 'admin' : 'user';
+    const short = currentUser.name
+      ? currentUser.name.split(' ')[0]
+      : currentUser.email.split('@')[0];
+    badgeEl.innerHTML = `<div class="user-badge">
+      ${currentUser.picture ? `<img src="${currentUser.picture}" style="width:26px;height:26px;border-radius:50%;object-fit:cover" onerror="this.remove()">` : ''}
+      <span class="ub-name">${short}</span>
+      <span class="ub-role ${roleClass}">${roleLabel}</span>
+      <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+    </div>`;
+  }
+  showDashboard();
+})();
 </script>
 </body>
 </html>
