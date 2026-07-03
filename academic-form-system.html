@@ -1538,7 +1538,8 @@ async function buildWordDoc(p){
 
   function run(text, opts={}){
     return new TextRun({text:String(text||''), font:FONT,
-      size: opts.size||SZ, bold:!!opts.bold, italics:!!opts.italic});
+      size: opts.size||SZ, bold:!!opts.bold, italics:!!opts.italic,
+      language:{value:'th-TH'}});
   }
   function para(runs, opts={}){
     let children;
@@ -1613,10 +1614,10 @@ async function buildWordDoc(p){
     new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.buu4),run('ยุทธศาสตร์ 4 การเพิ่มขีดความสามารถองค์กรผ่านการใช้ทรัพยากรเชิงกลยุทธ์')]}),
     // 4
     heading('4. ความสอดคล้องกับพันธกิจและยุทธศาสตร์คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา ปีงบประมาณ พ.ศ. ๒๕๖๘ – ๒๕๗๑'),
-    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m1),run('พันธกิจ ๑ ผลิตบุคลากรที่มีสมรรถนะด้านสุขภาพแม่นยำตอบสนองความต้องการของประเทศ'),new TextRun({text:'',break:1}),run('         ยุทธศาสตร์ ๑ การพัฒนากำลังคนคุณภาพที่มีองค์ความรู้ด้านสุขภาพแม่นยำ เพื่อตอบสนองต่อความต้องการของประเทศ')]}),
-    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m2),run('พันธกิจ ๒ สร้างงานวิจัยและนวัตกรรมที่เกี่ยวข้องกับสุขภาพแม่นยำในระดับสากล'),new TextRun({text:'',break:1}),run('         ยุทธศาสตร์ ๒ การยกระดับคุณภาพงานวิจัย การเผยแพร่ความร่วมมือในระดับสากล และการนำไปใช้ประโยชน์')]}),
-    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m3),run('พันธกิจ ๓ บริการวิชาการด้านสุขภาพแม่นยำแก่ประชาชน ชุมชน และสังคม'),new TextRun({text:'',break:1}),run('         ยุทธศาสตร์ ๓ การพัฒนาการบริการวิชาการด้านสุขภาพแม่นยำกับชุมชนและสังคม เพื่อส่งเสริมคุณภาพชีวิต')]}),
-    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m4),run('พันธกิจ ๔ ยกระดับความสามารถขององค์กร เพื่อมุ่งสู่ความเป็นเลิศ'),new TextRun({text:'',break:1}),run('         ยุทธศาสตร์ ๔ การพัฒนาระบบการบริหารจัดการ เพื่อความยั่งยืนขององค์กรและสิ่งแวดล้อม')]}),
+    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m1),run('พันธกิจ ๑ ผลิตบุคลากรที่มีสมรรถนะด้านสุขภาพแม่นยำตอบสนองความต้องการของประเทศ'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('         ยุทธศาสตร์ ๑ การพัฒนากำลังคนคุณภาพที่มีองค์ความรู้ด้านสุขภาพแม่นยำ เพื่อตอบสนองต่อความต้องการของประเทศ')]}),
+    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m2),run('พันธกิจ ๒ สร้างงานวิจัยและนวัตกรรมที่เกี่ยวข้องกับสุขภาพแม่นยำในระดับสากล'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('         ยุทธศาสตร์ ๒ การยกระดับคุณภาพงานวิจัย การเผยแพร่ความร่วมมือในระดับสากล และการนำไปใช้ประโยชน์')]}),
+    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m3),run('พันธกิจ ๓ บริการวิชาการด้านสุขภาพแม่นยำแก่ประชาชน ชุมชน และสังคม'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('         ยุทธศาสตร์ ๓ การพัฒนาการบริการวิชาการด้านสุขภาพแม่นยำกับชุมชนและสังคม เพื่อส่งเสริมคุณภาพชีวิต')]}),
+    new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.m4),run('พันธกิจ ๔ ยกระดับความสามารถขององค์กร เพื่อมุ่งสู่ความเป็นเลิศ'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('         ยุทธศาสตร์ ๔ การพัฒนาระบบการบริหารจัดการ เพื่อความยั่งยืนขององค์กรและสิ่งแวดล้อม')]}),
     // 5 EdPEx
     heading('๕. ความสอดคล้องกับเกณฑ์คุณภาพการศึกษา EdPEx ฉบับปี ๒๕๖๗ - ๒๕๗๐'),
     new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},indent:{left:640},children:[chkR(p.edpex1),run('หมวด ๑ การนำองค์กร\t\t'),chkR(p.edpex2),run('หมวด ๒ กลยุทธ์\t\t'),chkR(p.edpex3),run('หมวด ๓ ลูกค้า')]}),
@@ -1736,8 +1737,14 @@ async function buildWordDoc(p){
     ...(p.deanActing ? [new Paragraph({spacing:{after:40,line:432,lineRule:'auto'},alignment:AlignmentType.CENTER,children:[run('คณบดีคณะเภสัชศาสตร์')]})] : []),
   ];
 
-  // Fix para() calls with run as first arg
   const doc = new Document({
+    styles:{
+      default:{
+        document:{
+          run:{size:SZ, language:{value:'th-TH'}}
+        }
+      }
+    },
     sections:[{
       properties:{
         page:{
