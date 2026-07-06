@@ -195,7 +195,9 @@ function requireAdmin() {
 /* ── Logout ── */
 function logout() {
   clearUser();
+  clearFirebaseUID();
   try { google.accounts.id.disableAutoSelect(); } catch {}
+  try { if(typeof firebase!=='undefined') firebase.auth().signOut(); } catch {}
   location.replace(AUTH_CONFIG.LOGIN_PAGE);
 }
 
@@ -227,3 +229,37 @@ function renderUserBadge(containerId, user) {
       <button class="auth-logout" onclick="logout()">ออกจากระบบ</button>
     </div>`;
 }
+
+/* ── Firebase Sync ── */
+const FIREBASE_CONFIG = {
+  apiKey:            'FIREBASE_API_KEY',
+  authDomain:        'FIREBASE_PROJECT_ID.firebaseapp.com',
+  databaseURL:       'https://FIREBASE_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:         'FIREBASE_PROJECT_ID',
+  storageBucket:     'FIREBASE_PROJECT_ID.appspot.com',
+  messagingSenderId: 'FIREBASE_MESSAGING_ID',
+  appId:             'FIREBASE_APP_ID'
+};
+
+const FIREBASE_UID_KEY = 'buu_pharma_fuid_v1';
+
+function initFirebase(){
+  try{
+    if(typeof firebase!=='undefined' && firebase.apps.length===0)
+      firebase.initializeApp(FIREBASE_CONFIG);
+  }catch(e){ console.warn('Firebase init:',e); }
+}
+
+async function signInToFirebase(googleIdToken){
+  try{
+    if(typeof firebase==='undefined') return null;
+    initFirebase();
+    const cred=firebase.auth.GoogleAuthProvider.credential(googleIdToken);
+    const r=await firebase.auth().signInWithCredential(cred);
+    sessionStorage.setItem(FIREBASE_UID_KEY, r.user.uid);
+    return r.user.uid;
+  }catch(e){ console.warn('Firebase sign-in:',e); return null; }
+}
+
+function getFirebaseUID(){ return sessionStorage.getItem(FIREBASE_UID_KEY)||null; }
+function clearFirebaseUID(){ sessionStorage.removeItem(FIREBASE_UID_KEY); }

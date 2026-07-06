@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ระบบแบบฟอร์มบริการวิชาการ · คณะเภสัชศาสตร์</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="auth.js"></script>
 <script>if(!getUser()){location.replace('login.html');}</script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+Thai:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -710,6 +713,42 @@ function saveProjects(arr, email){
   const e = email || (currentUser&&currentUser.email) || '';
   localStorage.setItem(getUserDbKey(e), JSON.stringify(arr));
   if(e) _registerUser(e);
+  _fbWrite(getFirebaseUID(), arr);
+}
+
+/* ── Firebase Realtime DB sync ── */
+function _fbRef(uid){
+  try{
+    initFirebase();
+    if(typeof firebase==='undefined'||!uid) return null;
+    return firebase.database().ref('pharma-form/'+uid+'/projects');
+  }catch(e){ return null; }
+}
+
+async function _fbSync(uid, email){
+  const ref=_fbRef(uid);
+  if(!ref) return;
+  try{
+    const snap=await ref.once('value');
+    const cloud=snap.val();
+    const local=JSON.parse(localStorage.getItem(getUserDbKey(email))||'[]');
+    if(cloud && Array.isArray(cloud) && cloud.length>0){
+      const cloudIds=new Set(cloud.map(p=>p.id));
+      const localOnly=local.filter(p=>!cloudIds.has(p.id));
+      const merged=[...cloud,...localOnly];
+      localStorage.setItem(getUserDbKey(email), JSON.stringify(merged));
+      if(localOnly.length>0) ref.set(merged).catch(()=>{});
+    } else if(local.length>0){
+      await ref.set(local);
+    }
+    console.log('[FB] sync complete, cloud items:'+(cloud&&cloud.length||0));
+  }catch(e){ console.warn('[FB] sync error:',e); }
+}
+
+function _fbWrite(uid, arr){
+  if(!uid||!arr) return;
+  const ref=_fbRef(uid);
+  if(ref) ref.set(arr).catch(e=>console.warn('[FB] write error:',e));
 }
 function _registerUser(email){
   const reg = getAllUserEmails();
@@ -1832,23 +1871,33 @@ function toggleSDGItem(){
   }catch(e){ console.warn('Migration error:',e); }
   // Register this user in the registry
   _registerUser(currentUser.email);
-  // Render user badge in navbar
-  const badgeEl = document.getElementById('user-badge-nav');
-  if(badgeEl){
-    const admin = isAdmin(currentUser);
-    const roleLabel = admin ? '⚡ ADMIN' : '◉ USER';
-    const roleClass = admin ? 'admin' : 'user';
-    const short = currentUser.name
-      ? currentUser.name.split(' ')[0]
-      : currentUser.email.split('@')[0];
-    badgeEl.innerHTML = `<div class="user-badge">
-      ${currentUser.picture ? `<img src="${currentUser.picture}" style="width:26px;height:26px;border-radius:50%;object-fit:cover" onerror="this.remove()">` : ''}
-      <span class="ub-name">${short}</span>
-      <span class="ub-role ${roleClass}">${roleLabel}</span>
-      <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
-    </div>`;
+
+  function _renderAndShow(){
+    // Render user badge in navbar
+    const badgeEl = document.getElementById('user-badge-nav');
+    if(badgeEl){
+      const admin = isAdmin(currentUser);
+      const roleLabel = admin ? '⚡ ADMIN' : '◉ USER';
+      const roleClass = admin ? 'admin' : 'user';
+      const short = currentUser.name
+        ? currentUser.name.split(' ')[0]
+        : currentUser.email.split('@')[0];
+      badgeEl.innerHTML = `<div class="user-badge">
+        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width:26px;height:26px;border-radius:50%;object-fit:cover" onerror="this.remove()">` : ''}
+        <span class="ub-name">${short}</span>
+        <span class="ub-role ${roleClass}">${roleLabel}</span>
+        <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+      </div>`;
+    }
+    showDashboard();
   }
-  showDashboard();
+
+  // Sync from Firebase first, then render dashboard
+  const _fuid = getFirebaseUID();
+  (_fuid
+    ? _fbSync(_fuid, currentUser.email)
+    : Promise.resolve()
+  ).catch(()=>{}).finally(_renderAndShow);
 })();
 </script>
 </body>

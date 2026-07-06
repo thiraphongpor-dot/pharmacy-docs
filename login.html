@@ -266,6 +266,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;
   .google-btn-wrap{margin-bottom:10px}
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="auth.js"></script>
 </head>
 <body>
@@ -388,7 +390,10 @@ function handleCredentialResponse(response){
     loginAt:Date.now()
   };
   setUser(user);
-  setTimeout(()=>location.replace(AUTH_CONFIG.HOME_PAGE),300);
+  // Sign into Firebase (for cross-device sync), then redirect
+  signInToFirebase(response.credential)
+    .catch(()=>{})
+    .finally(()=>{ setTimeout(()=>location.replace(AUTH_CONFIG.HOME_PAGE),300); });
 }
 
 function showLoginError(msg){
