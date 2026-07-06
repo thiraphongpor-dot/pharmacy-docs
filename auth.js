@@ -149,6 +149,7 @@ const AUTH_CONFIG = {
     'chutikarn.pi@go.buu.ac.th',
     'tadsanapon.pr@go.buu.ac.th',
     'amornrat.kh@go.buu.ac.th',
+    'zporsupreme@gmail.com',
   ],
 
   SESSION_KEY: 'buu_pharma_auth_v1',
