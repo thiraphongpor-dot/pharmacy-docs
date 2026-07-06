@@ -1496,7 +1496,7 @@ h2{text-align:center;font-size:16pt;margin:0;font-weight:700}
 .tgt-tbl td.tgt-td-name{padding-left:4.5em;text-indent:-2.5em;white-space:normal;vertical-align:top}
 .tgt-td-label{padding-left:1em}
 .tgt-td-cnt{text-align:right;padding:0 6pt;min-width:40pt}
-.tgt-td-unit{padding-left:2em}
+.tgt-td-unit{padding-left:1em}
 .chk-row{display:flex;gap:0.25em;padding-left:2em}
 .chk-prefix{flex-shrink:0;white-space:nowrap}
 .chk-text{flex:1}
@@ -1793,12 +1793,12 @@ async function buildWordDoc(p){
             mkCell(`๑๓.${toThai(i+1)} ${t.name}`,{w:5000,hang:800}),
             mkCell('จำนวน',{w:1100}),
             mkCell(t.count||'...',{w:1000,right:true}),
-            mkCell('คน',{w:700,lm:640}),
+            mkCell('คน',{w:700,lm:320}),
           ]})),
           new TableRow({children:[
             mkCell('รวมทั้งสิ้น',{w:6100}),
             mkCell(tTotal.toLocaleString('th-TH'),{w:1000,right:true}),
-            mkCell('คน',{w:700,lm:640}),
+            mkCell('คน',{w:700,lm:320}),
           ]}),
         ]});
     })(),
