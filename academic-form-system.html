@@ -193,17 +193,22 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .phase-title,.kpi-label{font-weight:700;font-size:.9rem;color:#c4b5fd;margin-bottom:10px}
 .sub-list{padding-left:4px}
 .btn-phase{margin-top:8px}
-/* Targets table */
-#targets-list{width:100%}
-.target-header{display:grid;grid-template-columns:1fr 110px 38px;gap:8px;margin-bottom:4px;
-  font-size:.75rem;color:var(--sub);padding:0 2px}
-.target-row{display:grid;grid-template-columns:1fr 110px 38px;gap:8px;align-items:center;margin-bottom:6px}
-.target-row input[type=text]{padding:8px 12px;background:rgba(255,255,255,.05);
+/* Targets */
+#targets-list{display:flex;flex-direction:column;gap:8px;margin-bottom:2px}
+.target-row{display:grid;grid-template-columns:40px 1fr auto 88px auto 34px;gap:8px;align-items:center;
+  background:rgba(139,92,246,.05);border:1px solid rgba(139,92,246,.15);border-radius:10px;
+  padding:8px 12px;transition:border-color .2s,background .2s}
+.target-row:hover{border-color:rgba(139,92,246,.35);background:rgba(139,92,246,.09)}
+.target-row-num{font-size:.78rem;color:var(--accent);font-family:var(--mono);
+  text-align:center;font-weight:700;white-space:nowrap}
+.target-row-lbl{font-size:.82rem;color:var(--sub);white-space:nowrap;padding:0 2px}
+.target-row input[type=text]{padding:7px 11px;background:rgba(255,255,255,.05);
   border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);font-size:.9rem}
-.target-row input[type=text]:focus{outline:none;border-color:#7c3aed}
-.target-row input[type=number]{width:100%;padding:8px 10px;background:rgba(255,255,255,.05);
-  border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);font-size:.9rem;text-align:center}
-.target-row input[type=number]:focus{outline:none;border-color:#7c3aed}
+.target-row input[type=text]:focus{outline:none;border-color:var(--accent);background:rgba(139,92,246,.07)}
+.target-row input[type=number]{width:100%;padding:7px 10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--brdw);border-radius:8px;color:#e2e8f0;font-family:var(--font);
+  font-size:.9rem;text-align:right}
+.target-row input[type=number]:focus{outline:none;border-color:var(--accent);background:rgba(139,92,246,.07)}
 /* Pre-filled section */
 .prefilled{background:rgba(255,255,255,.02);border:1px solid var(--brdw);border-radius:9px;padding:14px;
   font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.9}
@@ -492,7 +497,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <div id="targets-list"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
       <button class="btn-table" onclick="addTargetRow()">＋ เพิ่มกลุ่มเป้าหมาย</button>
-      <span style="font-size:.82rem;color:var(--sub)">รวมทั้งสิ้น: <strong id="target-total" style="color:#34d399">0</strong> คน</span>
+      <div style="display:flex;align-items:center;gap:8px;font-size:.88rem;
+        background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);
+        border-radius:9px;padding:6px 16px">
+        <span style="color:var(--sub)">รวมทั้งสิ้น</span>
+        <strong id="target-total" style="color:#34d399;font-size:1.05rem">0</strong>
+        <span style="color:var(--sub)">คน</span>
+      </div>
     </div>
   </div>
 
@@ -1253,19 +1264,22 @@ function renderDynList(listId, items, placeholder){
 function addTargetRow(data){
   const list = document.getElementById('targets-list');
   const idx = list.querySelectorAll('.target-row').length + 1;
-  if(idx===1 && !list.querySelector('.target-header')){
-    const hdr = document.createElement('div');
-    hdr.className='target-header';
-    hdr.innerHTML='<span>กลุ่มเป้าหมาย</span><span style="text-align:center">จำนวน (คน)</span><span></span>';
-    list.insertBefore(hdr, list.firstChild);
-  }
   const div = document.createElement('div');
   div.className='target-row';
-  div.innerHTML=`<input type="text" value="${(data&&data.name)||''}" placeholder="เช่น นิสิต นักศึกษา ประชาชน...">
+  div.innerHTML=`<span class="target-row-num">๑๓.${toThai(idx)}</span>
+    <input type="text" value="${(data&&data.name)||''}" placeholder="เช่น นิสิต นักศึกษา ประชาชน...">
+    <span class="target-row-lbl">จำนวน</span>
     <input type="number" min="0" value="${(data&&data.count)||''}" placeholder="0" oninput="updateTargetTotal()">
-    <button class="btn-del-row" onclick="this.parentElement.remove();updateTargetTotal()">✕</button>`;
+    <span class="target-row-lbl">คน</span>
+    <button class="btn-del-row" onclick="this.closest('.target-row').remove();renumberTargets();updateTargetTotal()">✕</button>`;
   list.appendChild(div);
   updateTargetTotal();
+}
+function renumberTargets(){
+  document.querySelectorAll('#targets-list .target-row').forEach((row,i)=>{
+    const n=row.querySelector('.target-row-num');
+    if(n) n.textContent=`๑๓.${toThai(i+1)}`;
+  });
 }
 function getTargetData(){
   return [...document.querySelectorAll('#targets-list .target-row')].map(row=>{
