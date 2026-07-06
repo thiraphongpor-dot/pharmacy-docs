@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>คำสั่งแต่งตั้ง · คณะเภสัชศาสตร์</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="auth.js?v=2"></script>
+<script>if(!getUser()){location.replace('login.html');}</script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+Thai:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030014;--card:#0d0d22;--brd:rgba(139,92,246,.2);--brdw:rgba(255,255,255,.07);
+  --txt:#e8e8ff;--sub:#888aaa;--accent:#a78bfa;--cyan:#22d3ee;--pink:#ec4899;--green:#34d399;
+  --font:'Sarabun','Noto Sans Thai',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --radius:14px;--tr:.25s ease;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;font-size:17px;line-height:1.7}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 55% at 8% 50%,rgba(6,182,212,.16) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 55% at 92% 40%,rgba(139,92,246,.18) 0%,transparent 70%),
+    radial-gradient(ellipse 100% 100% at 50% 50%,#0a061a 0%,#06040f 100%)}
+/* NAVBAR */
+.navbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:14px;padding:12px 24px;
+  background:rgba(3,0,20,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--brd)}
+.navbar-icon{width:40px;height:40px;background:linear-gradient(135deg,#a78bfa,#22d3ee);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.navbar-info{flex:1}
+.navbar-info h1{font-size:.92rem;font-weight:700;letter-spacing:.04em;color:#c4b5fd;line-height:1.2}
+.navbar-info p{font-size:.68rem;color:var(--sub);font-family:var(--mono)}
+.btn-back{background:none;border:1px solid var(--brd);color:var(--sub);font-family:var(--font);
+  font-size:.8rem;padding:.4rem 1rem;border-radius:20px;cursor:pointer;transition:var(--tr)}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+/* AUTH BADGE */
+.auth-badge{display:flex;align-items:center;gap:8px}
+.auth-avatar{width:30px;height:30px;border-radius:50%;border:2px solid rgba(139,92,246,.4)}
+.auth-avatar-fallback{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#22d3ee);
+  display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#0d0d22}
+.auth-name{font-size:.82rem;font-weight:600;color:var(--txt)}
+.auth-role{font-size:.68rem;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:6px}
+.auth-logout{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);
+  font-size:.75rem;padding:4px 10px;border-radius:8px;cursor:pointer;font-family:var(--font);transition:var(--tr)}
+.auth-logout:hover{background:rgba(239,68,68,.25)}
+/* MAIN */
+.main-wrap{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:24px 16px 60px}
+/* PROJECT BANNER */
+.proj-banner{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(34,211,238,.08));
+  border:1px solid var(--brd);border-radius:var(--radius);padding:14px 20px;margin-bottom:24px;
+  display:flex;align-items:center;gap:12px}
+.proj-banner-icon{font-size:1.4rem}
+.proj-banner-name{font-size:.95rem;font-weight:700;color:#c4b5fd}
+.proj-banner-sub{font-size:.72rem;color:var(--sub)}
+/* CARD */
+.card{background:rgba(13,13,34,.85);border:1px solid var(--brd);border-radius:var(--radius);
+  padding:22px;margin-bottom:20px;backdrop-filter:blur(8px)}
+.card-title{font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:16px;
+  display:flex;align-items:center;gap:8px}
+/* FORM GRID */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fgfull{grid-column:1/-1}
+.flabel{font-size:.8rem;color:var(--sub);margin-bottom:4px;font-weight:600;letter-spacing:.04em}
+.finput{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(139,92,246,.2);
+  color:var(--txt);font-family:var(--font);font-size:.92rem;padding:9px 12px;border-radius:9px;
+  transition:var(--tr);outline:none}
+.finput:focus{border-color:var(--accent);background:rgba(139,92,246,.08)}
+textarea.finput{resize:vertical;min-height:72px}
+select.finput{cursor:pointer}
+/* SECTION inside card */
+.fsec-label{font-size:.75rem;font-weight:700;color:var(--cyan);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid rgba(34,211,238,.15)}
+/* COMMITTEE */
+.committee-block{background:rgba(139,92,246,.05);border:1px solid rgba(139,92,246,.15);
+  border-radius:12px;padding:16px;margin-bottom:14px}
+.committee-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.committee-num{width:28px;height:28px;background:linear-gradient(135deg,#a78bfa,#22d3ee);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:700;color:#0d0d22;flex-shrink:0}
+.committee-name-input{flex:1}
+.btn-remove{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);
+  border-radius:8px;padding:5px 10px;font-size:.75rem;cursor:pointer;font-family:var(--font);transition:var(--tr)}
+.btn-remove:hover{background:rgba(239,68,68,.25)}
+/* MEMBER */
+.members-table{width:100%;margin-bottom:10px}
+.members-table thead th{font-size:.75rem;color:var(--sub);font-weight:600;padding:4px 6px;text-align:left}
+.members-table td{padding:4px 6px;vertical-align:top}
+.member-row td{vertical-align:middle}
+.btn-add{background:rgba(34,211,238,.1);color:var(--cyan);border:1px solid rgba(34,211,238,.25);
+  border-radius:8px;padding:6px 14px;font-size:.8rem;cursor:pointer;font-family:var(--font);transition:var(--tr)}
+.btn-add:hover{background:rgba(34,211,238,.2)}
+.btn-add-committee{background:rgba(167,139,250,.1);color:var(--accent);border:1px solid rgba(167,139,250,.25);
+  border-radius:10px;padding:8px 18px;font-size:.85rem;cursor:pointer;font-family:var(--font);transition:var(--tr);
+  display:block;width:100%;text-align:center;margin-top:6px}
+.btn-add-committee:hover{background:rgba(167,139,250,.2)}
+/* ACTIONS */
+.form-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+.btn-save{padding:11px 28px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;
+  border:none;border-radius:10px;font-family:var(--font);font-size:.92rem;font-weight:700;
+  cursor:pointer;transition:var(--tr);box-shadow:0 4px 20px rgba(124,58,237,.35)}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,.5)}
+.btn-export-word{padding:10px 22px;background:rgba(6,182,212,.15);color:#22d3ee;
+  border:1px solid rgba(6,182,212,.3);border-radius:10px;font-family:var(--font);
+  font-size:.92rem;font-weight:700;cursor:pointer;transition:var(--tr)}
+.btn-export-word:hover{background:rgba(6,182,212,.3)}
+.btn-export-pdf{padding:10px 22px;background:rgba(219,39,119,.12);color:#f472b6;
+  border:1px solid rgba(219,39,119,.25);border-radius:10px;font-family:var(--font);
+  font-size:.92rem;font-weight:700;cursor:pointer;transition:var(--tr)}
+.btn-export-pdf:hover{background:rgba(219,39,119,.25)}
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;padding:12px 22px;
+  border-radius:12px;font-size:.88rem;font-weight:600;pointer-events:none;
+  opacity:0;transition:opacity .3s ease;backdrop-filter:blur(10px)}
+.toast.ok{background:rgba(52,211,153,.2);border:1px solid rgba(52,211,153,.4);color:#34d399}
+.toast.err{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#f87171}
+.toast.show{opacity:1}
+@media(max-width:600px){
+  .fg2,.fg3{grid-template-columns:1fr}
+  .form-actions{flex-direction:column}
+  .btn-save,.btn-export-word,.btn-export-pdf{text-align:center}
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-icon">📋</div>
+  <div class="navbar-info">
+    <h1>คำสั่งแต่งตั้ง · คณะเภสัชศาสตร์</h1>
+    <p id="nav-proj-name">กำลังโหลด...</p>
+  </div>
+  <button class="btn-back" onclick="goBack()">← กลับ</button>
+  <div id="user-badge-container"></div>
+</nav>
+
+<div class="main-wrap">
+  <!-- Project banner -->
+  <div class="proj-banner" id="proj-banner">
+    <span class="proj-banner-icon">📁</span>
+    <div>
+      <div class="proj-banner-name" id="banner-proj-name">กำลังโหลดโครงการ...</div>
+      <div class="proj-banner-sub">คำสั่งแต่งตั้งสำหรับโครงการนี้</div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 1: ข้อมูลคำสั่ง -->
+  <div class="card">
+    <div class="card-title">📄 ข้อมูลคำสั่ง</div>
+    <div class="fg3">
+      <div>
+        <div class="flabel">คำสั่งที่</div>
+        <input class="finput" id="f-orderNum" placeholder="เช่น 119/2569">
+      </div>
+      <div>
+        <div class="flabel">ปีการศึกษา</div>
+        <input class="finput" id="f-acYear" placeholder="เช่น 2569">
+      </div>
+      <div>
+        <div class="flabel">ชื่อคณะกรรมการ</div>
+        <input class="finput" id="f-commTitle" placeholder="เช่น คณะกรรมการบริหาร" value="คณะกรรมการบริหาร">
+      </div>
+      <div class="fgfull">
+        <div class="flabel">ชื่อโครงการ</div>
+        <input class="finput" id="f-projName" placeholder="ชื่อโครงการ">
+      </div>
+      <div class="fgfull">
+        <div class="flabel">คำนำ (เหตุผล) — ปล่อยว่างเพื่อใช้ข้อความมาตรฐาน</div>
+        <textarea class="finput" id="f-preamble" placeholder="เพื่อให้การดำเนินงานเกี่ยวกับ... เป็นไปด้วยความเรียบร้อย..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนที่ 2: คณะกรรมการ -->
+  <div class="card">
+    <div class="card-title">👥 คณะกรรมการ</div>
+    <div id="committees-container"></div>
+    <button class="btn-add-committee" onclick="addCommittee()">＋ เพิ่มคณะกรรมการ</button>
+  </div>
+
+  <!-- ส่วนที่ 3: วันที่และผู้ลงนาม -->
+  <div class="card">
+    <div class="card-title">✍️ วันที่และผู้ลงนาม</div>
+    <div class="fg2" style="margin-bottom:16px">
+      <div>
+        <div class="flabel">สั่ง ณ วันที่</div>
+        <input class="finput" type="date" id="f-orderDate">
+      </div>
+    </div>
+    <div class="fsec-label">ผู้ลงนาม</div>
+    <div class="fg2" style="margin-bottom:12px">
+      <div>
+        <div class="flabel">ลงชื่อ (ไม่ต้องมีคำนำหน้า)</div>
+        <input class="finput" id="f-signerName" placeholder="เช่น เนตรชนก เจียงสืบชาติวีระ">
+      </div>
+      <div>
+        <div class="flabel">ชื่อเต็มพร้อมตำแหน่งวิชาการ (ในวงเล็บ)</div>
+        <input class="finput" id="f-signerTitle" placeholder="เช่น ผศ.ดร.ภญ. เนตรชนก เจียงสืบชาติวีระ">
+      </div>
+      <div>
+        <div class="flabel">ตำแหน่ง บรรทัดที่ 1</div>
+        <input class="finput" id="f-signerPos1" placeholder="เช่น รองคณบดีฝ่ายวางแผนและพัฒนาบุคลากร">
+      </div>
+      <div>
+        <div class="flabel">ตำแหน่ง บรรทัดที่ 2</div>
+        <input class="finput" id="f-signerPos2" placeholder="เช่น รักษาการแทน คณบดีคณะเภสัชศาสตร์">
+      </div>
+      <div class="fgfull">
+        <div class="flabel">ตำแหน่ง บรรทัดที่ 3</div>
+        <input class="finput" id="f-signerPos3" placeholder="เช่น ปฏิบัติการแทน อธิการบดีมหาวิทยาลัยบูรพา">
+      </div>
+    </div>
+    <div class="fsec-label" style="margin-top:16px">สำเนาถูกต้อง</div>
+    <div class="fg2">
+      <div>
+        <div class="flabel">ชื่อ-สกุล</div>
+        <input class="finput" id="f-copyName" placeholder="เช่น ธีรพงศ์ เกิดทรง">
+      </div>
+      <div>
+        <div class="flabel">ตำแหน่ง</div>
+        <input class="finput" id="f-copyPos" placeholder="เช่น เจ้าหน้าที่บริหารงานทั่วไปปฏิบัติการ">
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="form-actions">
+    <button class="btn-export-pdf" onclick="exportPDF()">🖨️ Export PDF</button>
+    <button class="btn-export-word" onclick="exportWord()">📄 Export Word</button>
+    <button class="btn-save" onclick="saveAppt()">💾 บันทึกคำสั่ง</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- docx.js -->
+<script type="module">
+  import * as docxLib from 'https://esm.sh/docx@8.5.0';
+  window.docx = docxLib;
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+let currentUser = null;
+let projectId   = null;
+let projectName = '';
+let LOGO_B64    = null;
+
+fetch('logo-pharm.png').then(r=>r.blob()).then(blob=>{
+  const rd = new FileReader();
+  rd.onload = e => { LOGO_B64 = e.target.result; };
+  rd.readAsDataURL(blob);
+}).catch(()=>{});
+
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+function getApptKey(pid){ return 'pharma_appt_' + pid; }
+function getUserProjKey(email){
+  return 'pharma_projects_' + (email||'').toLowerCase().replace(/[^a-z0-9@._-]/g,'_');
+}
+
+function loadAppt(pid){
+  const raw = localStorage.getItem(getApptKey(pid));
+  if(raw){ try{ return JSON.parse(raw); }catch{} }
+  return null;
+}
+function saveApptToStorage(pid, data){
+  data.updatedAt = new Date().toISOString();
+  localStorage.setItem(getApptKey(pid), JSON.stringify(data));
+}
+
+// Firebase sync for appointments
+function _fbApptRef(email, pid){
+  try{
+    initFirebase();
+    if(typeof firebase==='undefined') return null;
+    return firebase.database().ref('pharma-form/'+emailToFbKey(email)+'/appointments/'+pid);
+  }catch{ return null; }
+}
+async function _fbApptSync(email, pid){
+  try{
+    const ref = _fbApptRef(email, pid);
+    if(!ref) return;
+    const snap = await ref.once('value');
+    const cloud = snap.val();
+    const local = loadAppt(pid);
+    if(!cloud && !local) return;
+    if(!cloud){ ref.set(local).catch(()=>{}); return; }
+    if(!local){ localStorage.setItem(getApptKey(pid), JSON.stringify(cloud)); return; }
+    // Keep newer
+    const cloudT = new Date(cloud.updatedAt||0).getTime();
+    const localT = new Date(local.updatedAt||0).getTime();
+    if(cloudT > localT) localStorage.setItem(getApptKey(pid), JSON.stringify(cloud));
+    else ref.set(local).catch(()=>{});
+  }catch(e){ console.warn('[FB] appt sync error:',e); }
+}
+function _fbApptWrite(email, pid, data){
+  const ref = _fbApptRef(email, pid);
+  if(ref) ref.set(data).catch(()=>{});
+}
+
+// ══════════════════════════════════════════
+// DATA → FORM
+// ══════════════════════════════════════════
+function getFormData(){
+  const committees = [];
+  document.querySelectorAll('.committee-block').forEach(block=>{
+    const name = block.querySelector('.comm-name-input').value;
+    const duties = block.querySelector('.comm-duties').value;
+    const members = [];
+    block.querySelectorAll('.member-row').forEach(row=>{
+      const inputs = row.querySelectorAll('input,select');
+      members.push({ name: inputs[0].value, role: inputs[1].value });
+    });
+    committees.push({ name, members, duties });
+  });
+  return {
+    orderNumber : document.getElementById('f-orderNum').value,
+    academicYear: document.getElementById('f-acYear').value,
+    committeeTitle: document.getElementById('f-commTitle').value,
+    projectName : document.getElementById('f-projName').value,
+    preamble    : document.getElementById('f-preamble').value,
+    committees,
+    orderDate   : document.getElementById('f-orderDate').value,
+    signerName  : document.getElementById('f-signerName').value,
+    signerTitle : document.getElementById('f-signerTitle').value,
+    signerPos1  : document.getElementById('f-signerPos1').value,
+    signerPos2  : document.getElementById('f-signerPos2').value,
+    signerPos3  : document.getElementById('f-signerPos3').value,
+    copyName    : document.getElementById('f-copyName').value,
+    copyPos     : document.getElementById('f-copyPos').value,
+  };
+}
+function fillForm(d){
+  if(!d) return;
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val||''; };
+  set('f-orderNum', d.orderNumber);
+  set('f-acYear',   d.academicYear);
+  set('f-commTitle',d.committeeTitle||'คณะกรรมการบริหาร');
+  set('f-projName', d.projectName||projectName);
+  set('f-preamble', d.preamble);
+  set('f-orderDate',d.orderDate);
+  set('f-signerName', d.signerName);
+  set('f-signerTitle',d.signerTitle);
+  set('f-signerPos1', d.signerPos1);
+  set('f-signerPos2', d.signerPos2);
+  set('f-signerPos3', d.signerPos3);
+  set('f-copyName', d.copyName);
+  set('f-copyPos',  d.copyPos);
+  // Render committees
+  const container = document.getElementById('committees-container');
+  container.innerHTML = '';
+  (d.committees||[]).forEach(c => addCommittee(c));
+}
+
+// ══════════════════════════════════════════
+// DYNAMIC COMMITTEES
+// ══════════════════════════════════════════
+const ROLES = ['ที่ปรึกษา','ประธานโครงการ','ประธานกรรมการ','กรรมการ','กรรมการและเลขานุการ','เลขานุการ'];
+
+function addCommittee(data){
+  const container = document.getElementById('committees-container');
+  const idx = container.querySelectorAll('.committee-block').length + 1;
+  const div = document.createElement('div');
+  div.className = 'committee-block';
+  div.innerHTML = `
+    <div class="committee-header">
+      <div class="committee-num">${idx}</div>
+      <input class="finput comm-name-input" style="flex:1" placeholder="ชื่อคณะกรรมการ เช่น กรรมการฝ่ายวิชาการ" value="${(data&&data.name)||''}">
+      <button class="btn-remove" onclick="this.closest('.committee-block').remove();renumberCommittees()">✕ ลบ</button>
+    </div>
+    <table class="members-table">
+      <thead><tr><th style="width:55%">ชื่อ-สกุล</th><th>ตำแหน่งในคณะกรรมการ</th><th style="width:40px"></th></tr></thead>
+      <tbody class="members-body"></tbody>
+    </table>
+    <button class="btn-add" onclick="addMember(this)">＋ เพิ่มสมาชิก</button>
+    <div style="margin-top:12px">
+      <div class="flabel">หน้าที่และความรับผิดชอบ</div>
+      <textarea class="finput comm-duties" rows="3" placeholder="อธิบายหน้าที่ของคณะกรรมการชุดนี้...">${(data&&data.duties)||''}</textarea>
+    </div>`;
+  container.appendChild(div);
+  // Add members
+  if(data && data.members && data.members.length){
+    data.members.forEach(m => addMember(div.querySelector('.btn-add'), m));
+  } else {
+    addMember(div.querySelector('.btn-add'));
+  }
+}
+function addMember(btn, data){
+  const tbody = btn.closest('.committee-block').querySelector('.members-body');
+  const roleOpts = ROLES.map(r=>`<option value="${r}" ${(data&&data.role===r)?'selected':''}>${r}</option>`).join('');
+  const tr = document.createElement('tr');
+  tr.className = 'member-row';
+  tr.innerHTML = `
+    <td><input class="finput" style="width:100%" placeholder="ชื่อ-สกุล" value="${(data&&data.name)||''}"></td>
+    <td><select class="finput" style="width:100%">${roleOpts}</select></td>
+    <td style="text-align:center"><button class="btn-remove" style="padding:4px 8px;font-size:.7rem" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function renumberCommittees(){
+  document.querySelectorAll('.committee-num').forEach((el,i)=>{ el.textContent = i+1; });
+}
+
+// ══════════════════════════════════════════
+// SAVE
+// ══════════════════════════════════════════
+function saveAppt(){
+  const data = getFormData();
+  saveApptToStorage(projectId, data);
+  _fbApptWrite(currentUser.email, projectId, data);
+  showToast('บันทึกคำสั่งแต่งตั้งแล้ว ✓', 'ok');
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function showToast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.className = `toast ${type} show`;
+  t.textContent = msg;
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+function goBack(){ history.length > 1 ? history.back() : location.replace('academic-form-system.html'); }
+function fmtDateTH(d){
+  if(!d) return '';
+  const dt = new Date(d);
+  const m = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  return `${dt.getDate()} ${m[dt.getMonth()]} พ.ศ. ${dt.getFullYear()+543}`;
+}
+function toThai(n){
+  const t=['','๑','๒','๓','๔','๕','๖','๗','๘','๙','๑๐','๑๑','๑๒','๑๓','๑๔','๑๕','๑๖','๑๗','๑๘','๑๙','๒๐'];
+  return t[n]||String(n);
+}
+function chkAppt(v){
+  const s='display:inline-block;width:12px;height:12px;border:1.5px solid #000;vertical-align:middle;text-align:center;line-height:10px;font-size:11px;font-family:Arial,sans-serif;margin-right:1px';
+  return `<span style="${s}">${v?'✓':''}</span>`;
+}
+
+// ══════════════════════════════════════════
+// EXPORT PDF
+// ══════════════════════════════════════════
+function exportPDF(){
+  saveAppt();
+  const d = getFormData();
+  const win = window.open('','_blank');
+  win.document.write(buildPrintHTML(d));
+  win.document.close();
+  setTimeout(()=>win.print(), 800);
+}
+
+function buildPrintHTML(d){
+  const projName = d.projectName || '';
+  const commTitle = d.committeeTitle || 'คณะกรรมการ';
+  const preamble = d.preamble ||
+    `เพื่อให้การดำเนินงานเกี่ยวกับ${projName} เป็นไปด้วยความเรียบร้อยและมีประสิทธิภาพ อาศัยอำนาจตามความในมาตรา ๓๕ แห่งพระราชบัญญัติมหาวิทยาลัยบูรพา พ.ศ.๒๕๕๐ จึงแต่งตั้งให้บุคคลต่อไปนี้ เป็น${commTitle}${projName}`;
+
+  const committeesHTML = (d.committees||[]).map((c,ci)=>{
+    const membersHTML = (c.members||[]).map((m,mi)=>
+      `<div class="ind1"><span class="num">${mi+1}.</span> ${m.name||''} <span class="role">${m.role||''}</span></div>`
+    ).join('');
+    return `
+      <div class="committee">
+        <div class="comm-title">${ci+1}. ${c.name||''}</div>
+        ${membersHTML}
+        ${c.duties ? `<div class="duties-label">หน้าที่และความรับผิดชอบ</div><div class="duties-text">${(c.duties||'').replace(/\n/g,'<br>')}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
+<title>คำสั่งแต่งตั้ง - ${projName}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+body{font-family:'TH SarabunIT๙','TH SarabunIT9','TH Sarabun New','Sarabun',sans-serif;font-size:16pt;line-height:1.8;color:#000;margin:0;padding:0}
+.page{padding:0;background:#fff}
+.center{text-align:center}
+.bold{font-weight:700}
+.header-title{font-size:16pt;font-weight:700;text-align:center;line-height:2}
+.divider{text-align:center;margin:6pt 0;letter-spacing:1pt;font-size:12pt}
+.preamble{text-indent:3em;margin:8pt 0 12pt;text-align:justify}
+.committee{margin:10pt 0;break-inside:avoid}
+.comm-title{font-weight:700;margin-bottom:4pt}
+.ind1{padding-left:3em;margin-bottom:2pt}
+.num{display:inline-block;min-width:1.5em}
+.role{margin-left:1em}
+.duties-label{font-weight:700;margin:4pt 0 2pt 3em}
+.duties-text{padding-left:3em;text-align:justify;margin-bottom:6pt}
+.closing{margin-top:14pt;text-align:justify;break-inside:avoid}
+.sig-section{margin-top:24pt;text-align:right;line-height:2}
+.sig-name{font-weight:700}
+.copy-section{margin-top:30pt;border-top:1px solid #000;padding-top:8pt;font-size:14pt}
+@media print{body{margin:0}@page{size:A4;margin:2.54cm 2cm 2cm 2.54cm}}
+</style></head><body><div class="page">
+${LOGO_B64?`<div style="text-align:center;margin-bottom:8pt"><img src="${LOGO_B64}" style="width:4cm;height:4cm;object-fit:contain"></div>`:''}
+<div class="header-title">คำสั่งคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div>
+<div class="header-title">ที่ ${d.orderNumber||'........./.........'}</div>
+<div class="header-title">เรื่อง แต่งตั้ง${commTitle}${projName}</div>
+<div class="divider">--------------------------------------------------------------------------------</div>
+<div class="preamble">${preamble}</div>
+${committeesHTML}
+<div class="closing">ทั้งนี้ ตั้งแต่บัดนี้เป็นต้นไปจนกว่าจะมีคำสั่งเปลี่ยนแปลงเป็นอย่างอื่น</div>
+<div class="sig-section">
+  <div>สั่ง ณ วันที่ ${fmtDateTH(d.orderDate)||'........................................'}</div>
+  <div style="margin-top:16pt">(ลงชื่อ) ${d.signerName||'........................................'}</div>
+  <div>(${d.signerTitle||'...........................................................................'})</div>
+  ${d.signerPos1?`<div>${d.signerPos1}</div>`:''}
+  ${d.signerPos2?`<div>${d.signerPos2}</div>`:''}
+  ${d.signerPos3?`<div>${d.signerPos3}</div>`:''}
+</div>
+<div class="copy-section">
+  <div class="bold">- สำเนา -</div>
+  <div style="margin-top:8pt;text-align:right">สำเนาถูกต้อง</div>
+  <div style="text-align:right">(${d.copyName||'....................................'})</div>
+  <div style="text-align:right">${d.copyPos||''}</div>
+</div>
+</div></body></html>`;
+}
+
+// ══════════════════════════════════════════
+// EXPORT WORD
+// ══════════════════════════════════════════
+async function exportWord(){
+  if(!window.docx){ showToast('กรุณารอสักครู่ แล้วลองใหม่','err'); return; }
+  saveAppt();
+  const d = getFormData();
+  try{ await buildWordDoc(d); }
+  catch(e){ console.error(e); showToast('Export Word ล้มเหลว: '+e.message,'err'); }
+}
+
+async function buildWordDoc(d){
+  const {Document,Packer,Paragraph,TextRun,AlignmentType,WidthType,BorderStyle,ImageRun} = docx;
+  const FONT = 'TH SarabunIT๙';
+  const SZ = 32; // 16pt
+
+  function run(text, opts={}){
+    return new TextRun({text:String(text||''),font:FONT,size:opts.size||SZ,
+      bold:!!opts.bold,language:{value:'th-TH'}});
+  }
+  function para(txt, opts={}){
+    const children = Array.isArray(txt) ? txt : [run(txt,opts)];
+    return new Paragraph({
+      alignment: opts.center ? AlignmentType.CENTER : opts.right ? AlignmentType.RIGHT : AlignmentType.LEFT,
+      indent: opts.indent ? {left:opts.indent*640} : undefined,
+      spacing: {before: opts.before||0, after:0, line:276, lineRule:'auto'},
+      children
+    });
+  }
+  function blank(){ return para(''); }
+  function heading(txt){ return para(txt,{bold:true}); }
+
+  const projName   = d.projectName||'';
+  const commTitle  = d.committeeTitle||'คณะกรรมการ';
+  const preamble   = d.preamble ||
+    `เพื่อให้การดำเนินงานเกี่ยวกับ${projName} เป็นไปด้วยความเรียบร้อยและมีประสิทธิภาพ อาศัยอำนาจตามความในมาตรา ๓๕ แห่งพระราชบัญญัติมหาวิทยาลัยบูรพา พ.ศ.๒๕๕๐ จึงแต่งตั้งให้บุคคลต่อไปนี้ เป็น${commTitle}${projName}`;
+
+  const children = [
+    ...(LOGO_B64 ? [new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0},
+      children:[new ImageRun({data:Uint8Array.from(atob(LOGO_B64.split(',')[1]),c=>c.charCodeAt(0)),
+        transformation:{width:113,height:113},type:'png'})]})] : []),
+    para([run('คำสั่งคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา',{bold:true})],{center:true}),
+    para([run(`ที่ ${d.orderNumber||'........./.........'}`,{bold:true})],{center:true}),
+    para([run(`เรื่อง แต่งตั้ง${commTitle}${projName}`,{bold:true})],{center:true}),
+    para('--------------------------------------------------------------------------------',{center:true}),
+    blank(),
+    para([run('          '+preamble)]),
+    blank(),
+  ];
+
+  // Committees
+  (d.committees||[]).forEach((c,ci)=>{
+    children.push(heading(`${ci+1}. ${c.name||''}`));
+    (c.members||[]).forEach((m,mi)=>{
+      children.push(new Paragraph({
+        spacing:{before:0,after:0,line:276,lineRule:'auto'},
+        indent:{left:640},
+        children:[run(`${mi+1}. ${m.name||''}`), run(`\t${m.role||''}`,{})],
+      }));
+    });
+    if(c.duties){
+      children.push(para('หน้าที่และความรับผิดชอบ',{bold:true,indent:1}));
+      c.duties.split('\n').forEach(line=>children.push(para(line,{indent:2})));
+    }
+    children.push(blank());
+  });
+
+  children.push(
+    para('ทั้งนี้ ตั้งแต่บัดนี้เป็นต้นไปจนกว่าจะมีคำสั่งเปลี่ยนแปลงเป็นอย่างอื่น'),
+    blank(),
+    para(`สั่ง ณ วันที่ ${fmtDateTH(d.orderDate)||'........................................'}`,{right:true}),
+    blank(),blank(),
+    para(`(ลงชื่อ)  ${d.signerName||'........................................'}`,{right:true}),
+    para(`(${d.signerTitle||'...........................................................................'})`,{right:true}),
+    ...(d.signerPos1 ? [para(d.signerPos1,{right:true})] : []),
+    ...(d.signerPos2 ? [para(d.signerPos2,{right:true})] : []),
+    ...(d.signerPos3 ? [para(d.signerPos3,{right:true})] : []),
+    blank(),blank(),
+    para('- สำเนา -',{bold:true}),
+    blank(),
+    para(`สำเนาถูกต้อง`,{right:true}),
+    para(`(${d.copyName||'.....................................'})`,{right:true}),
+    para(d.copyPos||'',{right:true}),
+  );
+
+  const doc = new Document({
+    sections:[{
+      properties:{page:{margin:{top:1440,right:1134,bottom:1134,left:1814}}},
+      children
+    }]
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  const safeName = (d.projectName||'คำสั่งแต่งตั้ง').replace(/[/\\:*?"<>|]/g,'_').substring(0,60);
+  a.download = `คำสั่งแต่งตั้ง_${safeName}.docx`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export Word สำเร็จ ✓','ok');
+}
+
+// ══════════════════════════════════════════
+// STARTUP
+// ══════════════════════════════════════════
+(function init(){
+  currentUser = requireUser();
+  if(!currentUser) return;
+
+  // Render user badge
+  renderUserBadge('user-badge-container', currentUser);
+
+  // Get projectId from URL
+  const params = new URLSearchParams(location.search);
+  projectId = params.get('id');
+
+  if(!projectId){
+    showToast('ไม่พบ ID โครงการ','err');
+    setTimeout(goBack, 2000);
+    return;
+  }
+
+  // Load project name from academic form data
+  const projKey  = getUserProjKey(currentUser.email);
+  const projects = JSON.parse(localStorage.getItem(projKey)||'[]');
+  const proj     = projects.find(p=>p.id===projectId);
+  projectName    = proj ? (proj.projectName||'') : '';
+
+  // Update UI
+  const bannerName = document.getElementById('banner-proj-name');
+  const navProj    = document.getElementById('nav-proj-name');
+  if(bannerName) bannerName.textContent = projectName || '(ไม่พบชื่อโครงการ)';
+  if(navProj)    navProj.textContent    = projectName || projectId;
+
+  // Firebase sync then render
+  _fbApptSync(currentUser.email, projectId).finally(()=>{
+    const data = loadAppt(projectId);
+    if(data){
+      fillForm(data);
+    } else {
+      // Pre-fill project name
+      document.getElementById('f-projName').value = projectName;
+      // Add one empty committee by default
+      addCommittee();
+    }
+  });
+})();
+</script>
+</body>
+</html>

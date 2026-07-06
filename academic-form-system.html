@@ -95,6 +95,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .btn-pdf:hover{background:rgba(219,39,119,.25);border-color:#f472b6}
 .btn-del{background:rgba(239,68,68,.1);color:#f87171;border-color:rgba(239,68,68,.2)}
 .btn-del:hover{background:rgba(239,68,68,.25);border-color:#f87171}
+.btn-appt{background:rgba(52,211,153,.1);color:#34d399;border-color:rgba(52,211,153,.25)}
+.btn-appt:hover{background:rgba(52,211,153,.25);border-color:#34d399}
 .empty-state{text-align:center;padding:60px 20px;color:var(--sub)}
 .empty-state .es-icon{font-size:3rem;margin-bottom:16px;opacity:.4}
 .empty-state p{font-size:.92rem}
@@ -932,6 +934,7 @@ function renderProjectList(){
       ${ownerTag}
       <div class="proj-card-actions">
         <button class="btn-sm btn-edit" onclick="showForm('${p.id}','${safeOwner}')">✏️ แก้ไข</button>
+        <button class="btn-sm btn-appt" onclick="location.href='appointment-order.html?id=${p.id}'">📋 คำสั่ง</button>
         <button class="btn-sm btn-word" onclick="exportWordById('${p.id}','${safeOwner}')">📄 Word</button>
         <button class="btn-sm btn-pdf" onclick="exportPDFById('${p.id}','${safeOwner}')">🖨️ PDF</button>
         <button class="btn-sm btn-del" onclick="deleteProject('${p.id}','${safeOwner}')">🗑️</button>
