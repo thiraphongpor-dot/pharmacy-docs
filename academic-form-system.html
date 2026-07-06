@@ -447,7 +447,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="fsec">
     <div class="fsec-title">๗. หลักการและเหตุผล</div>
     <div class="form-group full">
-      <textarea id="f-rationale" rows="6" placeholder="อธิบายหลักการและเหตุผลของโครงการ..."></textarea>
+      <textarea id="f-rationale" rows="6" spellcheck="false" placeholder="อธิบายหลักการและเหตุผลของโครงการ..."></textarea>
     </div>
   </div>
 
@@ -1536,7 +1536,7 @@ ${LOGO_B64?`<div style="text-align:center;margin-top:0;margin-bottom:8pt"><img s
 <div class="chk-row"><span class="chk-prefix">${chk(p.sdg16)} ๑๖.</span><span class="chk-text">ส่งเสริมสังคมที่สงบสุข ให้ทุกคนเข้าถึงความยุติธรรม</span></div>
 <div class="chk-row"><span class="chk-prefix">${chk(p.sdg17)} ๑๗.</span><span class="chk-text">เสริมความเข้มแข็งให้แก่กลไกการดำเนินงานและฟื้นฟูหุ้นส่วนความร่วมมือระดับโลกที่ยั่งยืน</span></div>
 </div>
-<div class="sec"><span class="sec-title">๗. หลักการและเหตุผล</span><br><div class="indent1">${(p.rationale||'').replace(/\n/g,'<br>')}</div></div>
+<div class="sec"><span class="sec-title">๗. หลักการและเหตุผล</span><br><div class="indent1" style="white-space:pre-wrap">${p.rationale||''}</div></div>
 <div class="sec"><span class="sec-title">๘. วัตถุประสงค์</span>
 ${(p.objectives||[]).map((o,i)=>`<div class="indent1">${toThai(i+1)}. ${o}</div>`).join('')}
 </div>
