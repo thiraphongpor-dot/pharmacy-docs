@@ -753,8 +753,33 @@ async function _fbSync(email){
     merged.sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
     localStorage.setItem(getUserDbKey(email), JSON.stringify(merged));
     if(needPush) ref.set(merged).catch(()=>{});
+    // Register this user in Firebase global registry
+    try{ firebase.database().ref('pharma-form/_users/'+emailToFbKey(email)).set(email).catch(()=>{}); }catch(e){}
     console.log('[FB] sync complete, merged:'+merged.length);
   }catch(e){ console.warn('[FB] sync error:',e); }
+}
+
+async function _fbAdminSync(adminEmail){
+  try{
+    initFirebase();
+    if(typeof firebase==='undefined') return;
+    const usersSnap=await firebase.database().ref('pharma-form/_users').once('value');
+    const fbEmails=Object.values(usersSnap.val()||{});
+    // Merge Firebase user list into local registry
+    const local=getAllUserEmails();
+    const all=[...new Set([...local,...fbEmails])];
+    localStorage.setItem('pharma_user_registry',JSON.stringify(all));
+    // Fetch each user's projects from Firebase into local cache
+    for(const email of fbEmails){
+      if(email===adminEmail) continue;
+      try{
+        const snap=await firebase.database().ref('pharma-form/'+emailToFbKey(email)+'/projects').once('value');
+        const projs=snap.val();
+        if(projs&&Array.isArray(projs)) localStorage.setItem(getUserDbKey(email),JSON.stringify(projs));
+      }catch(e){}
+    }
+    console.log('[FB] admin sync complete, users:'+fbEmails.length);
+  }catch(e){ console.warn('[FB] admin sync error:',e); }
 }
 
 function _fbWrite(email, arr){
@@ -1905,7 +1930,10 @@ function toggleSDGItem(){
   }
 
   // Sync from Firebase first, then render dashboard
-  _fbSync(currentUser.email).catch(()=>{}).finally(_renderAndShow);
+  const _isAdmin = isAdmin(currentUser);
+  _fbSync(currentUser.email)
+    .then(()=> _isAdmin ? _fbAdminSync(currentUser.email) : Promise.resolve())
+    .catch(()=>{}).finally(_renderAndShow);
 })();
 </script>
 </body>
