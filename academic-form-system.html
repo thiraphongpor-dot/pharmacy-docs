@@ -763,22 +763,30 @@ async function _fbAdminSync(adminEmail){
   try{
     initFirebase();
     if(typeof firebase==='undefined') return;
-    const usersSnap=await firebase.database().ref('pharma-form/_users').once('value');
-    const fbEmails=Object.values(usersSnap.val()||{});
-    // Merge Firebase user list into local registry
+    // Read entire pharma-form tree in ONE request (efficient)
+    const rootSnap=await firebase.database().ref('pharma-form').once('value');
+    const rootVal=rootSnap.val()||{};
+    // Build fbKey -> email map from _users registry
+    const fbEmails=Object.values(rootVal['_users']||{});
+    const keyToEmail=new Map(fbEmails.map(e=>[emailToFbKey(e),e]));
+    // Also map ALLOWED_EMAILS so users not yet in _users registry are still found
+    const allowed=(typeof AUTH_CONFIG!=='undefined')?AUTH_CONFIG.ALLOWED_EMAILS:[];
+    allowed.forEach(e=>{ if(!keyToEmail.has(emailToFbKey(e))) keyToEmail.set(emailToFbKey(e),e); });
+    // Process all data keys (everything except _users)
     const local=getAllUserEmails();
-    const all=[...new Set([...local,...fbEmails])];
-    localStorage.setItem('pharma_user_registry',JSON.stringify(all));
-    // Fetch each user's projects from Firebase into local cache
-    for(const email of fbEmails){
-      if(email===adminEmail) continue;
-      try{
-        const snap=await firebase.database().ref('pharma-form/'+emailToFbKey(email)+'/projects').once('value');
-        const projs=snap.val();
-        if(projs&&Array.isArray(projs)) localStorage.setItem(getUserDbKey(email),JSON.stringify(projs));
-      }catch(e){}
-    }
-    console.log('[FB] admin sync complete, users:'+fbEmails.length);
+    const activeEmails=[...fbEmails];
+    Object.keys(rootVal).filter(k=>k!=='_users').forEach(key=>{
+      const email=keyToEmail.get(key);
+      if(!email||email===adminEmail) return;
+      const projs=rootVal[key]&&rootVal[key].projects;
+      if(projs&&Array.isArray(projs)&&projs.length>0){
+        localStorage.setItem(getUserDbKey(email),JSON.stringify(projs));
+        if(!activeEmails.includes(email)) activeEmails.push(email);
+      }
+    });
+    // Update registry with all known active users
+    localStorage.setItem('pharma_user_registry',JSON.stringify([...new Set([...local,...activeEmails])]));
+    console.log('[FB] admin sync complete, users:'+activeEmails.length);
   }catch(e){ console.warn('[FB] admin sync error:',e); }
 }
 
