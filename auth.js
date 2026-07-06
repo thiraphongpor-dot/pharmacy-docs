@@ -232,13 +232,13 @@ function renderUserBadge(containerId, user) {
 
 /* ── Firebase Sync ── */
 const FIREBASE_CONFIG = {
-  apiKey:            'FIREBASE_API_KEY',
-  authDomain:        'FIREBASE_PROJECT_ID.firebaseapp.com',
-  databaseURL:       'https://FIREBASE_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId:         'FIREBASE_PROJECT_ID',
-  storageBucket:     'FIREBASE_PROJECT_ID.appspot.com',
-  messagingSenderId: 'FIREBASE_MESSAGING_ID',
-  appId:             'FIREBASE_APP_ID'
+  apiKey:            'AIzaSyBmXVqyqms8qG9rPBW0gadoBcV8HTr7O5U',
+  authDomain:        'pharmacy-buu.firebaseapp.com',
+  databaseURL:       'https://pharmacy-buu-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:         'pharmacy-buu',
+  storageBucket:     'pharmacy-buu.firebasestorage.app',
+  messagingSenderId: '15077505324',
+  appId:             '1:15077505324:web:e5fcb9d23cd888ec9bd489'
 };
 
 const FIREBASE_UID_KEY = 'buu_pharma_fuid_v1';
