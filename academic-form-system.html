@@ -1549,7 +1549,8 @@ h2{text-align:center;font-size:16pt;margin:0;font-weight:700}
 .indent1{padding-left:2em;margin-bottom:2pt}
 .indent2{padding-left:4em;margin-bottom:2pt}
 .tgt-tbl{width:100%;border-collapse:collapse;margin-bottom:0;table-layout:auto}
-.tgt-tbl td{padding:1pt 0;font-size:16pt;vertical-align:top;white-space:nowrap}
+.tgt-tbl td{padding:1pt 0;font-size:16pt;vertical-align:top;white-space:nowrap;border:none}
+.tgt-total td{border-top:1px solid #000!important}
 .tgt-tbl td.tgt-td-name{padding-left:4.5em;text-indent:-2.5em;white-space:normal;vertical-align:top}
 .tgt-td-label{padding-left:2em;padding-right:1.2em}
 .tgt-td-cnt{text-align:center;padding:0 16pt;min-width:60pt}
@@ -1620,7 +1621,7 @@ ${(p.coordinators||[]).map(c=>`<div class="indent1">${c}</div>`).join('')}
 <div class="sec"><span class="sec-title">๑๓. กลุ่มเป้าหมายและจำนวน</span>
 <table class="tgt-tbl">
 ${(p.targets||[]).map((t,i)=>`<tr><td class="tgt-td-name">๑๓.${toThai(i+1)} ${t.name}</td><td class="tgt-td-label">จำนวน</td><td class="tgt-td-cnt">${t.count||'...'}</td><td class="tgt-td-unit">คน</td></tr>`).join('')}
-<tr><td class="tgt-td-name" style="padding-left:4em">รวมทั้งสิ้น</td><td class="tgt-td-label"></td><td class="tgt-td-cnt">${(p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH')}</td><td class="tgt-td-unit">คน</td></tr>
+<tr class="tgt-total"><td class="tgt-td-name" style="padding-left:4em">รวมทั้งสิ้น</td><td class="tgt-td-label"></td><td class="tgt-td-cnt">${(p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH')}</td><td class="tgt-td-unit">คน</td></tr>
 </table>
 </div>
 <div class="sec"><span class="sec-title">๑๔. ผลที่คาดว่าจะได้รับ</span>
