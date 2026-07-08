@@ -235,6 +235,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .toast.show{opacity:1;transform:none}
 .toast.ok{background:rgba(52,211,153,.2);border:1px solid rgba(52,211,153,.4);color:#6ee7b7}
 .toast.err{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+.toast.warn{background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:#fcd34d}
 /* Budget section */
 .budget-summary{background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);
   border-radius:9px;padding:12px 16px;margin-top:12px;font-size:.92rem}
@@ -1516,6 +1517,39 @@ function showToast(msg, type='ok'){
 }
 
 // ═══════════════════════════════════════════
+// AUTO-FORMAT TEXT INPUTS
+// ═══════════════════════════════════════════
+document.addEventListener('focusout', function(e){
+  const el = e.target;
+  if(!el.matches('#page-form input[type=text], #page-form textarea')) return;
+  // Skip free-form fields where the user controls spacing/newlines
+  if(el.id === 'f-rationale') return;
+  const original = el.value;
+  if(!original) return;
+
+  let v = original;
+  // Trim & collapse spaces (preserve newlines in textarea)
+  if(el.tagName === 'TEXTAREA'){
+    v = v.split('\n').map(line => line.trim().replace(/[ \t]{2,}/g, ' ')).join('\n').trim();
+  } else {
+    v = v.trim().replace(/[ \t]{2,}/g, ' ');
+  }
+
+  // Warn if project name starts with "โครงการ"
+  if(el.id === 'f-projectName' && /^โครงการ\s*/i.test(v)){
+    v = v.replace(/^โครงการ\s*/i, '');
+    el.value = v;
+    showToast('ตัด "โครงการ" ออกอัตโนมัติ — ระบบเติมให้แล้วครับ', 'warn');
+    return;
+  }
+
+  if(v !== original){
+    el.value = v;
+    showToast('จัดรูปแบบข้อความอัตโนมัติแล้ว', 'ok');
+  }
+});
+
+// ═══════════════════════════════════════════
 // EXPORT PDF
 // ═══════════════════════════════════════════
 function exportPDF(){
@@ -1545,18 +1579,26 @@ function toThai(n){
 }
 function thDigits(s){ return String(s||'').replace(/[0-9]/g,d=>'๐๑๒๓๔๕๖๗๘๙'[+d]); }
 function fmtDate(d){ if(!d) return ''; const dt=new Date(d); return `${dt.getDate()} ${['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][dt.getMonth()]} ${dt.getFullYear()+543}`; }
+function thaiWrap(str){
+  if(!str) return str;
+  try{
+    if(typeof Intl.Segmenter==='undefined') return str;
+    const seg=new Intl.Segmenter('th',{granularity:'word'});
+    return [...seg.segment(str)].map(s=>s.isWordLike?s.segment+'<wbr>':s.segment).join('');
+  }catch(e){return str;}
+}
 
 function buildPrintHTML(p){
   const total = (p.budget||[]).reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
-  const schedRows = (p.schedule||[]).map(r=>`<tr><td>${r.date||''}</td><td>${(r.time||'').split('\n').map(t=>`<span style="white-space:nowrap;display:block">${t}</span>`).join('')}</td><td>${(r.activity||'').replace(/\n/g,'<br>')}</td></tr>`).join('');
+  const schedRows = (p.schedule||[]).map(r=>`<tr><td style="white-space:nowrap;text-align:center;vertical-align:middle">${r.date||''}</td><td style="text-align:center">${(r.time||'').split('\n').map(t=>`<span style="white-space:nowrap;display:block">${t}</span>`).join('')}</td><td>${(r.activity||'').split('\n').map(thaiWrap).join('<br>')}</td></tr>`).join('');
   const kpiGrid = items => {
     const rows = items||[];
     const inner = rows.length
-      ? rows.map((item,i)=>`<span>${i===0?':':''}</span><span>${item}</span>`).join('')
+      ? rows.map((item,i)=>`<span>${i===0?':':''}</span><span>${thaiWrap(item)}</span>`).join('')
       : '<span>:</span><span></span>';
     return `<div style="display:grid;grid-template-columns:max-content 1fr;gap:0 4pt">${inner}</div>`;
   };
-  const budgRows = (p.budget||[]).map(r=>`<tr><td>${(r.item||'').replace(/\n/g,'<br>')}</td><td style="text-align:right">${parseFloat(r.amount||0).toLocaleString('th-TH',{minimumFractionDigits:2})}</td></tr>`).join('');
+  const budgRows = (p.budget||[]).map(r=>`<tr><td>${(r.item||'').split('\n').map(thaiWrap).join('<br>')}</td><td style="text-align:right">${parseFloat(r.amount||0).toLocaleString('th-TH',{minimumFractionDigits:2})}</td></tr>`).join('');
   const _html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
 <title>โครงการ${p.projectName||''}</title>
 <style>
@@ -1565,7 +1607,7 @@ body{font-family:'TH SarabunIT๙','TH SarabunIT9','TH Sarabun New','Sarabun',sa
   margin:0;padding:0;color:#000}
 .page{width:100%;min-height:0;margin:0;padding:0;background:#fff}
 h2{text-align:center;font-size:16pt;margin:0;font-weight:700}
-.sec{margin-bottom:20pt;break-inside:avoid;page-break-inside:avoid}
+.sec{margin-bottom:20pt}
 .sec-title{font-weight:700;display:inline-block;margin-bottom:2pt}
 .indent1{padding-left:2em;margin-bottom:2pt}
 .indent2{padding-left:4em;margin-bottom:2pt}
@@ -1587,9 +1629,9 @@ table th{font-weight:700;text-align:center;background:#f0f0f0}
 ${LOGO_B64?`<div style="text-align:center;margin-top:0;margin-bottom:8pt"><img src="${LOGO_B64}" style="width:4.5cm;height:4.5cm;object-fit:contain"></div>`:''}
 <h2>โครงการ${p.projectName||'...........................................................................................................................'}  </h2>
 <h2>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</h2>
-<h2>ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. 2568</h2>
+<h2>ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. 25${p.planYear||'68'}</h2>
 <br>
-<div class="sec" style="display:flex;gap:0;align-items:baseline"><span class="sec-title" style="white-space:nowrap;flex-shrink:0">๑. ชื่อโครงการ&emsp;</span><span>โครงการ${p.projectName||''}</span></div>
+<div class="sec" style="display:flex;gap:0;align-items:baseline"><span class="sec-title" style="white-space:nowrap;flex-shrink:0">๑. ชื่อโครงการ&emsp;</span><span>โครงการ${thaiWrap(p.projectName||'')}</span></div>
 <div class="sec"><span class="sec-title">๒. ประเภทโครงการ</span>
 <div class="indent1">${chk(p.type21==='continuous')} โครงการต่อเนื่อง &emsp;&emsp; ${chk(p.type21==='new')} โครงการใหม่</div>
 <div class="indent1">${chk(p.type22==='inPlan')} โครงการตามแผนปฏิบัติการคณะเภสัชศาสตร์ ปีงบประมาณ พ.ศ. 25${p.planYear||'68'}</div>
@@ -1600,11 +1642,15 @@ ${LOGO_B64?`<div style="text-align:center;margin-top:0;margin-bottom:8pt"><img s
 <div class="indent1">${chk(p.buu3)} ยุทธศาสตร์ ๓ การพัฒนาสังคมอย่างยั่งยืน</div>
 <div class="indent1">${chk(p.buu4)} ยุทธศาสตร์ 4 การเพิ่มขีดความสามารถองค์กรผ่านการใช้ทรัพยากรเชิงกลยุทธ์</div></div>
 <div class="sec"><span class="sec-title">4. ความสอดคล้องกับพันธกิจและยุทธศาสตร์คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</span>
-<div class="indent1">${chk(p.m1)} <b>พันธกิจ ๑</b> ผลิตบุคลากรที่มีสมรรถนะด้านสุขภาพแม่นยำตอบสนองความต้องการของประเทศ<br><span style="display:inline-block;width:2.0em"></span><b>ยุทธศาสตร์ ๑</b> การพัฒนากำลังคนคุณภาพที่มีองค์ความรู้ด้านสุขภาพแม่นยำ เพื่อตอบสนองต่อความต้องการของประเทศ</div>
-<div class="indent1">${chk(p.m2)} <b>พันธกิจ ๒</b> สร้างงานวิจัยและนวัตกรรมที่เกี่ยวข้องกับสุขภาพแม่นยำในระดับสากล<br><span style="display:inline-block;width:2.0em"></span><b>ยุทธศาสตร์ ๒</b> การยกระดับคุณภาพงานวิจัย การเผยแพร่ความร่วมมือในระดับสากล และการนำไปใช้ประโยชน์</div>
-<div class="indent1">${chk(p.m3)} <b>พันธกิจ ๓</b> บริการวิชาการด้านสุขภาพแม่นยำแก่ประชาชน ชุมชน และสังคม<br><span style="display:inline-block;width:2.0em"></span><b>ยุทธศาสตร์ ๓</b> การพัฒนาการบริการวิชาการด้านสุขภาพแม่นยำกับชุมชนและสังคม เพื่อส่งเสริมคุณภาพชีวิต</div>
-<div class="indent1">${chk(p.m4)} <b>พันธกิจ ๔</b> ยกระดับความสามารถขององค์กร เพื่อมุ่งสู่ความเป็นเลิศ<br><span style="display:inline-block;width:2.0em"></span><b>ยุทธศาสตร์ ๔</b> การพัฒนาระบบการบริหารจัดการ เพื่อความยั่งยืนขององค์กรและสิ่งแวดล้อม</div></div>
-<div class="sec"><span class="sec-title">๕. ความสอดคล้องกับเกณฑ์คุณภาพการศึกษา EdPEx ฉบับปี ๒๕๖๗ - ๒๕๗๐</span>
+<div class="indent1" style="white-space:nowrap;margin-bottom:0">${chk(p.m1)} <b>พันธกิจ ๑</b> ผลิตบุคลากรที่มีสมรรถนะด้านสุขภาพแม่นยำตอบสนองความต้องการของประเทศ</div>
+<div style="display:flex;gap:0;align-items:baseline;padding-left:5.2em;margin-bottom:2pt"><span style="white-space:nowrap;flex-shrink:0"><b>ยุทธศาสตร์ ๑</b>&ensp;</span><span style="flex:1;min-width:0">การพัฒนากำลังคนคุณภาพที่มีองค์ความรู้ด้านสุขภาพแม่นยำ เพื่อตอบสนองต่อความต้องการของประเทศ</span></div>
+<div class="indent1" style="margin-bottom:0">${chk(p.m2)} <b>พันธกิจ ๒</b> สร้างงานวิจัยและนวัตกรรมที่เกี่ยวข้องกับสุขภาพแม่นยำในระดับสากล</div>
+<div style="display:flex;gap:0;align-items:baseline;padding-left:5.2em;margin-bottom:2pt"><span style="white-space:nowrap;flex-shrink:0"><b>ยุทธศาสตร์ ๒</b>&ensp;</span><span style="flex:1;min-width:0">การยกระดับคุณภาพงานวิจัย การเผยแพร่ความร่วมมือในระดับสากล <span style="white-space:nowrap">และการนำไปใช้ประโยชน์</span></span></div>
+<div class="indent1" style="margin-bottom:0">${chk(p.m3)} <b>พันธกิจ ๓</b> บริการวิชาการด้านสุขภาพแม่นยำแก่ประชาชน ชุมชน และสังคม</div>
+<div style="display:flex;gap:0;align-items:baseline;padding-left:5.2em;margin-bottom:2pt"><span style="white-space:nowrap;flex-shrink:0"><b>ยุทธศาสตร์ ๓</b>&ensp;</span><span style="flex:1;min-width:0">การพัฒนาการบริการวิชาการด้านสุขภาพแม่นยำกับชุมชนและสังคม <span style="white-space:nowrap">เพื่อส่งเสริมคุณภาพชีวิต</span></span></div>
+<div class="indent1" style="margin-bottom:0">${chk(p.m4)} <b>พันธกิจ ๔</b> ยกระดับความสามารถขององค์กร เพื่อมุ่งสู่ความเป็นเลิศ</div>
+<div style="display:flex;gap:0;align-items:baseline;padding-left:5.2em;margin-bottom:2pt;white-space:nowrap"><span style="flex-shrink:0"><b>ยุทธศาสตร์ ๔</b>&ensp;</span><span>การพัฒนาระบบการบริหารจัดการ เพื่อความยั่งยืนขององค์กรและสิ่งแวดล้อม</span></div></div>
+<div class="sec" style="break-before:page;page-break-before:always"><span class="sec-title">๕. ความสอดคล้องกับเกณฑ์คุณภาพการศึกษา EdPEx ฉบับปี ๒๕๖๗ - ๒๕๗๐</span>
 <div class="indent1">${chk(p.edpex1)} หมวด ๑ การนำองค์กร &emsp; ${chk(p.edpex2)} หมวด ๒ กลยุทธ์ &emsp; ${chk(p.edpex3)} หมวด ๓ ลูกค้า</div>
 <div class="indent1">${chk(p.edpex4)} หมวด ๔ การวัด การวิเคราะห์ และการจัดการความรู้ &emsp; ${chk(p.edpex5)} หมวด ๕ บุคลากร</div>
 <div class="indent1">${chk(p.edpex6)} หมวด ๖ การปฏิบัติการ &emsp; ${chk(p.edpex7)} หมวด ๗ ผลลัพธ์</div></div>
@@ -1628,40 +1674,40 @@ ${LOGO_B64?`<div style="text-align:center;margin-top:0;margin-bottom:8pt"><img s
 <div class="chk-row"><span class="chk-prefix">${chk(p.sdg16)} ๑๖.</span><span class="chk-text">ส่งเสริมสังคมที่สงบสุข ให้ทุกคนเข้าถึงความยุติธรรม</span></div>
 <div class="chk-row"><span class="chk-prefix">${chk(p.sdg17)} ๑๗.</span><span class="chk-text">เสริมความเข้มแข็งให้แก่กลไกการดำเนินงานและฟื้นฟูหุ้นส่วนความร่วมมือระดับโลกที่ยั่งยืน</span></div>
 </div>
-<div class="sec"><span class="sec-title">๗. หลักการและเหตุผล</span><br><div class="indent1" style="white-space:pre-wrap">${p.rationale||''}</div></div>
+<div class="sec" style="break-before:page;page-break-before:always"><span class="sec-title">๗. หลักการและเหตุผล</span><br><div class="indent1" style="white-space:pre-wrap">${(p.rationale||'').split('\n').map(thaiWrap).join('\n')}</div></div>
 <div class="sec"><span class="sec-title">๘. วัตถุประสงค์</span>
-${(p.objectives||[]).map((o,i)=>`<div class="indent1">๘.${toThai(i+1)} ${o}</div>`).join('')}
+${(p.objectives||[]).map((o,i)=>`<div class="indent1">๘.${toThai(i+1)} ${thaiWrap(o)}</div>`).join('')}
 </div>
-<div class="sec"><span class="sec-title">๙. หน่วยงานที่รับผิดชอบ</span><br><div class="indent1">${p.dept||''}</div></div>
+<div class="sec"><span class="sec-title">๙. หน่วยงานที่รับผิดชอบ</span><br><div class="indent1">${thaiWrap(p.dept||'')}</div></div>
 <div class="sec"><span class="sec-title">๑๐. ผู้รับผิดชอบโครงการ</span>
-${(p.coordinators||[]).map(c=>`<div class="indent1">${c}</div>`).join('')}
+${(p.coordinators||[]).map(c=>`<div class="indent1">${thaiWrap(c)}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๑. ระยะเวลาดำเนินการ</span><br><div class="indent1">${fmtDate(p.startDate)||'วันที่......เดือน......พ.ศ....'} – ${fmtDate(p.endDate)||'วันที่......เดือน......พ.ศ....'}</div></div>
-<div class="sec"><span class="sec-title">๑๒. สถานที่ดำเนินงาน</span><br><div class="indent1">${p.location||''}</div></div>
+<div class="sec"><span class="sec-title">๑๒. สถานที่ดำเนินงาน</span><br><div class="indent1">${thaiWrap(p.location||'')}</div></div>
 <div class="sec"><span class="sec-title">๑๓. กลุ่มเป้าหมายและจำนวน</span>
 <table class="tgt-tbl">
-${(p.targets||[]).map((t,i)=>`<tr><td class="tgt-td-name">๑๓.${toThai(i+1)} ${t.name}</td><td class="tgt-td-label">จำนวน</td><td class="tgt-td-cnt">${t.count||'...'}</td><td class="tgt-td-unit">คน</td></tr>`).join('')}
+${(p.targets||[]).map((t,i)=>`<tr><td class="tgt-td-name">๑๓.${toThai(i+1)} ${thaiWrap(t.name)}</td><td class="tgt-td-label">จำนวน</td><td class="tgt-td-cnt">${t.count||'...'}</td><td class="tgt-td-unit">คน</td></tr>`).join('')}
 <tr class="tgt-total"><td class="tgt-td-name" style="padding-left:4.5em;text-indent:0">รวมทั้งสิ้น</td><td class="tgt-td-label"></td><td class="tgt-td-cnt">${(p.targets||[]).reduce((s,t)=>s+(parseInt(t.count||0)||0),0).toLocaleString('th-TH')}</td><td class="tgt-td-unit">คน</td></tr>
 </table>
 </div>
 <div class="sec"><span class="sec-title">๑๔. ผลที่คาดว่าจะได้รับ</span>
-${(p.results||[]).map((r,i)=>`<div class="indent1">๑๔.${toThai(i+1)} ${r}</div>`).join('')}
+${(p.results||[]).map((r,i)=>`<div class="indent1">๑๔.${toThai(i+1)} ${thaiWrap(r)}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๕. วิธีการประเมินผลโครงการ</span>
 <div class="indent1">๑๕.๑ ประเมินจำนวนผู้เข้าร่วมโครงการ</div>
 <div class="indent1">๑๕.๒ ประเมินความพึงพอใจของผู้เข้าร่วมโครงการ</div>
-${(p.evals||[]).map((e,i)=>`<div class="indent1">๑๕.${toThai(i+3)} ${e}</div>`).join('')}
+${(p.evals||[]).map((e,i)=>`<div class="indent1">๑๕.${toThai(i+3)} ${thaiWrap(e)}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๖. วิธีดำเนินโครงการ</span>
 <div class="indent1"><strong>๑๖.๑ ขั้นเตรียมการ</strong></div>
-${(p.phase1Items||[]).map((item,i)=>`<div class="indent2">๑๖.๑.${toThai(i+1)} ${item}</div>`).join('')}
+${(p.phase1Items||[]).map((item,i)=>`<div class="indent2">๑๖.๑.${toThai(i+1)} ${thaiWrap(item)}</div>`).join('')}
 <div class="indent1"><strong>๑๖.๒ ขั้นดำเนินการ</strong></div>
-${(p.phase2Items||[]).map((item,i)=>`<div class="indent2">๑๖.๒.${toThai(i+1)} ${item}</div>`).join('')}
+${(p.phase2Items||[]).map((item,i)=>`<div class="indent2">๑๖.๒.${toThai(i+1)} ${thaiWrap(item)}</div>`).join('')}
 <div class="indent1"><strong>๑๖.๓ ขั้นสรุปผล</strong></div>
-${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+1)} ${item}</div>`).join('')}
+${(p.phase3Items||[]).map((item,i)=>`<div class="indent2">๑๖.๓.${toThai(i+1)} ${thaiWrap(item)}</div>`).join('')}
 </div>
 <div class="sec"><span class="sec-title">๑๗. กำหนดการโครงการ</span>
-<table><tr><th style="width:20%">วันที่</th><th style="width:28%">เวลา</th><th>กิจกรรม</th></tr>${schedRows||'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>'}</table></div>
+<table style="table-layout:auto"><thead><tr><th style="width:20%;text-align:center">วันที่</th><th style="white-space:nowrap;text-align:center">เวลา</th><th>กิจกรรม</th></tr></thead><tbody>${schedRows||'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>'}</tbody></table></div>
 <div class="sec"><span class="sec-title">๑๘. เป้าหมายผลผลิต</span>
 <div class="indent1" style="display:grid;grid-template-columns:max-content auto;gap:2pt 6pt;align-items:start">
   <strong>ตัวชี้วัดปริมาณ</strong>${kpiGrid(p.kpiQty)}
@@ -1719,15 +1765,20 @@ async function exportWordById(id, ownerEmail){
 }
 
 async function buildWordDoc(p){
+  console.log('[Word] rationale raw:', JSON.stringify((p.rationale||'').substring(0,80)));
   const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,
-    AlignmentType,WidthType,BorderStyle,HeightRule,VerticalAlign,ImageRun} = docx;
+    AlignmentType,WidthType,BorderStyle,HeightRule,VerticalAlign,ImageRun,TabStopType} = docx;
 
   const FONT = 'TH SarabunIT๙';
   const SZ = 32;    // 16pt
 
   function run(text, opts={}){
-    return new TextRun({text:String(text||''), font:FONT,
+    // Strip ALL line-break characters before passing to docx.js
+    // docx.js v8 converts \n in TextRun text into <w:br/> hard breaks
+    const safeText = String(text||'').replace(/[\r\n  ]+/g, ' ');
+    return new TextRun({text:safeText, font:FONT,
       size: opts.size||SZ, bold:!!opts.bold, italics:!!opts.italic,
+      break: opts.break||undefined,
       language:{value:'th-TH'}});
   }
   function para(runs, opts={}){
@@ -1796,7 +1847,7 @@ async function buildWordDoc(p){
     // Header
     para([run(`โครงการ${p.projectName||'…………………………………………………………………………'}`,{bold:true})],{center:true}),
     para([run('คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา',{bold:true})],{center:true}),
-    para([run('ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘',{bold:true})],{center:true}),
+    para([run(`ของบประมาณรายจ่ายจากเงินรายได้ ประจำปีงบประมาณ พ.ศ. ${thDigits('25'+(p.planYear||'68'))}`,{bold:true})],{center:true}),
     blank(),
     // 1
     new Paragraph({spacing:{before:0,after:0,line:240,lineRule:'auto'},children:[run('๑. ชื่อโครงการ',{bold:true}),run(` โครงการ${p.projectName||''}`)]}),
@@ -1813,10 +1864,14 @@ async function buildWordDoc(p){
     new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.buu4),run('ยุทธศาสตร์ 4 การเพิ่มขีดความสามารถองค์กรผ่านการใช้ทรัพยากรเชิงกลยุทธ์')]}),
     // 4
     heading('4. ความสอดคล้องกับพันธกิจและยุทธศาสตร์คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา ปีงบประมาณ พ.ศ. ๒๕๖๘ – ๒๕๗๑'),
-    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m1),run('พันธกิจ ๑ ผลิตบุคลากรที่มีสมรรถนะด้านสุขภาพแม่นยำตอบสนองความต้องการของประเทศ'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('     ยุทธศาสตร์ ๑ การพัฒนากำลังคนคุณภาพที่มีองค์ความรู้ด้านสุขภาพแม่นยำ เพื่อตอบสนองต่อความต้องการของประเทศ')]}),
-    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m2),run('พันธกิจ ๒ สร้างงานวิจัยและนวัตกรรมที่เกี่ยวข้องกับสุขภาพแม่นยำในระดับสากล'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('     ยุทธศาสตร์ ๒ การยกระดับคุณภาพงานวิจัย การเผยแพร่ความร่วมมือในระดับสากล และการนำไปใช้ประโยชน์')]}),
-    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m3),run('พันธกิจ ๓ บริการวิชาการด้านสุขภาพแม่นยำแก่ประชาชน ชุมชน และสังคม'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('     ยุทธศาสตร์ ๓ การพัฒนาการบริการวิชาการด้านสุขภาพแม่นยำกับชุมชนและสังคม เพื่อส่งเสริมคุณภาพชีวิต')]}),
-    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m4),run('พันธกิจ ๔ ยกระดับความสามารถขององค์กร เพื่อมุ่งสู่ความเป็นเลิศ'),new TextRun({text:'',break:1,font:FONT,language:{value:'th-TH'}}),run('     ยุทธศาสตร์ ๔ การพัฒนาระบบการบริหารจัดการ เพื่อความยั่งยืนขององค์กรและสิ่งแวดล้อม')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m1),run('พันธกิจ ๑ ผลิตบุคลากรที่มีสมรรถนะด้านสุขภาพแม่นยำตอบสนองความต้องการของประเทศ')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:2350,hanging:1250},tabStops:[{type:TabStopType.LEFT,position:2350}],children:[run('ยุทธศาสตร์ ๑\tการพัฒนากำลังคนคุณภาพที่มีองค์ความรู้ด้านสุขภาพแม่นยำ เพื่อตอบสนองต่อความต้องการของประเทศ')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m2),run('พันธกิจ ๒ สร้างงานวิจัยและนวัตกรรมที่เกี่ยวข้องกับสุขภาพแม่นยำในระดับสากล')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:2350,hanging:1250},tabStops:[{type:TabStopType.LEFT,position:2350}],children:[run('ยุทธศาสตร์ ๒\tการยกระดับคุณภาพงานวิจัย การเผยแพร่ความร่วมมือในระดับสากล และการนำไปใช้ประโยชน์')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m3),run('พันธกิจ ๓ บริการวิชาการด้านสุขภาพแม่นยำแก่ประชาชน ชุมชน และสังคม')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:2350,hanging:1250},tabStops:[{type:TabStopType.LEFT,position:2350}],children:[run('ยุทธศาสตร์ ๓\tการพัฒนาการบริการวิชาการด้านสุขภาพแม่นยำกับชุมชนและสังคม เพื่อส่งเสริมคุณภาพชีวิต')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.m4),run('พันธกิจ ๔ ยกระดับความสามารถขององค์กร เพื่อมุ่งสู่ความเป็นเลิศ')]}),
+    new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:2350,hanging:1250},tabStops:[{type:TabStopType.LEFT,position:2350}],children:[run('ยุทธศาสตร์ ๔\tการพัฒนาระบบการบริหารจัดการ เพื่อความยั่งยืนขององค์กรและสิ่งแวดล้อม')]}),
     // 5 EdPEx
     heading('๕. ความสอดคล้องกับเกณฑ์คุณภาพการศึกษา EdPEx ฉบับปี ๒๕๖๗ - ๒๕๗๐'),
     new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[chkR(p.edpex1),run('หมวด ๑ การนำองค์กร\t\t'),chkR(p.edpex2),run('หมวด ๒ กลยุทธ์\t\t'),chkR(p.edpex3),run('หมวด ๓ ลูกค้า')]}),
@@ -1844,7 +1899,9 @@ async function buildWordDoc(p){
     new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:1280,hanging:640},children:[chkR(p.sdg17),run('๑๗. เสริมความเข้มแข็งให้แก่กลไกการดำเนินงานและฟื้นฟูหุ้นส่วนความร่วมมือระดับโลกที่ยั่งยืน')]}),
     // 7
     heading('๗. หลักการและเหตุผล'),
-    ...((p.rationale||'').split('\n').map(line=>para(line,{indent:{left:640}}))),
+    new Paragraph({children:[run((p.rationale||'').trimStart().replace(/[\r\n]+/g,' ').replace(/ {2,}/g,' '))]}),
+
+
     // 8
     heading('๘. วัตถุประสงค์'),
     ...(p.objectives||[]).map((o,i)=>para(`๘.${toThai(i+1)} ${o}`,{indent:{left:640}})),
@@ -1980,7 +2037,8 @@ async function buildWordDoc(p){
     styles:{
       default:{
         document:{
-          run:{size:SZ, language:{value:'th-TH'}}
+          run:{size:SZ, language:{value:'th-TH'}},
+          paragraph:{spacing:{before:0, after:0, line:240, lineRule:'auto'}}
         }
       }
     },
