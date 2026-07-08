@@ -1775,7 +1775,7 @@ async function buildWordDoc(p){
   function run(text, opts={}){
     // Strip ALL line-break characters before passing to docx.js
     // docx.js v8 converts \n in TextRun text into <w:br/> hard breaks
-    const safeText = String(text||'').replace(/[\r\n\u2028\u2029\u0085\u000b\u000c]+/g, ' ');
+    const safeText = String(text||'').replace(/[\r\n\t\u2028\u2029\u0085\u000b\u000c]+/g, ' ');
     return new TextRun({text:safeText, font:FONT,
       size: opts.size||SZ, bold:!!opts.bold, italics:!!opts.italic,
       break: opts.break||undefined,
@@ -1899,21 +1899,7 @@ async function buildWordDoc(p){
     new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:1280,hanging:640},children:[chkR(p.sdg17),run('๑๗. เสริมความเข้มแข็งให้แก่กลไกการดำเนินงานและฟื้นฟูหุ้นส่วนความร่วมมือระดับโลกที่ยั่งยืน')]}),
     // 7
     heading('๗. หลักการและเหตุผล'),
-    ...(function(){
-      var raw = (p.rationale||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-      // Split ONLY on blank lines or newline+indent (true paragraph breaks)
-      // Single bare \n = line continuation → joined with space in same paragraph
-      return raw.split(/\n[ \t]+|\n\n+/).map(function(block){
-        var text = block.replace(/\n/g,' ').replace(/[ \t]+/g,' ').trim();
-        if(!text) return null;
-        return new Paragraph({
-          alignment: AlignmentType.BOTH,
-          indent: {firstLine:720},
-          spacing: {before:0, after:0, line:240, lineRule:'auto'},
-          children: [run(text)]
-        });
-      }).filter(Boolean);
-    })(),
+    para(p.rationale||''),
 
 
     // 8
@@ -2166,4 +2152,4 @@ function toggleSDGItem(){
 })();
 </script>
 </body>
-</html>
+</html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
