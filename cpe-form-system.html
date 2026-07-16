@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบแบบฟอร์ม CPE · คณะเภสัชศาสตร์</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="auth.js?v=2"></script>
+<script>if(!getUser()){location.replace('login.html');}</script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030014;--card:#0d0d22;--brd:rgba(139,92,246,.2);--brdw:rgba(255,255,255,.07);
+  --txt:#e8e8ff;--sub:#888aaa;--accent:#a78bfa;--cyan:#22d3ee;--pink:#ec4899;--green:#34d399;
+  --font:'Prompt',sans-serif;--mono:'Prompt',sans-serif;
+  --radius:14px;--tr:.25s ease;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;position:relative;overflow-x:hidden;font-size:16px;line-height:1.7}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 55% at 8% 50%,rgba(6,182,212,.16) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 55% at 92% 40%,rgba(139,92,246,.18) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 40% at 50% 60%,rgba(219,39,119,.1) 0%,transparent 65%),
+    radial-gradient(ellipse 100% 100% at 50% 50%,#0a061a 0%,#06040f 100%);
+  animation:nebulaBreath 18s ease-in-out infinite alternate}
+@keyframes nebulaBreath{0%{opacity:1}50%{opacity:.88}100%{opacity:1}}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(1.5px 1.5px at 15% 22%,rgba(255,255,255,.35) 0%,transparent 100%),
+    radial-gradient(1px 1px at 38% 8%,rgba(255,255,255,.25) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 62% 18%,rgba(255,255,255,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 80% 5%,rgba(255,255,255,.2) 0%,transparent 100%),
+    radial-gradient(2px 2px at 91% 35%,rgba(255,255,255,.28) 0%,transparent 100%),
+    radial-gradient(1px 1px at 5% 70%,rgba(255,255,255,.2) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 75%,rgba(255,255,255,.25) 0%,transparent 100%),
+    radial-gradient(1px 1px at 48% 90%,rgba(255,255,255,.2) 0%,transparent 100%),
+    radial-gradient(2px 2px at 25% 88%,rgba(200,180,255,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 85% 92%,rgba(255,255,255,.2) 0%,transparent 100%)}
+#mouse-nebula{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse 40% 35% at 50% 50%,rgba(139,92,246,.2) 0%,transparent 70%)}
+.navbar{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:14px;padding:12px 24px;
+  background:rgba(3,0,20,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--brd)}
+.navbar-info{flex:1}
+.navbar-info h1{font-size:.92rem;font-weight:700;letter-spacing:.04em;color:#c4b5fd;line-height:1.2}
+.navbar-info p{font-size:.68rem;color:var(--sub)}
+.btn-home{background:none;border:1px solid var(--brd);color:var(--sub);font-family:var(--font);
+  font-size:.8rem;padding:.4rem 1rem;border-radius:20px;cursor:pointer;transition:var(--tr)}
+.btn-home:hover{border-color:#a78bfa;color:#a78bfa}
+.container{max-width:860px;margin:0 auto;padding:28px 20px 80px;position:relative;z-index:2}
+.hero{padding:28px 32px;margin-bottom:24px;background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.06));
+  border:1px solid rgba(139,92,246,.25);border-radius:var(--radius);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(139,92,246,.08),transparent 60%)}
+.hero h2{font-weight:700;font-size:1.4rem;color:#fff;margin-bottom:4px}
+.hero p{font-size:.85rem;color:var(--sub)}
+.fsec{background:rgba(255,255,255,.03);border:1px solid var(--brdw);border-radius:var(--radius);
+  padding:24px;margin-bottom:16px;transition:border-color .3s}
+.fsec:hover{border-color:rgba(139,92,246,.2)}
+.fsec-title{font-size:.95rem;font-weight:700;color:#c4b5fd;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px}
+.fsec-title::before{content:'';width:3px;height:18px;background:linear-gradient(180deg,#a78bfa,#22d3ee);border-radius:2px;flex-shrink:0}
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:180px}
+.form-group.full{flex:100%;min-width:0}
+.form-group label{font-size:.78rem;font-weight:600;color:var(--sub);letter-spacing:.04em}
+.form-group input[type=text],.form-group input[type=date],.form-group input[type=number],.form-group textarea,.form-group select{
+  background:rgba(255,255,255,.05);border:1px solid var(--brdw);border-radius:9px;
+  color:var(--txt);font-family:var(--font);font-size:.92rem;padding:9px 13px;
+  outline:none;transition:var(--tr);width:100%}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+  border-color:rgba(139,92,246,.55);box-shadow:0 0 0 3px rgba(139,92,246,.1);background:rgba(255,255,255,.07)}
+.form-group textarea{resize:vertical;min-height:72px}
+/* Search input */
+.search-wrap{position:relative;margin-bottom:20px}
+.search-wrap input{width:100%;padding:13px 48px 13px 18px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid var(--brdw);
+  color:var(--txt);font-family:var(--font);font-size:1rem;outline:none;transition:var(--tr)}
+.search-wrap input:focus{border-color:rgba(139,92,246,.5);box-shadow:0 0 0 3px rgba(139,92,246,.08)}
+.search-wrap .s-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--sub);pointer-events:none}
+.search-results{background:rgba(13,13,34,.96);border:1px solid rgba(139,92,246,.25);
+  border-radius:10px;margin-top:4px;overflow:hidden;display:none}
+.search-results.open{display:block}
+.s-result-item{padding:11px 16px;cursor:pointer;transition:background .12s;font-size:.92rem;display:flex;align-items:center;justify-content:space-between}
+.s-result-item:hover{background:rgba(139,92,246,.12)}
+.s-result-item .sr-name{font-weight:600;color:var(--txt)}
+.s-result-item .sr-date{font-size:.72rem;color:var(--sub)}
+.s-empty{padding:14px 16px;font-size:.85rem;color:var(--sub);text-align:center}
+/* Status card */
+.status-card{border-radius:14px;padding:22px 24px;margin-bottom:20px;display:none}
+.status-card.show{display:block}
+.status-card.valid{background:rgba(52,211,153,.08);border:1.5px solid rgba(52,211,153,.3)}
+.status-card.warning{background:rgba(251,191,36,.08);border:1.5px solid rgba(251,191,36,.28)}
+.status-card.expired{background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.28)}
+.sc-org{font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px}
+.sc-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sc-label{font-size:.75rem;color:var(--sub);min-width:100px}
+.sc-val{font-size:.88rem;font-weight:600}
+.sc-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:700}
+.badge-valid{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3)}
+.badge-warning{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.badge-expired{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.sc-btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+/* Buttons */
+.btn{padding:10px 22px;border-radius:10px;font-family:var(--font);font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);letter-spacing:.02em}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;box-shadow:0 4px 20px rgba(124,58,237,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.45)}
+.btn-danger{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.28)}
+.btn-danger:hover{background:rgba(239,68,68,.22)}
+.btn-outline{background:rgba(255,255,255,.05);color:var(--sub);border:1px solid var(--brdw)}
+.btn-outline:hover{border-color:#a78bfa;color:#a78bfa}
+.btn-green{background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.28)}
+.btn-green:hover{background:rgba(52,211,153,.22)}
+.btn-sm{padding:6px 14px;font-size:.78rem;border-radius:8px}
+/* Admin add org */
+.admin-add-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+/* Renewal steps */
+.step-list{counter-reset:step;display:flex;flex-direction:column;gap:14px}
+.step-item{display:flex;gap:14px;align-items:flex-start}
+.step-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#2563eb);
+  display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;
+  color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+.step-body{padding-top:4px}
+.step-title{font-size:.92rem;font-weight:700;color:var(--txt);margin-bottom:3px}
+.step-desc{font-size:.8rem;color:var(--sub);line-height:1.6}
+/* Renew step cards */
+.renew-step-card{background:rgba(248,250,255,.85);border:1.5px solid rgba(200,210,230,.4);border-radius:14px;margin-bottom:16px;overflow:hidden;transition:.2s}
+.renew-step-card.done{border-color:rgba(5,150,105,.35);background:rgba(5,150,105,.04)}
+.rsc-header{display:flex;gap:14px;align-items:flex-start;padding:16px 18px 0}
+.rsc-num{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#5a7bff,#0891b2);
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;
+  color:#fff;flex-shrink:0;box-shadow:0 4px 12px rgba(90,123,255,.28);margin-top:2px}
+.rsc-info{flex:1}
+.rsc-title{font-size:.94rem;font-weight:700;color:#16181f;margin-bottom:4px}
+.rsc-desc{font-size:.8rem;color:#6a6d77;line-height:1.65}
+.rsc-body{padding:12px 18px 16px 66px}
+.rsc-dl{font-size:.78rem !important;padding:5px 12px !important;margin-bottom:4px}
+.rsc-upload-label{font-size:.76rem;font-weight:600;color:#6a6d77;margin-bottom:6px}
+.rsc-zone{padding:14px 10px !important}
+.rsc-zone .fz-label{font-size:.78rem}
+.rsc-attached{display:flex;align-items:center;gap:8px;background:rgba(5,150,105,.08);
+  border:1px solid rgba(5,150,105,.25);border-radius:8px;padding:7px 12px;font-size:.78rem;
+  color:#059669;font-weight:600;margin-top:6px}
+.rsc-attached .rsc-rm{margin-left:auto;cursor:pointer;opacity:.6;font-size:.9rem}
+.rsc-attached .rsc-rm:hover{opacity:1;color:#dc2626}
+/* File upload zone */
+.file-zone{border:2px dashed rgba(139,92,246,.3);border-radius:12px;padding:20px;
+  text-align:center;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
+.file-zone:hover,.file-zone.drag{border-color:#a78bfa;background:rgba(139,92,246,.06)}
+.file-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.fz-icon{font-size:1.8rem;margin-bottom:6px}
+.fz-label{font-size:.85rem;font-weight:600;color:var(--sub)}
+.fz-sub{font-size:.72rem;color:rgba(136,138,170,.6);margin-top:3px}
+/* File attached state */
+.file-attached{display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.22);
+  border-radius:10px;margin-top:8px;display:none}
+.file-attached.show{display:flex}
+.fa-icon{font-size:1.3rem;flex-shrink:0}
+.fa-info{flex:1;min-width:0}
+.fa-name{font-size:.85rem;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-size{font-size:.7rem;color:var(--sub)}
+.fa-remove{background:none;border:none;color:rgba(239,68,68,.6);cursor:pointer;font-size:.85rem;padding:4px;flex-shrink:0;transition:var(--tr)}
+.fa-remove:hover{color:#f87171}
+/* Progress bar */
+.upload-progress{height:4px;background:rgba(139,92,246,.15);border-radius:2px;margin-top:8px;overflow:hidden;display:none}
+.upload-progress.show{display:block}
+.up-bar{height:100%;background:linear-gradient(90deg,#7c3aed,#22d3ee);border-radius:2px;width:0%;transition:width .2s}
+.up-text{font-size:.72rem;color:var(--sub);margin-top:4px;display:none}
+.up-text.show{display:block}
+/* Speaker list */
+.speaker-card{background:rgba(255,255,255,.03);border:1px solid var(--brdw);border-radius:12px;
+  padding:16px;margin-bottom:12px;position:relative}
+.speaker-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.speaker-num{font-size:.78rem;font-weight:700;color:#a78bfa;letter-spacing:.06em}
+.btn-del-speaker{background:none;border:none;color:rgba(239,68,68,.5);cursor:pointer;font-size:.9rem;
+  padding:4px 8px;border-radius:6px;transition:var(--tr)}
+.btn-del-speaker:hover{color:#f87171;background:rgba(239,68,68,.1)}
+/* User badge */
+.user-badge{display:flex;align-items:center;gap:8px;padding:5px 14px;border-radius:20px;
+  background:rgba(255,255,255,.05);border:1px solid var(--brdw);font-size:.78rem;color:var(--sub);white-space:nowrap}
+.user-badge .ub-name{color:var(--txt);font-weight:600}
+.user-badge .ub-role{font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:700}
+.ub-role.admin{background:rgba(204,255,0,.15);color:#CCFF00;border:1px solid rgba(204,255,0,.3)}
+.ub-role.user{background:rgba(34,211,238,.1);color:#22d3ee;border:1px solid rgba(34,211,238,.25)}
+.btn-logout{padding:5px 12px;border-radius:10px;background:rgba(239,68,68,.1);color:#f87171;
+  border:1px solid rgba(239,68,68,.2);font-size:.75rem;cursor:pointer;font-family:var(--font);transition:var(--tr)}
+.btn-logout:hover{background:rgba(239,68,68,.25)}
+/* Toast */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;padding:12px 22px;
+  border-radius:12px;font-size:.88rem;font-weight:600;opacity:0;transform:translateY(12px);
+  transition:.3s;pointer-events:none;backdrop-filter:blur(20px);max-width:340px}
+.toast.show{opacity:1;transform:none}
+.toast.ok{background:rgba(52,211,153,.2);border:1px solid rgba(52,211,153,.4);color:#6ee7b7}
+.toast.err{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+.toast.warn{background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.35);color:#fcd34d}
+@media(max-width:600px){.container{padding:16px 14px 80px}.hero{padding:20px 18px}.fsec{padding:18px 16px}.btn{font-size:.82rem;padding:9px 16px}}
+</style>
+
+<!-- ══════ AURA LIGHT THEME OVERRIDE ══════ -->
+<style>
+:root{
+  --bg:#eceff5 !important;--card:rgba(255,255,255,.52) !important;
+  --brd:rgba(200,210,230,.55) !important;--brdw:rgba(255,255,255,.82) !important;
+  --txt:#16181f !important;--sub:#6a6d77 !important;--accent:#5a7bff !important;
+  --cyan:#0891b2 !important;--pink:#db2777 !important;--green:#059669 !important;
+  --fg:#16181f !important;--font:'Prompt',sans-serif;--mono:'Prompt',sans-serif;--radius:14px !important;
+}
+body{background:#eceff5 !important;color:#16181f !important}
+body::before,body::after{display:none !important}
+#mouse-nebula{display:none !important}
+@keyframes auSpinForm{to{transform:rotate(360deg)}}
+.au-orb{position:fixed;border-radius:50%;pointer-events:none;z-index:1}
+.au-orb1{width:500px;height:500px;background:conic-gradient(from 0deg,#86c5ff,#c5a0ff,#ff95d0,#95f5d0,#86c5ff);filter:blur(80px) hue-rotate(calc(var(--hue,0)*1deg));opacity:.52;left:calc(6% + var(--mx,.5)*50%);top:calc(-20% + var(--my,.5)*50%);animation:auSpinForm 26s linear infinite}
+.au-orb2{width:360px;height:360px;background:conic-gradient(from 130deg,#95f5d0,#86c5ff,#c5a0ff,#95f5d0);filter:blur(70px) hue-rotate(calc(var(--hue,0)*-.8deg));opacity:.42;left:calc(55% - var(--mx,.5)*50%);top:calc(32% + var(--my,.5)*38%);animation:auSpinForm 38s linear infinite reverse}
+.au-orb3{width:250px;height:250px;background:conic-gradient(from 240deg,#ffd090,#ff95d0,#b9a4ff);filter:blur(58px) hue-rotate(calc(var(--hue,0)*1.6deg));opacity:.4;left:calc(2% + var(--mx,.5)*22%);top:calc(16% + var(--my,.5)*48%);animation:auSpinForm 44s linear infinite}
+#au-cursor{position:fixed;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle at center,rgba(255,255,255,.18),transparent 65%);pointer-events:none;z-index:5;transform:translate(-50%,-50%)}
+.navbar{background:rgba(245,247,252,.52) !important;backdrop-filter:blur(24px) !important;-webkit-backdrop-filter:blur(24px) !important;border-bottom:1px solid rgba(200,210,230,.5) !important}
+.navbar-info h1{color:#16181f !important;font-size:.9rem !important;letter-spacing:.04em !important}
+.navbar-info p{color:#6a6d77 !important}
+.btn-home{background:rgba(255,255,255,.42) !important;border:1px solid rgba(255,255,255,.82) !important;color:#16181f !important;backdrop-filter:blur(10px) !important;border-radius:20px !important;font-size:.76rem !important;font-weight:600 !important}
+.btn-home:hover{background:rgba(255,255,255,.72) !important}
+.hero{background:rgba(255,255,255,.46) !important;border:1px solid rgba(255,255,255,.82) !important;backdrop-filter:blur(20px) !important;box-shadow:0 4px 18px -6px rgba(0,0,0,.09) !important}
+.hero::before{display:none !important}
+.hero h2{color:#16181f !important}
+.hero p{color:#6a6d77 !important}
+.fsec{background:rgba(255,255,255,.46) !important;border:1px solid rgba(255,255,255,.82) !important;backdrop-filter:blur(20px) !important;box-shadow:0 3px 14px -5px rgba(0,0,0,.08) !important}
+.fsec:hover{border-color:rgba(90,123,255,.3) !important}
+.fsec-title{color:#16181f !important}
+.fsec-title::before{background:linear-gradient(180deg,#5a7bff,#0891b2) !important}
+.form-group label{color:#6a6d77 !important}
+.form-group input[type=text],.form-group input[type=date],.form-group input[type=number],.form-group textarea,.form-group select{background:rgba(255,255,255,.72) !important;border:1px solid rgba(200,210,230,.6) !important;color:#16181f !important}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:rgba(90,123,255,.5) !important;box-shadow:0 0 0 3px rgba(90,123,255,.1) !important;background:rgba(255,255,255,.9) !important}
+.form-group input::placeholder,.form-group textarea::placeholder{color:rgba(74,77,87,.35) !important}
+.search-wrap input{background:rgba(255,255,255,.72) !important;border:1px solid rgba(200,210,230,.6) !important;color:#16181f !important}
+.search-wrap input:focus{border-color:rgba(90,123,255,.5) !important;box-shadow:0 0 0 3px rgba(90,123,255,.1) !important;background:#fff !important}
+.search-wrap input::placeholder{color:rgba(74,77,87,.35) !important}
+.search-results{background:rgba(255,255,255,.96) !important;border:1px solid rgba(200,210,230,.5) !important;box-shadow:0 8px 30px rgba(0,0,0,.08) !important;backdrop-filter:blur(20px) !important}
+.s-result-item:hover{background:rgba(90,123,255,.07) !important}
+.s-result-item .sr-name{color:#16181f !important}
+.s-result-item .sr-date{color:#6a6d77 !important}
+.s-empty{color:#6a6d77 !important}
+.status-card.valid{background:rgba(5,150,105,.06) !important;border-color:rgba(5,150,105,.3) !important}
+.status-card.warning{background:rgba(217,119,6,.06) !important;border-color:rgba(217,119,6,.3) !important}
+.status-card.expired{background:rgba(220,38,38,.06) !important;border-color:rgba(220,38,38,.28) !important}
+.sc-org{color:#16181f !important}
+.sc-label{color:#6a6d77 !important}
+.btn-primary{background:linear-gradient(135deg,#5a7bff,#2563eb) !important;box-shadow:0 4px 20px rgba(90,123,255,.28) !important}
+.btn-primary:hover{box-shadow:0 8px 30px rgba(90,123,255,.45) !important}
+.btn-danger{background:rgba(220,38,38,.07) !important;color:#dc2626 !important;border-color:rgba(220,38,38,.22) !important}
+.btn-danger:hover{background:rgba(220,38,38,.15) !important}
+.btn-outline{background:rgba(255,255,255,.52) !important;border:1px solid rgba(200,210,230,.6) !important;color:#6a6d77 !important}
+.btn-outline:hover{border-color:rgba(90,123,255,.4) !important;color:#5a7bff !important;background:rgba(90,123,255,.05) !important}
+.btn-green{background:rgba(5,150,105,.08) !important;color:#059669 !important;border-color:rgba(5,150,105,.25) !important}
+.btn-green:hover{background:rgba(5,150,105,.18) !important}
+.step-num{background:linear-gradient(135deg,#5a7bff,#0891b2) !important;box-shadow:0 4px 14px rgba(90,123,255,.25) !important}
+.step-title{color:#16181f !important}
+.step-desc{color:#6a6d77 !important}
+.file-zone{border-color:rgba(90,123,255,.3) !important}
+.file-zone:hover,.file-zone.drag{border-color:#5a7bff !important;background:rgba(90,123,255,.04) !important}
+.fz-label{color:#6a6d77 !important}
+.file-attached{background:rgba(90,123,255,.07) !important;border-color:rgba(90,123,255,.2) !important}
+.fa-name{color:#16181f !important}
+.fa-size{color:#6a6d77 !important}
+.upload-progress{background:rgba(90,123,255,.12) !important}
+.up-bar{background:linear-gradient(90deg,#5a7bff,#0891b2) !important}
+.up-text{color:#6a6d77 !important}
+.speaker-card{background:rgba(255,255,255,.36) !important;border:1px solid rgba(200,210,230,.45) !important}
+.speaker-num{color:#5a7bff !important}
+.user-badge{background:rgba(255,255,255,.42) !important;border:1px solid rgba(255,255,255,.82) !important;color:#6a6d77 !important;backdrop-filter:blur(12px) !important}
+.user-badge .ub-name{color:#16181f !important}
+.ub-role.admin{background:rgba(90,123,255,.1) !important;color:#5a7bff !important;border-color:rgba(90,123,255,.28) !important}
+.ub-role.user{background:rgba(8,145,178,.1) !important;color:#0891b2 !important;border-color:rgba(8,145,178,.25) !important}
+.btn-logout{background:rgba(220,38,38,.07) !important;border-color:rgba(220,38,38,.18) !important;color:#dc2626 !important}
+.btn-logout:hover{background:rgba(220,38,38,.16) !important}
+.auth-badge{display:flex;align-items:center;gap:7px;border-radius:10px;padding:5px 12px 5px 7px;background:rgba(255,255,255,.42) !important;border:1px solid rgba(255,255,255,.82) !important;backdrop-filter:blur(12px) !important}
+.auth-name{color:#16181f !important}
+.auth-role{color:#6a6d77 !important}
+.auth-logout{background:transparent !important;border:1px solid rgba(22,24,31,.12) !important;color:rgba(22,24,31,.4) !important}
+.auth-logout:hover{background:rgba(239,68,68,.08) !important;border-color:rgba(239,68,68,.22) !important;color:#b91c1c !important}
+.auth-avatar-fallback{background:linear-gradient(135deg,rgba(90,123,255,.3),rgba(168,85,247,.25)) !important;color:#16181f !important}
+.toast.ok{background:rgba(5,150,105,.12) !important;border-color:rgba(5,150,105,.35) !important;color:#059669 !important}
+.toast.err{background:rgba(220,38,38,.1) !important;border-color:rgba(220,38,38,.3) !important;color:#dc2626 !important}
+.toast.warn{background:rgba(245,158,11,.1) !important;border-color:rgba(245,158,11,.3) !important;color:#d97706 !important}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(200,210,230,.2)}
+::-webkit-scrollbar-thumb{background:rgba(90,123,255,.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(90,123,255,.55)}
+/* Org list rows */
+.org-list-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(200,210,230,.35);gap:12px;flex-wrap:wrap}
+.org-list-row:last-child{border-bottom:none}
+.org-list-row:hover{background:rgba(90,123,255,.04)}
+.olr-code{font-size:.7rem;font-weight:700;color:#5a7bff;background:rgba(90,123,255,.1);padding:2px 7px;border-radius:6px;flex-shrink:0}
+.olr-name{font-size:.85rem;font-weight:600;color:#16181f;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.olr-expiry{font-size:.72rem;white-space:nowrap;flex-shrink:0}
+.olr-expiry.expired{color:#dc2626;font-weight:700}
+.olr-expiry.warning{color:#d97706;font-weight:700}
+.olr-expiry.valid{color:#059669}
+/* Inline edit form (quick renewal) */
+.org-edit-form{width:100%;background:rgba(90,123,255,.05);border-top:1px solid rgba(90,123,255,.15);padding:12px 14px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.org-edit-form label{font-size:.72rem;font-weight:600;color:#6a6d77;display:block;margin-bottom:4px}
+.org-edit-form input[type=date]{background:rgba(255,255,255,.9);border:1px solid rgba(200,210,230,.6);border-radius:8px;color:#16181f;font-family:var(--font);font-size:.82rem;padding:6px 10px;outline:none}
+.org-edit-form input[type=date]:focus{border-color:rgba(90,123,255,.5);box-shadow:0 0 0 2px rgba(90,123,255,.1)}
+.olr-btns{display:flex;gap:6px;flex-shrink:0}
+/* Detail form */
+.org-detail-form{width:100%;background:rgba(248,250,255,.92);border-top:2px solid rgba(90,123,255,.2);padding:16px 14px 18px}
+.odf-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.odf-table tr{border-bottom:1px solid rgba(200,210,230,.3)}
+.odf-table tr:last-child{border-bottom:none}
+.odf-table td{padding:7px 10px;vertical-align:middle}
+.odf-table td:first-child{width:220px;font-weight:600;color:#6a6d77;border-right:1px solid rgba(200,210,230,.35);white-space:nowrap}
+.odf-table input[type=text],.odf-table input[type=email],.odf-table input[type=date],.odf-table input[type=url]{width:100%;background:rgba(255,255,255,.9);border:1px solid rgba(200,210,230,.55);border-radius:7px;color:#16181f;font-family:var(--font);font-size:.84rem;padding:5px 10px;outline:none;transition:.2s}
+.odf-table textarea{width:100%;background:rgba(255,255,255,.9);border:1px solid rgba(200,210,230,.55);border-radius:7px;color:#16181f;font-family:var(--font);font-size:.84rem;padding:5px 10px;outline:none;resize:vertical;min-height:68px;transition:.2s}
+.odf-table input:focus,.odf-table textarea:focus{border-color:rgba(90,123,255,.5);box-shadow:0 0 0 2px rgba(90,123,255,.1);background:#fff}
+.odf-static{font-size:.84rem;color:#16181f;font-weight:600}
+.req-star{color:#dc2626;margin-left:2px}
+/* Org Detail Modal */
+#org-detail-modal{position:fixed;inset:0;z-index:9000;background:rgba(10,12,24,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;animation:odm-fade .18s ease}
+@keyframes odm-fade{from{opacity:0}to{opacity:1}}
+#org-detail-panel{background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(30,50,120,.22);width:100%;max-width:720px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;animation:odm-up .22s cubic-bezier(.32,.72,0,1)}
+@keyframes odm-up{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.odm-header{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid rgba(200,210,230,.4);flex-shrink:0;background:linear-gradient(135deg,rgba(90,123,255,.06),rgba(140,170,255,.04))}
+.odm-title{font-size:1.08rem;font-weight:700;color:#16181f;line-height:1.3}
+.odm-sub{font-size:.78rem;color:#6a6d77;margin-top:3px}
+.odm-close{background:rgba(100,110,130,.1);border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;color:#6a6d77;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;margin-top:2px}
+.odm-close:hover{background:rgba(220,38,38,.12);color:#dc2626}
+.odm-body{overflow-y:auto;padding:18px 24px;flex:1}
+.odm-footer{display:flex;gap:10px;padding:14px 24px;border-top:1px solid rgba(200,210,230,.4);flex-shrink:0;background:#fafbff}
+/* Renewal file-attached bar (shows after file selected, replaces zone visually) */
+.rsc-attached-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:rgba(5,150,105,.08);border:2px solid rgba(5,150,105,.35);
+  border-radius:12px;padding:10px 14px;margin-top:0}
+.rbar-check{font-size:1.1rem;color:#059669;flex-shrink:0}
+.rbar-name{font-size:.8rem;font-weight:600;color:#059669;flex:1;word-break:break-all;min-width:0}
+</style>
+</head>
+<body>
+
+<div class="au-orb au-orb1" aria-hidden="true"></div>
+<div class="au-orb au-orb2" aria-hidden="true"></div>
+<div class="au-orb au-orb3" aria-hidden="true"></div>
+<div id="au-cursor" aria-hidden="true"></div>
+<div id="mouse-nebula" aria-hidden="true"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <img src="mainlogo2.gif" alt="คณะเภสัชศาสตร์" style="height:34px;width:auto;object-fit:contain;flex-shrink:0">
+  <div class="navbar-info">
+    <h1>ระบบแบบฟอร์ม CPE</h1>
+    <p>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</p>
+  </div>
+  <div id="user-badge-nav"></div>
+  <button class="btn-home" onclick="location.href='index.html'" style="margin-left:4px">← กลับหน้าแรก</button>
+</nav>
+
+<!-- ════════════════════════════════
+     VIEW 1 : สถานะหน่วยงาน
+════════════════════════════════ -->
+<div id="view-status">
+<div class="container">
+  <div class="hero">
+    <h2>💊 สถานะหน่วยงาน CPE</h2>
+    <p>ค้นหาหน่วยงานเพื่อตรวจสอบสถานะการรับรอง CPE</p>
+  </div>
+
+  <!-- Admin: เพิ่มหน่วยงาน -->
+  <div id="admin-add-section" style="display:none" class="fsec">
+    <div class="fsec-title">⚡ เพิ่ม / จัดการหน่วยงาน (Admin)</div>
+    <div class="form-row">
+      <div class="form-group" style="flex:2">
+        <label>ชื่อหน่วยงาน</label>
+        <input type="text" id="new-org-name" placeholder="ชื่อหน่วยงานที่ขอรับรอง CPE...">
+      </div>
+      <div class="form-group">
+        <label>วันที่ลงทะเบียน</label>
+        <input type="date" id="new-org-reg">
+      </div>
+      <div class="form-group">
+        <label>วันหมดอายุ</label>
+        <input type="date" id="new-org-expiry">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+      <button class="btn btn-primary btn-sm" onclick="addOrg()">＋ เพิ่มสถาบัน</button>
+      <button class="btn btn-outline btn-sm" onclick="toggleOrgList()" id="btn-manage">📋 จัดการรายชื่อ</button>
+      <button class="btn btn-outline btn-sm" onclick="seedAllOrgs()" id="btn-seed" style="font-size:.72rem">📥 นำเข้าข้อมูลเริ่มต้น</button>
+    </div>
+
+    <!-- Org management list (toggle) -->
+    <div id="org-list-panel" style="display:none;margin-top:18px">
+      <div style="font-size:.8rem;font-weight:700;color:var(--sub);letter-spacing:.05em;margin-bottom:10px">รายชื่อสถาบันทั้งหมด</div>
+      <div id="org-list-wrap" style="border:1px solid rgba(200,210,230,.4);border-radius:10px;overflow:hidden;max-height:360px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ค้นหา -->
+  <div class="fsec">
+    <div class="fsec-title">🔍 ค้นหาหน่วยงาน</div>
+    <div class="search-wrap">
+      <input type="text" id="org-search" placeholder="พิมพ์ชื่อหน่วยงาน..." oninput="searchOrgs(this.value)" autocomplete="off">
+      <span class="s-icon">🔍</span>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <!-- Status card -->
+    <div class="status-card" id="status-card">
+      <div class="sc-org" id="sc-org-name"></div>
+      <div class="sc-row">
+        <span class="sc-label">วันที่ลงทะเบียน</span>
+        <span class="sc-val" id="sc-reg-date"></span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-label">วันหมดอายุ</span>
+        <span class="sc-val" id="sc-exp-date"></span>
+      </div>
+      <div class="sc-row">
+        <span class="sc-label">สถานะ</span>
+        <span class="sc-badge" id="sc-badge"></span>
+      </div>
+      <div class="sc-btns" id="sc-btns"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════
+     VIEW 2 : วิธีต่ออายุ
+════════════════════════════════ -->
+<div id="view-renew" style="display:none">
+<div class="container">
+  <div class="hero">
+    <h2>🔄 วิธีการต่ออายุ CPE</h2>
+    <p id="renew-org-label">ขั้นตอนการต่ออายุการรับรองหน่วยงาน CPE</p>
+  </div>
+
+  <!-- 3 ขั้นตอน -->
+  <div class="fsec">
+    <div class="fsec-title">📋 ขั้นตอนการต่ออายุ</div>
+
+    <!-- ขั้นตอน 1 -->
+    <div class="renew-step-card" id="rsc-1">
+      <div class="rsc-header">
+        <div class="rsc-num">1</div>
+        <div class="rsc-info">
+          <div class="rsc-title">จัดทำหนังสือขอต่ออายุหน่วยงานสมทบ</div>
+          <div class="rsc-desc">ร่างหนังสือคำขอต่ออายุการเป็นหน่วยงานสมทบของคณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา เพื่อขอรับหน่วยกิต CPE โดยใช้ตัวอย่างจากแบบฟอร์มที่กำหนด</div>
+        </div>
+      </div>
+      <div class="rsc-body">
+        <a href="template_renewal_letter.pdf" target="_blank" class="btn btn-outline btn-sm rsc-dl">
+          📥 ดาวน์โหลดตัวอย่างหนังสือ
+        </a>
+        <div style="margin-top:10px">
+          <div class="rsc-upload-label">📤 อัปโหลดหนังสือขอต่ออายุของหน่วยงาน (PDF)</div>
+          <div class="file-zone rsc-zone" id="rzone-letter"
+               onclick="document.getElementById('ru-letter').click()"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleRenewDrop('letter',event)">
+            <input type="file" id="ru-letter" accept=".pdf" style="display:none"
+                   onchange="handleRenewFile('letter',this)">
+            <div class="fz-icon">📄</div>
+            <div class="fz-label" id="rl-letter-lbl">คลิกหรือลากไฟล์ PDF มาวางที่นี่</div>
+          </div>
+          <div class="rsc-attached-bar" id="rbar-letter" style="display:none">
+            <span class="rbar-check">✓</span>
+            <span class="rbar-name" id="rbar-letter-name"></span>
+            <button class="btn btn-outline btn-sm" style="font-size:.72rem;padding:4px 10px" onclick="document.getElementById('ru-letter').click()">🔄 เปลี่ยนไฟล์</button>
+            <button class="btn btn-danger btn-sm" style="font-size:.72rem;padding:4px 10px" onclick="clearRenewFile('letter')">✕ ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ขั้นตอน 2 -->
+    <div class="renew-step-card" id="rsc-2">
+      <div class="rsc-header">
+        <div class="rsc-num">2</div>
+        <div class="rsc-info">
+          <div class="rsc-title">กรอกแบบฟอร์ม สภ.59</div>
+          <div class="rsc-desc">กรอกข้อมูลในแบบฟอร์ม สภ.59 "คำขอขึ้นทะเบียนเป็นหน่วยงานในเครือข่ายเพื่อจัดกิจกรรมการศึกษาต่อเนื่องแก่ผู้ประกอบวิชาชีพเภสัชกรรม" พร้อมลงนามโดยหัวหน้าหน่วยการศึกษาต่อเนื่องและผู้บริหารสูงสุดของหน่วยงาน</div>
+        </div>
+      </div>
+      <div class="rsc-body">
+        <a href="template_spd59.pdf" target="_blank" class="btn btn-outline btn-sm rsc-dl">
+          📥 ดาวน์โหลดแบบฟอร์ม สภ.59
+        </a>
+        <div style="margin-top:10px">
+          <div class="rsc-upload-label">📤 อัปโหลดแบบฟอร์ม สภ.59 ที่กรอกและลงนามแล้ว (PDF)</div>
+          <div class="file-zone rsc-zone" id="rzone-form59"
+               onclick="document.getElementById('ru-form59').click()"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleRenewDrop('form59',event)">
+            <input type="file" id="ru-form59" accept=".pdf" style="display:none"
+                   onchange="handleRenewFile('form59',this)">
+            <div class="fz-icon">📋</div>
+            <div class="fz-label" id="rl-form59-lbl">คลิกหรือลากไฟล์ PDF มาวางที่นี่</div>
+          </div>
+          <div class="rsc-attached-bar" id="rbar-form59" style="display:none">
+            <span class="rbar-check">✓</span>
+            <span class="rbar-name" id="rbar-form59-name"></span>
+            <button class="btn btn-outline btn-sm" style="font-size:.72rem;padding:4px 10px" onclick="document.getElementById('ru-form59').click()">🔄 เปลี่ยนไฟล์</button>
+            <button class="btn btn-danger btn-sm" style="font-size:.72rem;padding:4px 10px" onclick="clearRenewFile('form59')">✕ ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ขั้นตอน 3 -->
+    <div class="renew-step-card" id="rsc-3">
+      <div class="rsc-header">
+        <div class="rsc-num">3</div>
+        <div class="rsc-info">
+          <div class="rsc-title">ชำระค่าต่ออายุและส่งหลักฐานการโอนเงิน</div>
+          <div class="rsc-desc">ชำระค่าต่ออายุสถาบันสมทบ จำนวน <strong>2,000 บาท</strong> โดยโอนเงินเข้าบัญชีดังนี้
+            <div style="margin:8px 0 4px;background:rgba(90,123,255,.07);border:1px solid rgba(90,123,255,.18);border-radius:10px;padding:10px 14px;font-size:.82rem;line-height:2">
+              <div>🏦 <strong>ธนาคาร:</strong> ธนาคารไทยพาณิชย์ (SCB)</div>
+              <div>👤 <strong>ชื่อบัญชี:</strong> สภาเภสัชกรรม</div>
+              <div>📒 <strong>ประเภทบัญชี:</strong> ออมทรัพย์</div>
+              <div>🔢 <strong>เลขที่บัญชี:</strong> <span style="font-family:monospace;font-size:.9rem;font-weight:700;color:#5a7bff;letter-spacing:.05em">340-2-01454-8</span></div>
+            </div>
+            พร้อมแนบสลิปการโอนเงินและระบุชื่อสถาบันในนามที่ต้องการออกใบเสร็จ
+          </div>
+        </div>
+      </div>
+      <div class="rsc-body">
+        <a href="template_payment_info.pdf" target="_blank" class="btn btn-outline btn-sm rsc-dl">
+          📥 ดาวน์โหลดรายละเอียดการนำส่ง
+        </a>
+        <div style="margin-top:10px">
+          <div class="rsc-upload-label">📤 อัปโหลดหลักฐานการชำระเงิน / สลิปโอนเงิน (PDF หรือรูปภาพ)</div>
+          <div class="file-zone rsc-zone" id="rzone-payment"
+               onclick="document.getElementById('ru-payment').click()"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleRenewDrop('payment',event)">
+            <input type="file" id="ru-payment" accept=".pdf,image/*" style="display:none"
+                   onchange="handleRenewFile('payment',this)">
+            <div class="fz-icon">💳</div>
+            <div class="fz-label" id="rl-payment-lbl">คลิกหรือลากไฟล์มาวางที่นี่</div>
+          </div>
+          <div class="rsc-attached-bar" id="rbar-payment" style="display:none">
+            <span class="rbar-check">✓</span>
+            <span class="rbar-name" id="rbar-payment-name"></span>
+            <button class="btn btn-outline btn-sm" style="font-size:.72rem;padding:4px 10px" onclick="document.getElementById('ru-payment').click()">🔄 เปลี่ยนไฟล์</button>
+            <button class="btn btn-danger btn-sm" style="font-size:.72rem;padding:4px 10px" onclick="clearRenewFile('payment')">✕ ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ปุ่มส่งเอกสาร -->
+  <div class="fsec">
+    <div class="fsec-title">📨 ส่งเอกสารทั้งหมด</div>
+    <div style="font-size:.84rem;color:#6a6d77;margin-bottom:14px">
+      กรุณาอัปโหลดเอกสารให้ครบทั้ง 3 ขั้นตอนก่อนกดส่ง เมื่อส่งแล้วเจ้าหน้าที่จะดำเนินการตรวจสอบและแจ้งผล
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="submitRenewalDocs()">✅ ส่งเอกสารต่ออายุ</button>
+      <button class="btn btn-outline" onclick="showView('status')">← กลับ</button>
+    </div>
+
+    <!-- สถานะการส่ง (admin view) -->
+    <div id="renew-submissions-wrap" style="display:none;margin-top:20px">
+      <div style="font-size:.78rem;font-weight:700;color:#6a6d77;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        📁 เอกสารที่ได้รับ (Admin)
+      </div>
+      <div id="renew-submissions-list"></div>
+    </div>
+  </div>
+
+  <div class="fsec">
+    <div class="fsec-title">📞 ติดต่อเจ้าหน้าที่ผู้รับผิดชอบ</div>
+    <div style="font-size:.88rem;line-height:2;color:var(--sub)">
+      <div>📧 <strong>อีเมล:</strong> <span style="color:var(--txt)">thiraphong.ge@go.buu.ac.th</span></div>
+      <div>📞 <strong>โทรศัพท์:</strong> <span style="color:var(--txt)">063-0742826</span></div>
+      <div>🕐 <strong>เวลาทำการ:</strong> <span style="color:var(--txt)">จันทร์–ศุกร์ 08.30–16.30 น.</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════
+     VIEW 3 : ประชุมวิชาการ
+════════════════════════════════ -->
+<div id="view-conference" style="display:none">
+<div class="container">
+  <div class="hero">
+    <h2>🎓 ประชุมวิชาการ</h2>
+    <p id="conf-org-label">บันทึกข้อมูลงานประชุมวิชาการ</p>
+  </div>
+
+  <!-- ข้อมูลพื้นฐาน -->
+  <div class="fsec">
+    <div class="fsec-title">📌 ข้อมูลพื้นฐาน</div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>ชื่องานประชุมวิชาการ</label>
+        <input type="text" id="conf-name" placeholder="ชื่องานประชุม...">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>วันที่เริ่ม</label>
+        <input type="date" id="conf-date-start">
+      </div>
+      <div class="form-group">
+        <label>วันที่สิ้นสุด</label>
+        <input type="date" id="conf-date-end">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>สถานที่จัดงาน</label>
+        <input type="text" id="conf-location" placeholder="สถานที่จัดงานประชุม...">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>รายละเอียด / หมายเหตุ</label>
+        <textarea id="conf-note" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ข้อมูลงานประชุมวิชาการ (ไฟล์) ── -->
+  <div class="fsec">
+    <div class="fsec-title">📁 ข้อมูลงานประชุมวิชาการ</div>
+
+    <div class="form-row">
+      <!-- PDF -->
+      <div class="form-group" style="flex:1;min-width:220px">
+        <label>ไฟล์ PDF</label>
+        <div class="file-zone" onclick="document.getElementById('upload-pdf').click()" id="zone-pdf">
+          <input type="file" id="upload-pdf" accept=".pdf" style="display:none" onchange="handleFileSelect('pdf',this)">
+          <div class="fz-icon">📄</div>
+          <div class="fz-label">คลิกเพื่อแนบไฟล์ PDF</div>
+          <div class="fz-sub">รองรับ .pdf</div>
+        </div>
+        <div class="file-attached" id="attached-pdf">
+          <div class="fa-icon">📄</div>
+          <div class="fa-info">
+            <div class="fa-name" id="attached-pdf-name"></div>
+            <div class="fa-size" id="attached-pdf-size"></div>
+          </div>
+          <button class="fa-remove" onclick="removeFile('pdf')" title="ลบ">✕</button>
+        </div>
+        <div class="upload-progress" id="prog-pdf"><div class="up-bar" id="progbar-pdf"></div></div>
+        <div class="up-text" id="progtext-pdf"></div>
+      </div>
+
+      <!-- Word -->
+      <div class="form-group" style="flex:1;min-width:220px">
+        <label>ไฟล์ Word</label>
+        <div class="file-zone" onclick="document.getElementById('upload-word').click()" id="zone-word">
+          <input type="file" id="upload-word" accept=".doc,.docx" style="display:none" onchange="handleFileSelect('word',this)">
+          <div class="fz-icon">📝</div>
+          <div class="fz-label">คลิกเพื่อแนบไฟล์ Word</div>
+          <div class="fz-sub">รองรับ .doc, .docx</div>
+        </div>
+        <div class="file-attached" id="attached-word">
+          <div class="fa-icon">📝</div>
+          <div class="fa-info">
+            <div class="fa-name" id="attached-word-name"></div>
+            <div class="fa-size" id="attached-word-size"></div>
+          </div>
+          <button class="fa-remove" onclick="removeFile('word')" title="ลบ">✕</button>
+        </div>
+        <div class="upload-progress" id="prog-word"><div class="up-bar" id="progbar-word"></div></div>
+        <div class="up-text" id="progtext-word"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CV วิทยากร ── -->
+  <div class="fsec">
+    <div class="fsec-title">👤 CV วิทยากร</div>
+    <div id="speakers-list"></div>
+    <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="addSpeaker()">＋ เพิ่มวิทยากร</button>
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+    <button class="btn btn-primary" onclick="saveConference()" id="btn-save-conf">💾 บันทึกข้อมูล</button>
+    <button class="btn btn-outline" onclick="showView('status')">← กลับ</button>
+  </div>
+</div>
+</div>
+
+<!-- ORG DETAIL MODAL -->
+<div id="org-detail-modal" style="display:none" onclick="if(event.target===this)closeOrgDetail()">
+  <div id="org-detail-panel">
+    <div class="odm-header">
+      <div>
+        <div class="odm-title" id="odm-title">รายละเอียดหน่วยงาน</div>
+        <div class="odm-sub">คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div>
+      </div>
+      <button class="odm-close" onclick="closeOrgDetail()">✕</button>
+    </div>
+    <div class="odm-body">
+      <table class="odf-table" id="odm-form-table"></table>
+    </div>
+    <div class="odm-footer">
+      <button class="btn btn-primary" onclick="saveOrgDetail()">💾 บันทึกรายละเอียด</button>
+      <button class="btn btn-outline" onclick="closeOrgDetail()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════
+   GLOBAL STATE — ต้องอยู่บนสุดก่อนทุกอย่าง
+════════════════════════════════ */
+var allOrgs = {};
+var SEED_ORGS = [
+  { code:'003', name:'สมาคมเภสัชกรจังหวัดชลบุรี',
+    approvalDate:'2026-03-30', expiryDate:'2027-03-29',
+    address:'เลขที่ 102 ถนนข้าวหลาม ตำบลแสนสุข อำเภอเมืองชลบุรี จังหวัดชลบุรี 20130',
+    phone:'064-159-9239', fax:'', email:'', website:'http://www.rxchon.com/',
+    headName:'ภญ.ศุภมนันย์ กวินศิริคุณ', headPosition:'นายกสมาคมเภสัชกรจังหวัดชลบุรี',
+    coordinator:'ภญ.ศุภมนันย์ กวินศิริคุณ' },
+  { code:'004', name:'สำนักงานสาธารณสุข จังหวัดชลบุรี',
+    approvalDate:'2023-01-16', expiryDate:'2024-01-15',
+    address:'สำนักงานสาธารณสุขจังหวัดชลบุรี 29/9 หมู่ 4 ถนนวชิรปราการ ตำบลบ้านสวน อำเภอเมืองชลบุรี ชลบุรี 20000',
+    phone:'038-932450 ต่อ 2484, 2486', fax:'', email:'', website:'',
+    headName:'เภสัชกรจิระสันต์ มีรัตน์ธนวัต', headPosition:'หัวหน้ากลุ่มงานคุ้มครองผู้บริโภคและเภสัชสาธารณสุข',
+    coordinator:'เภสัชกรจิระสันต์ มีรัตน์ธนวัต' },
+  { code:'005', name:'กลุ่มงานเภสัชกรรม โรงพยาบาลชลบุรี',
+    approvalDate:'2016-01-04', expiryDate:'2020-12-31',
+    address:'69 หมู่ 2 ถนนสุขุมวิท ตำบลบ้านสวน อำเภอเมือง จังหวัดชลบุรี',
+    phone:'038-931507', fax:'038-931322', email:'', website:'',
+    headName:'นางอรพินทร์ ปราโมทย์', headPosition:'', coordinator:'' },
+  { code:'006', name:'โรงพยาบาลมหาวิทยาลัยบูรพา',
+    approvalDate:'2016-01-15', expiryDate:'2020-12-31',
+    address:'เลขที่ 169/382 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131',
+    phone:'0-3839-4850-3, 0-3839-0580', fax:'0-3874-5803', email:'', website:'http://hsc.buu.ac.th/hsc2/',
+    headName:'นางศศิธร กิจจารุวรรณกุล', headPosition:'', coordinator:'' },
+  { code:'007', name:'กลุ่มงานเภสัชกรรม และคุ้มครองผู้บริโภค โรงพยาบาลแหลมฉบัง',
+    approvalDate:'2016-01-15', expiryDate:'2020-12-31',
+    address:'188/36 หมู่ 6 ต.ทุ่งสุขลา อ.ศรีราชา จ.ชลบุรี 20230',
+    phone:'038-352974-9 ต่อ 5030-31', fax:'038-352393', email:'', website:'http://www.ao-udom.go.th/site/',
+    headName:'นายราเมศร์ อำไพพิศ', headPosition:'', coordinator:'' },
+  { code:'008', name:'ชมรมร้านขายยา จังหวัดจันทบุรี',
+    approvalDate:'2016-01-18', expiryDate:'2020-12-31',
+    address:'49 ถนนขวาง ต.วัดใหม่ อ.เมือง จ.จันทบุรี',
+    phone:'039-311078', fax:'', email:'', website:'',
+    headName:'นายสาโรจน์ บรรจง', headPosition:'', coordinator:'' },
+  { code:'040', name:'ชมรมผู้ประกอบการค้ายา จังหวัดชลบุรี',
+    approvalDate:'2015-11-17', expiryDate:'2020-12-31',
+    address:'99 ม.2 ต.หนองไผ่แก้ว อ.บ้านบึง จ.ชลบุรี 20220',
+    phone:'038-292193, 085-3993535', fax:'', email:'kamronpiroon@gmail.com', website:'',
+    headName:'นายคำรณพิรุฬห์ มีรัตน์ธนวัต', headPosition:'', coordinator:'คุณวันดี คุณาฤทธิพล' },
+  { code:'043', name:'สำนักงานสาธารณสุข จังหวัดจันทบุรี',
+    approvalDate:'2016-04-05', expiryDate:'2020-12-31',
+    address:'สำนักงานสาธารณสุขจังหวัดจันทบุรี ถ.ท่าแฉลบ จ.จันทบุรี 22000',
+    phone:'039-311166 ต่อ 105', fax:'039-311553', email:'', website:'http://www.chpho.go.th/web2014',
+    headName:'นายจรัญ จันทมัตตุการ', headPosition:'', coordinator:'ภญ.ปรียาภรณ์ พิทักษ์เสมากุล' },
+  { code:'079', name:'ชมรมร้านขายยา จังหวัดระยอง',
+    approvalDate:'2016-05-16', expiryDate:'2020-12-31',
+    address:'', phone:'', fax:'', email:'', website:'',
+    headName:'', headPosition:'', coordinator:'' },
+  { code:'080', name:'ชมรมเภสัชกรสี่เหล่า',
+    approvalDate:'2016-05-30', expiryDate:'2020-12-31',
+    address:'183 ซอยตรีมิตร แขวงพระโขนง เขตคลองเตย กรุงเทพฯ 10110',
+    phone:'081-8662551', fax:'02-3921563', email:'prasitpornv@yahoo.com', website:'',
+    headName:'พลตรีอนุมนตรี วัฒนศิริ', headPosition:'', coordinator:'นาวาโทประสิทธิพร วีระยุทธวิไล' },
+  { code:'095', name:'สำนักงานหลักประกันสุขภาพแห่งชาติ',
+    approvalDate:'2016-07-15', expiryDate:'2020-12-31',
+    address:'115 อาคารสตาร์พลาซ่า ชั้น 2 ซอยศูนย์การค้า สาย 4 ถนนสุขุมวิท ตำบลเชิงเนิน อำเภอเมือง จังหวัดระยอง 21000',
+    phone:'038-864313 ต่อ 18', fax:'038-864320', email:'', website:'http://rayong.nhso.go.th',
+    headName:'นายวิบูลย์ สุพุทธิธาดา', headPosition:'', coordinator:'ฐิติพร ตันรัตนาวงศ์' },
+  { code:'097', name:'ชมรมเภสัชกรระยอง',
+    approvalDate:'2016-08-10', expiryDate:'2020-12-31',
+    address:'142 หมู่ 2 ถ.สุขุมวิท ต.เนินพระ อ.เมือง จ.ระยอง 21000',
+    phone:'038-967532', fax:'', email:'', website:'',
+    headName:'นายสมชัย วงศ์ทางประเสริฐ', headPosition:'', coordinator:'' },
+  { code:'109', name:'โรงพยาบาลตราด',
+    approvalDate:'2016-09-22', expiryDate:'2020-12-31',
+    address:'108 ถ.สุขุมวิท ต.วังกระแจะ อ.เมือง จ.ตราด 23000',
+    phone:'089-7600040', fax:'', email:'sirinate_sud@hotmail.com', website:'',
+    headName:'นายสายชล ชำปฏิ', headPosition:'', coordinator:'ภญ.ศิริเนตร สุดประเสริฐ' },
+  { code:'112', name:'สำนักงานสาธารณสุข จังหวัดสระบุรี',
+    approvalDate:'2016-10-01', expiryDate:'2020-12-31',
+    address:'สำนักงานสาธารณสุข จังหวัดสระบุรี',
+    phone:'036-223120-125', fax:'036-212038', email:'', website:'',
+    headName:'', headPosition:'', coordinator:'' },
+  { code:'114', name:'โรงพยาบาลชลบุรี',
+    approvalDate:'2016-10-28', expiryDate:'2020-12-31',
+    address:'26 หมู่ 2 ถ.สุขุมวิท ต.บ้านสวน อ.เมือง จ.ชลบุรี 20000',
+    phone:'038-931048', fax:'038-931100', email:'', website:'http://www.cbh.moph.go.th/',
+    headName:'', headPosition:'', coordinator:'' },
+  { code:'141', name:'สมาคมผู้ประกอบการร้านขายยารวมใจภาคตะวันออก',
+    approvalDate:'2017-02-14', expiryDate:'2020-12-31',
+    address:'๔๓๗/๓-๔ หมู่ ๒ อำเภอสัตหีบ จังหวัดชลบุรี',
+    phone:'086-9558889', fax:'', email:'', website:'',
+    headName:'', headPosition:'', coordinator:'ภก.ชยินทร์' },
+  { code:'147', name:'โรงพยาบาลมะเร็งชลบุรี',
+    approvalDate:'2017-03-02', expiryDate:'2020-12-31',
+    address:'300 หมู่ที่ 2 ตำบลเสม็ด อำเภอเมือง จ.ชลบุรี 20000',
+    phone:'0 3878 4001-5', fax:'', email:'narat1624@gmail.com', website:'',
+    headName:'ภญ.นภารัตน์ โอทกานนท์', headPosition:'', coordinator:'ภญ.นภารัตน์ โอทกานนท์' },
+  { code:'197', name:'สำนักงานสาธารณสุขจังหวัดระยอง',
+    approvalDate:'2024-07-19', expiryDate:'2025-07-18',
+    address:'142 หมู่ 2 อาคารคุ้มครองผู้บริโภคฯ ถนนสุขุมวิท ตำบลเนินพระ อำเภอเมือง จังหวัดระยอง 21000',
+    phone:'082-4762064', fax:'', email:'rayongfda@gmail.com', website:'rayongfda.org',
+    headName:'ภก.วันชัย นนทกิจไพศาล', headPosition:'เภสัชกรชำนาญการพิเศษ',
+    coordinator:'ภก.วันชัย นนทกิจไพศาล' },
+  { code:'200', name:'โรงพยาบาลสมเด็จพระบรมราชเทวี ณ ศรีราชา',
+    approvalDate:'2025-07-15', expiryDate:'2026-07-14',
+    address:'290 อาคารศรีสวรินทิรานุสรณ์ 150 ปี ชั้น 9 ถนนเจิมจอมพล ต.ศรีราชา อ.ศรีราชา จ.ชลบุรี 20110',
+    phone:'038-320200', fax:'', email:'edu.somdej@gmail.com', website:'www.somdej.or.th',
+    headName:'ทิพวรรณ วงเวียน', headPosition:'ผู้เชี่ยวชาญพิเศษ เภสัชกร 9',
+    coordinator:'ทิพวรรณ วงเวียน' },
+  { code:'213', name:'โรงพยาบาลสมเด็จพระยุพราชสระแก้ว',
+    approvalDate:'2026-05-05', expiryDate:'2027-05-04',
+    address:'283 ถนนสุวรรณศร ตำบลสระแก้ว อำเภอเมืองสระแก้ว จ.สระแก้ว 27000',
+    phone:'037-243018-20 ต่อ 332', fax:'', email:'pharm.scph@gmail.com', website:'www.skh.moph.go.th',
+    headName:'ภญ.เสาวณีย์ ยถาภูธานนท์', headPosition:'หัวหน้ากลุ่มงานเภสัชกรรม',
+    coordinator:'ภญ.เสาวณีย์ ยถาภูธานนท์' },
+  { code:'231', name:'สมาคมผู้ประกอบการร้านยาจังหวัดชลบุรี',
+    approvalDate:'2026-01-29', expiryDate:'2027-01-28',
+    address:'127/14 หมู่ 1 ซอยชัยพรวิถี 14 ต.หนองปรือ อ.บางละมุง จ.ชลบุรี 20150',
+    phone:'', fax:'', email:'', website:'',
+    headName:'ภก.ชานนท์ เรืองรัตน์วณิชยา', headPosition:'นายกสมาคม',
+    coordinator:'ภก.ชานนท์ เรืองรัตน์วณิชยา' },
+  { code:'242', name:'สมาคมร้านขายยา',
+    approvalDate:'2025-05-15', expiryDate:'2026-05-14',
+    address:'84-86 ถนนประชาธิปก แขวงวัดกัลยาณ์ เขตธนบุรี กรุงเทพมหานคร 10600',
+    phone:'02-4651876', fax:'', email:'thaidrug@gmail.com', website:'',
+    headName:'ภก.ชนินท์ จตุพรประสิทธิ์', headPosition:'นายกสมาคมร้านขายยา',
+    coordinator:'ภก.ชนินท์ จตุพรประสิทธิ์' },
+  { code:'252', name:'ชมรมร้านขายยาจังหวัดฉะเชิงเทรา',
+    approvalDate:'2026-05-19', expiryDate:'2027-05-18',
+    address:'8/9-10 ถนนสันติราษฎร์ ต.หน้าเมือง อ.เมือง จ.ฉะเชิงเทรา 24000',
+    phone:'038-816685', fax:'', email:'thongosoth@hotmail.com', website:'',
+    headName:'ธงชัย สีมาเอกรัตน์', headPosition:'ประธานชมรม',
+    coordinator:'ธงชัย สีมาเอกรัตน์' },
+];
+// โหลด SEED_ORGS เข้า allOrgs ทันที — ก่อน Firebase init ด้วยซ้ำ
+SEED_ORGS.forEach(function(o){
+  allOrgs['org_'+o.code]=Object.assign({
+    mainInstitution:'คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา',
+    type:'หน่วยงานในเครือข่าย',
+    registrationDate:o.approvalDate
+  }, o);
+});
+
+/* ════════════════════════════════
+   FIREBASE INIT
+════════════════════════════════ */
+var FB_CFG = {
+  apiKey:'AIzaSyBmXVqyqms8qG9rPBW0gadoBcV8HTr7O5U',
+  databaseURL:'https://pharmacy-buu-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:'pharmacy-buu',
+  storageBucket:'pharmacy-buu.appspot.com',
+  appId:'1:15077505324:web:e5fcb9d23cd888ec9bd489'
+};
+if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+var db = firebase.database();
+var storage = null;
+try{ storage = firebase.storage(); }catch(e){ console.warn('Firebase Storage ไม่พร้อม:',e.message); }
+
+/* ════════════════════════════════
+   HELPERS
+════════════════════════════════ */
+function emailToFbKey(e){ return (e||'').toLowerCase().replace(/\./g,'_').replace(/@/g,'__').replace(/[#$\[\]\/]/g,'_'); }
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+}
+function fmtSize(bytes){
+  if(bytes<1024) return bytes+'B';
+  if(bytes<1048576) return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1048576).toFixed(1)+'MB';
+}
+function showToast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>t.className='toast',3000);
+}
+function logout(){ clearUser(); location.replace('login.html'); }
+function getCanonicalEmail(){
+  const u=getUser(); if(!u) return null;
+  return u._canonicalEmail||u.email;
+}
+
+/* เก็บ auth.js isAdmin() ไว้ก่อนที่ var isAdmin=false จะทับมัน */
+var _checkAdmin = (typeof isAdmin === 'function') ? isAdmin : function(){ return false; };
+var currentUser=null, isAdmin=false;
+
+/* ════════════════════════════════
+   AUTH INIT
+════════════════════════════════ */
+(function initAuth(){
+  currentUser = getUser();
+  if(!currentUser){ location.replace('login.html'); return; }
+  isAdmin = _checkAdmin(currentUser);
+  const badgeEl = document.getElementById('user-badge-nav');
+  if(badgeEl){
+    const short = currentUser.name ? currentUser.name.split(' ')[0] : currentUser.email.split('@')[0];
+    badgeEl.innerHTML = `<div class="user-badge">
+      ${currentUser.picture?`<img src="${currentUser.picture}" style="width:26px;height:26px;border-radius:50%;object-fit:cover" onerror="this.remove()">` : ''}
+      <span class="ub-name">${short}</span>
+      <span class="ub-role ${isAdmin?'admin':'user'}">${isAdmin?'⚡ ADMIN':'◉ USER'}</span>
+      <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+    </div>`;
+  }
+  if(isAdmin) document.getElementById('admin-add-section').style.display='block';
+  loadAllOrgs();
+})();
+
+/* ════════════════════════════════
+   VIEW NAVIGATION
+════════════════════════════════ */
+function showView(id, orgKey, orgName){
+  ['status','renew','conference'].forEach(v=>document.getElementById('view-'+v).style.display='none');
+  document.getElementById('view-'+id).style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='renew'){
+    var rv=document.getElementById('view-renew');
+    rv.dataset.orgKey=orgKey||'';
+    if(orgName){
+      document.getElementById('renew-org-label').textContent='หน่วยงาน: '+orgName;
+    }
+    if(isAdmin && orgKey) loadRenewSubmissions(orgKey);
+  }
+  if(id==='conference' && orgName){
+    document.getElementById('conf-org-label').textContent='หน่วยงาน: '+orgName;
+  }
+}
+
+/* ════════════════════════════════
+   ORG MANAGEMENT
+════════════════════════════════ */
+
+function loadAllOrgs(){
+  // allOrgs ถูกโหลด SEED_ORGS ไว้แล้วตั้งแต่ต้น script
+  // Firebase sync: override ด้วยข้อมูลที่ admin แก้ไข, และลบรายการที่ถูก delete
+  try{
+    db.ref('pharma-form/_cpe_orgs').on('value',function(snap){
+      var fbData=snap.val()||{};
+      Object.keys(fbData).forEach(function(k){
+        if(fbData[k] && fbData[k].deleted){
+          delete allOrgs[k]; // ลบรายการที่ถูก mark deleted
+        } else if(fbData[k]){
+          allOrgs[k]=fbData[k]; // อัปเดตข้อมูล
+        }
+      });
+      // re-render org list ถ้ากำลังเปิดอยู่
+      if(document.getElementById('org-list-panel').style.display!=='none') renderOrgList();
+    });
+  }catch(e){ console.warn('Firebase DB listener error:',e.message); }
+}
+
+function toggleOrgList(){
+  var panel=document.getElementById('org-list-panel');
+  var btn=document.getElementById('btn-manage');
+  if(panel.style.display==='none'){
+    panel.style.display='block';
+    btn.textContent='📋 ซ่อนรายชื่อ';
+    renderOrgList();
+  } else {
+    panel.style.display='none';
+    btn.textContent='📋 จัดการรายชื่อ';
+  }
+}
+
+function renderOrgList(){
+  var wrap=document.getElementById('org-list-wrap');
+  var entries=Object.entries(allOrgs).filter(function(e){ return !e[1].deleted; });
+  entries.sort(function(a,b){ return (a[1].name||'').localeCompare(b[1].name||'','th'); });
+  if(!entries.length){
+    wrap.innerHTML='<div style="padding:16px;font-size:.85rem;color:var(--sub);text-align:center">ยังไม่มีสถาบันในระบบ</div>';
+    return;
+  }
+  var today=new Date(); today.setHours(0,0,0,0);
+  wrap.innerHTML=entries.map(function(e){
+    var k=e[0], o=e[1];
+    var exp=o.expiryDate?new Date(o.expiryDate+'T00:00:00'):null;
+    var daysLeft=exp?Math.ceil((exp-today)/(1000*60*60*24)):null;
+    var cls='valid', exLabel='';
+    if(!exp||daysLeft<0){ cls='expired'; exLabel='❌ หมดอายุแล้ว'; }
+    else if(daysLeft<=60){ cls='warning'; exLabel='⚠️ อีก '+daysLeft+' วัน'; }
+    else{ exLabel='✓ อีก '+daysLeft+' วัน'; }
+    return '<div class="org-list-row" id="olr-'+k+'">'
+      +(o.code?'<span class="olr-code">'+o.code+'</span>':'')
+      +'<span class="olr-name" title="'+o.name+'">'+o.name+'</span>'
+      +'<span class="olr-expiry '+cls+'" title="'+fmtDate(o.expiryDate)+'">'+exLabel+'</span>'
+      +'<div class="olr-btns">'
+        +'<button class="btn btn-outline btn-sm" onclick="openOrgDetail(\''+k+'\')">📄 รายละเอียด</button>'
+        +'<button class="btn btn-green btn-sm" onclick="showView(\'renew\',\''+k+'\',\''+o.name.replace(/'/g,"\\'")+'\')" >✏️ ต่ออายุ</button>'
+        +'<button class="btn btn-danger btn-sm" onclick="deleteOrg(\''+k+'\')">🗑</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function editOrg(key){
+  var row=document.getElementById('olr-'+key);
+  if(!row) return;
+  // ถ้ามี form เปิดอยู่แล้ว ให้ปิดก่อน
+  var existing=row.querySelector('.org-edit-form');
+  if(existing){ existing.remove(); return; }
+  var o=allOrgs[key];
+  var form=document.createElement('div');
+  form.className='org-edit-form';
+  form.innerHTML=''
+    +'<div><label>วันที่ลงทะเบียนใหม่</label>'
+      +'<input type="date" id="edit-reg-'+key+'" value="'+(o.registrationDate||'')+'"></div>'
+    +'<div><label>วันหมดอายุใหม่ <span style="color:#dc2626">*</span></label>'
+      +'<input type="date" id="edit-exp-'+key+'" value="'+(o.expiryDate||'')+'"></div>'
+    +'<div style="display:flex;gap:6px;padding-bottom:1px">'
+      +'<button class="btn btn-primary btn-sm" onclick="saveOrgEdit(\''+key+'\')">💾 บันทึก</button>'
+      +'<button class="btn btn-outline btn-sm" onclick="cancelOrgEdit(\''+key+'\')">ยกเลิก</button>'
+    +'</div>';
+  row.appendChild(form);
+  document.getElementById('edit-exp-'+key).focus();
+}
+
+function cancelOrgEdit(key){
+  var row=document.getElementById('olr-'+key);
+  if(!row) return;
+  var form=row.querySelector('.org-edit-form');
+  if(form) form.remove();
+}
+
+function openOrgDetail(key){
+  var o=allOrgs[key]||{};
+  var modal=document.getElementById('org-detail-modal');
+  modal.dataset.currentKey=key;
+  document.getElementById('odm-title').textContent=(o.name||'รายละเอียดหน่วยงาน');
+  function v(f){ return o[f]||''; }
+  var html='<tbody>'
+    +'<tr><td>ชื่อสถาบันหลัก</td><td><div class="odf-static">คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div></td></tr>'
+    +'<tr><td>ชื่อหน่วยงาน<span class="req-star">*</span></td>'
+      +'<td><input type="text" id="odf-name" value="'+v('name')+'" placeholder="ชื่อหน่วยงาน"></td></tr>'
+    +'<tr><td>รหัสหน่วยงาน</td>'
+      +'<td><input type="text" id="odf-code" value="'+v('code')+'" placeholder="เช่น 003" style="max-width:120px"></td></tr>'
+    +'<tr><td>ที่อยู่</td>'
+      +'<td><textarea id="odf-addr">'+((o.address||'')).replace(/</g,'&lt;')+'</textarea></td></tr>'
+    +'<tr><td>โทรศัพท์<span class="req-star">*</span></td>'
+      +'<td><input type="text" id="odf-tel" value="'+v('phone')+'" placeholder="0X-XXXXXXX"></td></tr>'
+    +'<tr><td>โทรสาร</td>'
+      +'<td><input type="text" id="odf-fax" value="'+v('fax')+'" placeholder="โทรสาร"></td></tr>'
+    +'<tr><td>อีเมล<span class="req-star">*</span></td>'
+      +'<td><input type="email" id="odf-email" value="'+v('email')+'" placeholder="email@example.com"></td></tr>'
+    +'<tr><td>เว็บไซต์</td>'
+      +'<td><input type="url" id="odf-web" value="'+v('website')+'" placeholder="https://..."></td></tr>'
+    +'<tr><td>หัวหน้าหน่วยการศึกษาต่อเนื่อง<span class="req-star">*</span></td>'
+      +'<td><div style="display:flex;gap:8px">'
+        +'<input type="text" id="odf-head" value="'+v('headName')+'" placeholder="ชื่อ-นามสกุล" style="flex:1">'
+        +'<input type="text" id="odf-headpos" value="'+v('headPosition')+'" placeholder="ตำแหน่งในสถาบัน" style="flex:1">'
+      +'</div></td></tr>'
+    +'<tr><td>ผู้ประสานงานหลัก<span class="req-star">*</span></td>'
+      +'<td><input type="text" id="odf-coord" value="'+v('coordinator')+'" placeholder="ชื่อ-นามสกุล"></td></tr>'
+    +'<tr><td>วันที่ผ่านการรับรอง</td>'
+      +'<td><input type="date" id="odf-app" value="'+v('approvalDate')+'" style="max-width:180px"></td></tr>'
+    +'<tr><td>วันที่หมดอายุ</td>'
+      +'<td><input type="date" id="odf-exp" value="'+v('expiryDate')+'" style="max-width:180px"></td></tr>'
+    +'</tbody>';
+  document.getElementById('odm-form-table').innerHTML=html;
+  modal.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeOrgDetail(){
+  var modal=document.getElementById('org-detail-modal');
+  modal.style.display='none';
+  document.body.style.overflow='';
+}
+
+function saveOrgDetail(){
+  var modal=document.getElementById('org-detail-modal');
+  var key=modal.dataset.currentKey;
+  var o=allOrgs[key]; if(!o) return;
+  var name=document.getElementById('odf-name').value.trim();
+  if(!name){ showToast('กรุณากรอกชื่อหน่วยงาน','err'); return; }
+  var updates={
+    name:        name,
+    code:        document.getElementById('odf-code').value.trim(),
+    address:     document.getElementById('odf-addr').value.trim(),
+    phone:       document.getElementById('odf-tel').value.trim(),
+    fax:         document.getElementById('odf-fax').value.trim(),
+    email:       document.getElementById('odf-email').value.trim(),
+    website:     document.getElementById('odf-web').value.trim(),
+    headName:    document.getElementById('odf-head').value.trim(),
+    headPosition:document.getElementById('odf-headpos').value.trim(),
+    coordinator: document.getElementById('odf-coord').value.trim(),
+    approvalDate:document.getElementById('odf-app').value,
+    expiryDate:  document.getElementById('odf-exp').value,
+    updatedAt:   new Date().toISOString()
+  };
+  Object.assign(allOrgs[key], updates);
+  try{
+    db.ref('pharma-form/_cpe_orgs/'+key).update(updates)
+      .catch(function(e){ console.warn('Firebase update failed:',e.message); });
+  }catch(e){ console.warn(e); }
+  closeOrgDetail();
+  renderOrgList();
+  showToast('✓ บันทึกรายละเอียด "'+name+'" แล้ว');
+}
+
+function saveOrgEdit(key){
+  var newExpiry=document.getElementById('edit-exp-'+key).value;
+  var newReg=document.getElementById('edit-reg-'+key).value;
+  if(!newExpiry){ showToast('กรุณาระบุวันหมดอายุ','err'); return; }
+  allOrgs[key].expiryDate=newExpiry;
+  if(newReg) allOrgs[key].registrationDate=newReg;
+  allOrgs[key].updatedAt=new Date().toISOString();
+  // Sync Firebase
+  try{
+    db.ref('pharma-form/_cpe_orgs/'+key).update({
+      expiryDate:newExpiry,
+      registrationDate:newReg||allOrgs[key].registrationDate||'',
+      updatedAt:allOrgs[key].updatedAt
+    }).catch(function(e){ console.warn('Firebase update failed:',e.message); });
+  }catch(e){ console.warn(e); }
+  renderOrgList();
+  showToast('✓ ต่ออายุสถาบัน "'+allOrgs[key].name+'" แล้ว');
+}
+
+function deleteOrg(key){
+  var org=allOrgs[key];
+  if(!org){ showToast('ไม่พบสถาบัน','err'); return; }
+  if(!confirm('ลบ "'+org.name+'" ออกจากระบบ?\n\n(จะถูกลบออกจากการค้นหาทันที)')){return;}
+  // Mark deleted in Firebase so ไม่กลับมาหลัง refresh
+  try{
+    db.ref('pharma-form/_cpe_orgs/'+key).set(
+      Object.assign({},org,{deleted:true,deletedAt:new Date().toISOString()})
+    );
+  }catch(e){ console.warn(e); }
+  delete allOrgs[key];
+  renderOrgList();
+  showToast('ลบสถาบัน "'+org.name+'" แล้ว','warn');
+}
+
+function orgNameToKey(name){ return name.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_ก-๙]/g,''); }
+
+function addOrg(){
+  var name   = document.getElementById('new-org-name').value.trim();
+  var expiry = document.getElementById('new-org-expiry').value;
+  var reg    = document.getElementById('new-org-reg').value;
+  if(!name){ showToast('กรุณากรอกชื่อหน่วยงาน','err'); return; }
+  if(!expiry){ showToast('กรุณาระบุวันหมดอายุ','err'); return; }
+  var key = orgNameToKey(name)+'_'+Date.now();
+  var record = {
+    name: name,
+    expiryDate: expiry,
+    registrationDate: reg||'',
+    addedBy: getCanonicalEmail()||'',
+    createdAt: new Date().toISOString()
+  };
+  // เพิ่มใน allOrgs ทันที — ไม่รอ Firebase
+  allOrgs[key] = record;
+  // ล้างฟอร์ม + อัปเดต UI ทันที
+  document.getElementById('new-org-name').value='';
+  document.getElementById('new-org-expiry').value='';
+  document.getElementById('new-org-reg').value='';
+  showToast('✓ เพิ่มสถาบัน "'+name+'" แล้ว');
+  if(document.getElementById('org-list-panel').style.display!=='none') renderOrgList();
+  // Sync Firebase (best effort — ถ้า rules บล็อกก็ยังใช้ session นี้ได้)
+  try{
+    db.ref('pharma-form/_cpe_orgs/'+key).set(record)
+      .catch(function(e){ console.warn('Firebase write failed:',e.message); });
+  }catch(e){ console.warn(e); }
+}
+
+/* ════════════════════════════════
+   ORG SEARCH & STATUS
+════════════════════════════════ */
+let selectedOrg = null;
+
+function searchOrgs(q){
+  const res = document.getElementById('search-results');
+  q = q.trim();
+  if(!q){ res.classList.remove('open'); return; }
+  const matches = Object.entries(allOrgs).filter(([,o])=>
+    (o.name||'').toLowerCase().includes(q.toLowerCase())
+  );
+  if(!matches.length){
+    res.innerHTML=`<div class="s-empty">ไม่พบหน่วยงาน "${q}"</div>`;
+  } else {
+    res.innerHTML = matches.map(([k,o])=>`
+      <div class="s-result-item" onclick="selectOrg('${k}')">
+        <span class="sr-name">${o.name}</span>
+        <span class="sr-date">หมดอายุ ${fmtDate(o.expiryDate)}</span>
+      </div>`).join('');
+  }
+  res.classList.add('open');
+}
+
+function selectOrg(key){
+  const org = allOrgs[key]; if(!org) return;
+  selectedOrg = {...org, _key:key};
+  document.getElementById('org-search').value = org.name;
+  document.getElementById('search-results').classList.remove('open');
+  showStatus(org);
+}
+
+function showStatus(org){
+  const card = document.getElementById('status-card');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const exp   = org.expiryDate ? new Date(org.expiryDate+'T00:00:00') : null;
+  const daysLeft = exp ? Math.ceil((exp-today)/(1000*60*60*24)) : null;
+
+  let statusClass, badgeClass, badgeText;
+  if(!exp || daysLeft < 0){
+    statusClass='expired'; badgeClass='badge-expired'; badgeText='❌ หมดอายุแล้ว';
+  } else if(daysLeft <= 60){
+    statusClass='warning'; badgeClass='badge-warning'; badgeText=`⚠️ ใกล้หมดอายุ (อีก ${daysLeft} วัน)`;
+  } else {
+    statusClass='valid'; badgeClass='badge-valid'; badgeText=`✅ ยังไม่หมดอายุ (อีก ${daysLeft} วัน)`;
+  }
+
+  card.className = 'status-card show '+statusClass;
+  document.getElementById('sc-org-name').textContent = org.name;
+  document.getElementById('sc-reg-date').textContent = fmtDate(org.registrationDate)||'—';
+  document.getElementById('sc-exp-date').textContent = fmtDate(org.expiryDate)||'—';
+  const badge = document.getElementById('sc-badge');
+  badge.className = 'sc-badge '+badgeClass;
+  badge.textContent = badgeText;
+
+  const btns = document.getElementById('sc-btns');
+  if(statusClass==='expired'){
+    btns.innerHTML=`
+      <button class="btn btn-danger" onclick="goRenew()">📋 ดูวิธีต่ออายุ</button>`;
+  } else {
+    btns.innerHTML=`
+      <button class="btn btn-primary" onclick="goConference()">🎓 ไปหน้าประชุมวิชาการ</button>
+      ${statusClass==='warning'?'<button class="btn btn-outline" onclick="goRenew()">🔄 ต่ออายุล่วงหน้า</button>':''}`;
+  }
+}
+
+function goRenew(){
+  var key = selectedOrg ? Object.keys(allOrgs).find(k=>allOrgs[k]===selectedOrg)||'' : '';
+  showView('renew', key, selectedOrg?selectedOrg.name:'');
+}
+function goConference(){
+  if(selectedOrg){
+    document.getElementById('conf-org-label').textContent='หน่วยงาน: '+selectedOrg.name;
+    currentConf.orgName = selectedOrg.name;
+    currentConf.orgKey  = selectedOrg._key;
+  }
+  showView('conference');
+}
+
+/* close search on outside click */
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#org-search')&&!e.target.closest('#search-results'))
+    document.getElementById('search-results').classList.remove('open');
+});
+
+/* ════════════════════════════════
+   RENEWAL DOC UPLOAD
+════════════════════════════════ */
+var renewFileStore = { letter:null, form59:null, payment:null };
+
+function handleRenewFile(type, input){
+  var file = input.files[0]; if(!file) return;
+  renewFileStore[type] = { file:file, name:file.name, url:null };
+  // hide zone, show attached bar
+  document.getElementById('rzone-'+type).style.display='none';
+  document.getElementById('rbar-'+type+'-name').textContent=file.name;
+  document.getElementById('rbar-'+type).style.display='flex';
+  // mark step done
+  var bar = document.getElementById('rbar-'+type);
+  var card = bar ? bar.closest('.renew-step-card') : null;
+  if(card) card.classList.add('done');
+}
+
+function clearRenewFile(type){
+  renewFileStore[type] = null;
+  // reset input so same file can be re-selected
+  var inp = document.getElementById('ru-'+type);
+  if(inp) inp.value='';
+  // show zone, hide attached bar
+  document.getElementById('rzone-'+type).style.display='';
+  document.getElementById('rbar-'+type).style.display='none';
+  // mark step undone
+  var zone = document.getElementById('rzone-'+type);
+  var card = zone ? zone.closest('.renew-step-card') : null;
+  if(card) card.classList.remove('done');
+}
+
+function handleRenewDrop(type, event){
+  event.preventDefault();
+  var zone = document.getElementById('rzone-'+type);
+  if(zone) zone.classList.remove('drag');
+  var file = event.dataTransfer.files[0];
+  if(!file) return;
+  var fakeInput = { files:[file] };
+  handleRenewFile(type, fakeInput);
+}
+
+function openRenewFile(type){
+  var id = type==='letter'?'ru-letter':type==='form59'?'ru-form59':'ru-payment';
+  document.getElementById(id).click();
+}
+
+function uploadRenewFile(type, file, orgKey){
+  return new Promise(function(resolve){
+    if(!storage){ resolve({url:'',path:''}); return; }
+    var ext = file.name.split('.').pop();
+    var path = 'renewals/'+orgKey+'/'+type+'_'+Date.now()+'.'+ext;
+    var done = false;
+    function finish(url, p){ if(!done){ done=true; clearTimeout(timer); resolve({url:url||'',path:p||''}); } }
+    var timer = setTimeout(function(){ finish('',''); }, 12000);
+    try{
+      var ref = storage.ref(path);
+      var task = ref.put(file);
+      task.on('state_changed', null,
+        function(){ finish('',''); },
+        function(){ ref.getDownloadURL().then(function(url){ finish(url,path); }).catch(function(){ finish('',''); }); }
+      );
+    }catch(e){ finish('',''); }
+  });
+}
+
+async function submitRenewalDocs(){
+  var orgKey = document.getElementById('view-renew').dataset.orgKey || '';
+  var orgName = document.getElementById('renew-org-label').textContent.replace('หน่วยงาน: ','') || '';
+  if(!renewFileStore.letter && !renewFileStore.form59 && !renewFileStore.payment){
+    showToast('กรุณาอัปโหลดเอกสารอย่างน้อย 1 รายการ','err'); return;
+  }
+  showToast('⏳ กำลังส่งเอกสาร...');
+  var record = { orgKey:orgKey, orgName:orgName, submittedAt:new Date().toISOString(), status:'รอตรวจสอบ' };
+  var types = ['letter','form59','payment'];
+  for(var i=0;i<types.length;i++){
+    var t = types[i];
+    if(renewFileStore[t] && renewFileStore[t].file){
+      try{
+        var r = await uploadRenewFile(t, renewFileStore[t].file, orgKey||('no-key-'+Date.now()));
+        record[t] = { url:r.url, path:r.path, name:renewFileStore[t].name };
+      }catch(e){
+        record[t] = { url:'', path:'', name:renewFileStore[t].name };
+      }
+    }
+  }
+  try{
+    var key = orgKey||('anon_'+Date.now());
+    await db.ref('pharma-form/_cpe_renewals/'+key+'/'+Date.now()).set(record);
+  }catch(e){ console.warn('Firebase save failed:',e.message); }
+  showToast('✅ ส่งเอกสารต่ออายุเรียบร้อยแล้ว ขอบคุณ');
+  renewFileStore = { letter:null, form59:null, payment:null };
+  ['letter','form59','payment'].forEach(function(t){ clearRenewFile(t); });
+  if(isAdmin) loadRenewSubmissions(orgKey);
+}
+
+function loadRenewSubmissions(orgKey){
+  if(!isAdmin || !orgKey) return;
+  var wrap = document.getElementById('renew-submissions-wrap');
+  var list = document.getElementById('renew-submissions-list');
+  if(!wrap||!list) return;
+  wrap.style.display='block';
+  try{
+    db.ref('pharma-form/_cpe_renewals/'+orgKey).orderByKey().limitToLast(5).once('value',function(snap){
+      var items=snap.val()||{};
+      if(!Object.keys(items).length){ list.innerHTML='<div style="font-size:.8rem;color:#999">ยังไม่มีการส่งเอกสาร</div>'; return; }
+      var labels={letter:'หนังสือขอต่ออายุ',form59:'แบบฟอร์ม สภ.59',payment:'หลักฐานการชำระเงิน'};
+      var html=Object.entries(items).reverse().map(function(e){
+        var k=e[0],v=e[1];
+        var dt=v.submittedAt?new Date(v.submittedAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'}):'';
+        var docs=['letter','form59','payment'].filter(function(t){return v[t]&&v[t].name;})
+          .map(function(t){ return v[t].url
+            ?'<a href="'+v[t].url+'" target="_blank" style="font-size:.75rem;color:#5a7bff;text-decoration:none">📎 '+labels[t]+'</a>'
+            :'<span style="font-size:.75rem;color:#999">📎 '+labels[t]+' ('+v[t].name+')</span>'; }).join(' &nbsp;');
+        return '<div style="padding:8px 10px;border:1px solid rgba(200,210,230,.4);border-radius:8px;margin-bottom:6px">'
+          +'<div style="font-size:.76rem;color:#6a6d77;margin-bottom:4px">'+dt+'</div>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+docs+'</div></div>';
+      }).join('');
+      list.innerHTML=html;
+    });
+  }catch(e){ console.warn(e); }
+}
+
+/* ════════════════════════════════
+   FILE UPLOAD
+════════════════════════════════ */
+const fileStore = { pdf:null, word:null }; // { file, url, name }
+const speakers  = [];
+
+function handleFileSelect(type, input){
+  const file = input.files[0]; if(!file) return;
+  fileStore[type] = { file, name:file.name, url:null };
+  // Show attached UI
+  document.getElementById('attached-'+type+'-name').textContent = file.name;
+  document.getElementById('attached-'+type+'-size').textContent = fmtSize(file.size);
+  document.getElementById('attached-'+type).classList.add('show');
+}
+
+function removeFile(type){
+  fileStore[type] = null;
+  document.getElementById('attached-'+type).classList.remove('show');
+  document.getElementById('upload-'+type).value='';
+  document.getElementById('prog-'+type).classList.remove('show');
+  document.getElementById('progtext-'+type).classList.remove('show');
+}
+
+function uploadFile(type, file, confId){
+  return new Promise((resolve,reject)=>{
+    const ext  = file.name.split('.').pop();
+    const path = `cpe-conferences/${confId}/${type}/${Date.now()}.${ext}`;
+    const ref  = storage.ref(path);
+    const task = ref.put(file);
+
+    const bar     = document.getElementById('progbar-'+type);
+    const prog    = document.getElementById('prog-'+type);
+    const progTxt = document.getElementById('progtext-'+type);
+    prog.classList.add('show'); progTxt.classList.add('show');
+
+    task.on('state_changed',
+      snap=>{
+        const pct = Math.round(snap.bytesTransferred/snap.totalBytes*100);
+        bar.style.width = pct+'%';
+        progTxt.textContent = `กำลังอัปโหลด ${type==='pdf'?'PDF':'Word'}... ${pct}%`;
+      },
+      err=>{ progTxt.textContent='อัปโหลดไม่สำเร็จ: '+err.message; reject(err); },
+      ()=>{
+        task.snapshot.ref.getDownloadURL().then(url=>{
+          progTxt.textContent='✓ อัปโหลดสำเร็จ';
+          bar.style.width='100%';
+          resolve({ name:file.name, url, path });
+        });
+      }
+    );
+  });
+}
+
+function uploadSpeakerCV(speakerIndex, file, confId){
+  return new Promise((resolve,reject)=>{
+    const ext  = file.name.split('.').pop();
+    const path = `cpe-conferences/${confId}/speakers/${speakerIndex}/cv.${ext}`;
+    const ref  = storage.ref(path);
+    const task = ref.put(file);
+
+    const progEl = document.getElementById(`spk-prog-${speakerIndex}`);
+    const txtEl  = document.getElementById(`spk-ptxt-${speakerIndex}`);
+    if(progEl) progEl.style.display='block';
+
+    task.on('state_changed',
+      snap=>{
+        const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);
+        if(txtEl) txtEl.textContent=`อัปโหลด CV... ${pct}%`;
+      },
+      err=>{ if(txtEl) txtEl.textContent='อัปโหลดไม่สำเร็จ'; reject(err); },
+      ()=>{
+        task.snapshot.ref.getDownloadURL().then(url=>{
+          if(txtEl) txtEl.textContent='✓ อัปโหลด CV สำเร็จ';
+          resolve({ name:file.name, url, path });
+        });
+      }
+    );
+  });
+}
+
+/* ════════════════════════════════
+   SPEAKER MANAGEMENT
+════════════════════════════════ */
+let speakerCount = 0;
+
+function addSpeaker(){
+  const idx = speakerCount++;
+  const wrap = document.getElementById('speakers-list');
+  const card = document.createElement('div');
+  card.className='speaker-card'; card.id=`speaker-${idx}`;
+  card.innerHTML=`
+    <div class="speaker-card-header">
+      <span class="speaker-num">วิทยากรคนที่ ${idx+1}</span>
+      <button class="btn-del-speaker" onclick="removeSpeaker(${idx})">✕ ลบ</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>ชื่อ-นามสกุล</label>
+        <input type="text" id="spk-name-${idx}" placeholder="ชื่อ-นามสกุล...">
+      </div>
+      <div class="form-group"><label>ตำแหน่ง</label>
+        <input type="text" id="spk-pos-${idx}" placeholder="ตำแหน่ง...">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group full"><label>สังกัด / หน่วยงาน</label>
+        <input type="text" id="spk-org-${idx}" placeholder="สังกัด...">
+      </div>
+    </div>
+    <div class="form-group full" style="margin-top:4px">
+      <label>CV วิทยากร (PDF)</label>
+      <div class="file-zone" id="spk-zone-${idx}"
+        onclick="document.getElementById('spk-cv-${idx}').click()">
+        <input type="file" id="spk-cv-${idx}" accept=".pdf" style="display:none"
+          onchange="handleSpeakerCV(${idx},this)">
+        <div class="fz-icon">👤</div>
+        <div class="fz-label">คลิกเพื่อแนบ CV (PDF)</div>
+        <div class="fz-sub">รองรับ .pdf</div>
+      </div>
+      <div class="file-attached" id="spk-attached-${idx}">
+        <div class="fa-icon">👤</div>
+        <div class="fa-info">
+          <div class="fa-name" id="spk-aname-${idx}"></div>
+          <div class="fa-size" id="spk-asize-${idx}"></div>
+        </div>
+        <button class="fa-remove" onclick="removeSpeakerCV(${idx})">✕</button>
+      </div>
+      <div class="upload-progress" id="spk-prog-${idx}" style="display:none">
+        <div class="up-bar" id="spk-progbar-${idx}"></div>
+      </div>
+      <div class="up-text" id="spk-ptxt-${idx}"></div>
+    </div>`;
+  wrap.appendChild(card);
+  speakers[idx] = { name:'', position:'', affiliation:'', cvFile:null, cvUrl:null, cvName:'' };
+}
+
+function handleSpeakerCV(idx, input){
+  const file=input.files[0]; if(!file) return;
+  speakers[idx].cvFile=file; speakers[idx].cvName=file.name;
+  document.getElementById('spk-aname-'+idx).textContent=file.name;
+  document.getElementById('spk-asize-'+idx).textContent=fmtSize(file.size);
+  document.getElementById('spk-attached-'+idx).classList.add('show');
+}
+
+function removeSpeakerCV(idx){
+  if(speakers[idx]){ speakers[idx].cvFile=null; speakers[idx].cvUrl=null; speakers[idx].cvName=''; }
+  document.getElementById('spk-attached-'+idx).classList.remove('show');
+  document.getElementById('spk-cv-'+idx).value='';
+}
+
+function removeSpeaker(idx){
+  const card=document.getElementById('speaker-'+idx);
+  if(card) card.remove();
+  if(speakers[idx]) speakers[idx]=null;
+}
+
+/* ════════════════════════════════
+   CONFERENCE SAVE
+════════════════════════════════ */
+let currentConf = { orgName:'', orgKey:'' };
+
+async function saveConference(){
+  const email=getCanonicalEmail(); if(!email){ showToast('ยังไม่ได้เข้าสู่ระบบ','err'); return; }
+  const confName=document.getElementById('conf-name').value.trim();
+  if(!confName){ showToast('กรุณาระบุชื่องานประชุม','err'); return; }
+
+  const btn=document.getElementById('btn-save-conf');
+  btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
+
+  const confId = 'conf-'+Date.now();
+  const uploads = [];
+
+  try{
+    // upload conference PDF
+    if(fileStore.pdf?.file){
+      const r=await uploadFile('pdf',fileStore.pdf.file,confId);
+      fileStore.pdf.url=r.url; fileStore.pdf.path=r.path;
+    }
+    // upload conference Word
+    if(fileStore.word?.file){
+      const r=await uploadFile('word',fileStore.word.file,confId);
+      fileStore.word.url=r.url; fileStore.word.path=r.path;
+    }
+    // upload speaker CVs
+    const spkData=[];
+    for(let i=0;i<speakers.length;i++){
+      const s=speakers[i]; if(!s) continue;
+      s.name=(document.getElementById('spk-name-'+i)?.value||'').trim();
+      s.position=(document.getElementById('spk-pos-'+i)?.value||'').trim();
+      s.affiliation=(document.getElementById('spk-org-'+i)?.value||'').trim();
+      if(s.cvFile){
+        const r=await uploadSpeakerCV(i,s.cvFile,confId);
+        s.cvUrl=r.url; s.cvName=r.name;
+      }
+      if(s.name) spkData.push({ name:s.name, position:s.position, affiliation:s.affiliation,
+        cvUrl:s.cvUrl||'', cvName:s.cvName||'' });
+    }
+
+    const record={
+      id: confId,
+      orgName: currentConf.orgName||'',
+      orgKey: currentConf.orgKey||'',
+      confName,
+      dateStart: document.getElementById('conf-date-start').value||'',
+      dateEnd:   document.getElementById('conf-date-end').value||'',
+      location:  document.getElementById('conf-location').value||'',
+      note:      document.getElementById('conf-note').value||'',
+      files:{
+        pdf:  fileStore.pdf?.url  ? {name:fileStore.pdf.name,  url:fileStore.pdf.url}  : null,
+        word: fileStore.word?.url ? {name:fileStore.word.name, url:fileStore.word.url} : null,
+      },
+      speakers: spkData,
+      createdBy: email,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const key=emailToFbKey(email);
+    await db.ref(`pharma-form/${key}/cpe-conferences/${confId}`).set(record);
+    showToast('✓ บันทึกข้อมูลประชุมวิชาการแล้ว');
+    btn.disabled=false; btn.textContent='💾 บันทึกข้อมูล';
+
+  } catch(e){
+    showToast('เกิดข้อผิดพลาด: '+e.message,'err');
+    btn.disabled=false; btn.textContent='💾 บันทึกข้อมูล';
+  }
+}
+
+async function seedAllOrgs(){
+  if(!isAdmin){ showToast('เฉพาะ Admin เท่านั้น','err'); return; }
+  const btn = document.getElementById('btn-seed');
+  btn.disabled = true; btn.textContent = '⏳ กำลังนำเข้า...';
+  try{
+    const updates = {};
+    SEED_ORGS.forEach(o=>{
+      const key = 'org_'+o.code;
+      updates['pharma-form/_cpe_orgs/'+key] = {
+        code: o.code,
+        name: o.name,
+        mainInstitution: 'คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา',
+        type: 'หน่วยงานในเครือข่าย',
+        approvalDate: o.approvalDate,
+        expiryDate: o.expiryDate,
+        registrationDate: o.approvalDate,
+        addedBy: getCanonicalEmail()||'admin',
+        seeded: true,
+        createdAt: new Date().toISOString()
+      };
+    });
+    await db.ref().update(updates);
+    showToast('✓ นำเข้าข้อมูล '+SEED_ORGS.length+' หน่วยงานสำเร็จ');
+    btn.textContent = '✓ นำเข้าแล้ว';
+  } catch(e){
+    showToast('เกิดข้อผิดพลาด: '+e.message,'err');
+    btn.disabled = false;
+    btn.textContent = '📥 นำเข้าข้อมูลทั้งหมด (23 หน่วยงาน)';
+  }
+}
+
+/* ════════════════════════════════
+   AURA REACTIVE MOUSE
+════════════════════════════════ */
+(function(){
+  let tx=.5,ty=.5,cx=.5,cy=.5;
+  const cursor=document.getElementById('au-cursor');
+  document.addEventListener('mousemove',e=>{
+    tx=e.clientX/window.innerWidth; ty=e.clientY/window.innerHeight;
+    if(cursor){cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';}
+  });
+  (function tick(){
+    cx+=(tx-cx)*.055; cy+=(ty-cy)*.055;
+    document.body.style.setProperty('--mx',cx.toFixed(4));
+    document.body.style.setProperty('--my',cy.toFixed(4));
+    document.body.style.setProperty('--hue',(cx*220).toFixed(1));
+    document.body.style.background='oklch(94.5% 0.018 '+(170+cx*100).toFixed(0)+')';
+    requestAnimationFrame(tick);
+  })();
+})();
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    var m=document.getElementById('org-detail-modal');
+    if(m && m.style.display!=='none') closeOrgDetail();
+  }
+});
+</script>
+</body>
+</html>
