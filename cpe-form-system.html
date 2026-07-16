@@ -383,6 +383,7 @@ body::before,body::after{display:none !important}
       <button class="btn btn-primary btn-sm" onclick="addOrg()">＋ เพิ่มสถาบัน</button>
       <button class="btn btn-outline btn-sm" onclick="toggleOrgList()" id="btn-manage">📋 จัดการรายชื่อ</button>
       <button class="btn btn-outline btn-sm" onclick="seedAllOrgs()" id="btn-seed" style="font-size:.72rem">📥 นำเข้าข้อมูลเริ่มต้น</button>
+      <button class="btn btn-green btn-sm" onclick="showView('admin-renewals')" style="font-size:.78rem">📁 เอกสารต่ออายุทั้งหมด</button>
     </div>
 
     <!-- Org management list (toggle) -->
@@ -419,6 +420,28 @@ body::before,body::after{display:none !important}
       <div class="sc-btns" id="sc-btns"></div>
     </div>
 
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════
+     VIEW ADMIN-RENEWALS : เอกสารต่ออายุทั้งหมด
+════════════════════════════════ -->
+<div id="view-admin-renewals" style="display:none">
+<div class="container">
+  <div class="hero">
+    <h2>📁 เอกสารต่ออายุทั้งหมด</h2>
+    <p style="font-size:.85rem;color:var(--sub)">รายการเอกสารที่หน่วยงานส่งมาทั้งหมด</p>
+  </div>
+  <div class="fsec">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="fsec-title" style="margin-bottom:0">รายการส่งเอกสาร</div>
+      <button class="btn btn-outline btn-sm" onclick="loadAllRenewals()">🔄 รีเฟรช</button>
+    </div>
+    <div id="all-renewals-list"><div style="color:var(--sub);font-size:.85rem">กำลังโหลด...</div></div>
+  </div>
+  <div style="margin-top:16px">
+    <button class="btn btn-outline" onclick="showView('status')">← กลับ</button>
   </div>
 </div>
 </div>
@@ -918,7 +941,7 @@ var currentUser=null, isAdmin=false;
    VIEW NAVIGATION
 ════════════════════════════════ */
 function showView(id, orgKey, orgName){
-  ['status','renew','conference'].forEach(v=>document.getElementById('view-'+v).style.display='none');
+  ['status','renew','conference','admin-renewals'].forEach(v=>document.getElementById('view-'+v).style.display='none');
   document.getElementById('view-'+id).style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='renew'){
@@ -932,6 +955,7 @@ function showView(id, orgKey, orgName){
   if(id==='conference' && orgName){
     document.getElementById('conf-org-label').textContent='หน่วยงาน: '+orgName;
   }
+  if(id==='admin-renewals') loadAllRenewals();
 }
 
 /* ════════════════════════════════
@@ -1349,6 +1373,51 @@ async function submitRenewalDocs(){
   renewFileStore = { letter:null, form59:null, payment:null };
   ['letter','form59','payment'].forEach(function(t){ clearRenewFile(t); });
   if(isAdmin) loadRenewSubmissions(orgKey);
+}
+
+function loadAllRenewals(){
+  var list = document.getElementById('all-renewals-list');
+  if(!list) return;
+  list.innerHTML='<div style="color:var(--sub);font-size:.85rem">กำลังโหลด...</div>';
+  var labels={letter:'หนังสือขอต่ออายุ',form59:'แบบ สภ.59',payment:'หลักฐานชำระ'};
+  try{
+    db.ref('pharma-form/_cpe_renewals').once('value',function(snap){
+      var data=snap.val()||{};
+      var rows=[];
+      Object.entries(data).forEach(function(e){
+        var orgKey=e[0], subs=e[1]||{};
+        Object.entries(subs).forEach(function(se){
+          var ts=se[0], v=se[1]||{};
+          rows.push(Object.assign({},v,{_orgKey:orgKey,_ts:parseInt(ts)||0}));
+        });
+      });
+      if(!rows.length){
+        list.innerHTML='<div style="color:var(--sub);font-size:.85rem;padding:16px 0">ยังไม่มีการส่งเอกสาร</div>';
+        return;
+      }
+      rows.sort(function(a,b){return b._ts-a._ts;});
+      var html=rows.map(function(v){
+        var dt=v.submittedAt?new Date(v.submittedAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+        var orgLabel=v.orgName||v._orgKey||'—';
+        var fileLinks=['letter','form59','payment'].map(function(t){
+          if(!v[t]||!v[t].name) return '';
+          return v[t].url
+            ?'<a href="'+v[t].url+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:#5a7bff;text-decoration:none;padding:4px 8px;border:1px solid rgba(90,123,255,.3);border-radius:6px;white-space:nowrap">📎 '+labels[t]+'</a>'
+            :'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:#999;padding:4px 8px;border:1px solid rgba(200,210,230,.3);border-radius:6px;white-space:nowrap" title="'+v[t].name+'">📄 '+labels[t]+' (ไม่มีลิงก์)</span>';
+        }).filter(Boolean).join('');
+        return '<div style="padding:12px 14px;border:1px solid rgba(200,210,230,.4);border-radius:10px;margin-bottom:8px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
+          +'<div style="font-weight:700;font-size:.85rem;color:var(--txt)">'+orgLabel+'</div>'
+          +'<div style="font-size:.73rem;color:var(--sub)">'+dt+'</div>'
+          +'</div>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+( fileLinks||'<span style="font-size:.75rem;color:#999">ไม่มีไฟล์</span>')+'</div>'
+          +'</div>';
+      }).join('');
+      list.innerHTML=html;
+    },function(err){
+      list.innerHTML='<div style="color:#ef4444;font-size:.85rem">โหลดไม่ได้: '+err.code+'</div>';
+    });
+  }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:.85rem">เกิดข้อผิดพลาด</div>'; }
 }
 
 function loadRenewSubmissions(orgKey){
