@@ -297,7 +297,23 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;
       <div class="divider"></div>
 
       <div class="login-error" id="login-error"></div>
-      <div class="google-btn-wrap" id="google-signin-btn"></div>
+      <div class="google-btn-wrap" id="google-signin-btn">
+        <button id="btn-google-login" onclick="loginWithGoogle()" style="
+          display:flex;align-items:center;gap:10px;
+          background:#fff;border:none;border-radius:24px;
+          padding:12px 24px;font-size:.95rem;font-weight:600;
+          color:#3c4043;cursor:pointer;
+          box-shadow:0 2px 8px rgba(0,0,0,.22);
+          font-family:'Poppins','Noto Sans Thai',sans-serif;
+          min-width:220px;justify-content:center;
+          transition:box-shadow .15s,opacity .15s;
+        " onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.28)'"
+           onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.22)'">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+               alt="" style="width:20px;height:20px;flex-shrink:0">
+          <span>เข้าสู่ระบบด้วย Google</span>
+        </button>
+      </div>
 
       <p class="note">
         กรุณาใช้อีเมลที่ได้รับสิทธิ์เท่านั้น<br>
@@ -358,43 +374,45 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;
   if(u)location.replace(AUTH_CONFIG.HOME_PAGE);
 })();
 
-/* ── Auth callbacks ── */
-function handleCredentialResponse(response){
+/* ── Auth: Firebase signInWithPopup ── */
+async function loginWithGoogle(){
+  if(isInAppBrowser()){showInAppWarning();return;}
+  const btn=document.getElementById('btn-google-login');
   document.getElementById('login-loading').classList.add('show');
-  const payload=decodeJWT(response.credential);
-  if(!payload){
-    showLoginError('เกิดข้อผิดพลาด ไม่สามารถอ่านข้อมูลบัญชีได้ กรุณาลองใหม่');
+  if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  try{
+    initFirebase();
+    const provider=new firebase.auth.GoogleAuthProvider();
+    const result=await firebase.auth().signInWithPopup(provider);
+    const fbUser=result.user;
+    const email=(fbUser.email||'').toLowerCase();
+    const allowed=AUTH_CONFIG.ALLOWED_EMAILS.map(e=>e.trim().toLowerCase());
+    if(!allowed.includes(email)){
+      await firebase.auth().signOut().catch(()=>{});
+      showLoginError(
+        '❌ อีเมลไม่ได้รับอนุญาต<br>'+
+        'กรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์การเข้าถึง<br>'+
+        '<span style="opacity:.55;font-size:.85em">อีเมลที่ใช้: '+fbUser.email+'</span>'
+      );
+      document.getElementById('login-loading').classList.remove('show');
+      if(btn){btn.disabled=false;btn.style.opacity='';}
+      return;
+    }
+    setUser({
+      email,
+      name:fbUser.displayName||email.split('@')[0],
+      picture:fbUser.photoURL||'',
+      role:isAdmin({email})?'admin':'user',
+      loginAt:Date.now()
+    });
+    location.replace(AUTH_CONFIG.HOME_PAGE);
+  }catch(e){
     document.getElementById('login-loading').classList.remove('show');
-    return;
+    if(btn){btn.disabled=false;btn.style.opacity='';}
+    if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
+    showLoginError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    console.error('[loginWithGoogle]',e.code,e.message);
   }
-  const email=(payload.email||'').toLowerCase();
-  const allowed=AUTH_CONFIG.ALLOWED_EMAILS.map(e=>e.trim().toLowerCase());
-  if(!allowed.includes(email)){
-    showLoginError(
-      '❌ อีเมลไม่ได้รับอนุญาต<br>'+
-      'กรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์การเข้าถึง<br>'+
-      '<span style="opacity:.55;font-size:.85em">อีเมลที่ใช้: '+payload.email+'</span>'
-    );
-    document.getElementById('login-loading').classList.remove('show');
-    return;
-  }
-  const user={
-    email,
-    name:payload.name||email.split('@')[0],
-    picture:payload.picture||'',
-    role:isAdmin({email})?'admin':'user',
-    loginAt:Date.now()
-  };
-  setUser(user);
-  var dest = AUTH_CONFIG.HOME_PAGE;
-  var fallback = setTimeout(()=>location.replace(dest), 3000);
-  syncFirebaseAuth(response.credential).then(function(){
-    clearTimeout(fallback);
-    location.replace(dest);
-  }).catch(function(){
-    clearTimeout(fallback);
-    location.replace(dest);
-  });
 }
 
 function showLoginError(msg){
@@ -462,18 +480,7 @@ function showInAppWarning(){
     </div>`;
 }
 
-function initGIS(){
-  // Block OAuth in WebView / in-app browsers (Google 403: disallowed_useragent)
-  if(isInAppBrowser()){showInAppWarning();return;}
-  google.accounts.id.initialize({
-    client_id:AUTH_CONFIG.CLIENT_ID,
-    callback:handleCredentialResponse
-  });
-  google.accounts.id.renderButton(
-    document.getElementById('google-signin-btn'),
-    {theme:'filled_black',size:'large',shape:'pill',width:260,locale:'th'}
-  );
-}
+/* initGIS removed — using firebase.auth().signInWithPopup() instead */
 
 /* ── Mouse nebula ── */
 (function(){
@@ -675,6 +682,6 @@ function initGIS(){
 })();
 </script>
 
-<script src="https://accounts.google.com/gsi/client" onload="initGIS()" async defer></script>
+<!-- GIS removed: using Firebase Auth signInWithPopup -->
 </body>
 </html>
