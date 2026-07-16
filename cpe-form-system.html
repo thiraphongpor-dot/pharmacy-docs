@@ -964,21 +964,24 @@ function showView(id, orgKey, orgName){
 
 function loadAllOrgs(){
   // allOrgs ถูกโหลด SEED_ORGS ไว้แล้วตั้งแต่ต้น script
-  // Firebase sync: override ด้วยข้อมูลที่ admin แก้ไข, และลบรายการที่ถูก delete
-  try{
-    db.ref('pharma-form/_cpe_orgs').on('value',function(snap){
-      var fbData=snap.val()||{};
-      Object.keys(fbData).forEach(function(k){
-        if(fbData[k] && fbData[k].deleted){
-          delete allOrgs[k]; // ลบรายการที่ถูก mark deleted
-        } else if(fbData[k]){
-          allOrgs[k]=fbData[k]; // อัปเดตข้อมูล
-        }
+  // Firebase sync: รอ auth ก่อนแล้วค่อย override ด้วยข้อมูล Firebase
+  var unsubAuth = firebase.auth().onAuthStateChanged(function(user){
+    unsubAuth();
+    if(!user) return; // ไม่มี auth → ใช้แค่ SEED_ORGS
+    try{
+      db.ref('pharma-form/_cpe_orgs').on('value',function(snap){
+        var fbData=snap.val()||{};
+        Object.keys(fbData).forEach(function(k){
+          if(fbData[k] && fbData[k].deleted){
+            delete allOrgs[k];
+          } else if(fbData[k]){
+            allOrgs[k]=fbData[k];
+          }
+        });
+        if(document.getElementById('org-list-panel').style.display!=='none') renderOrgList();
       });
-      // re-render org list ถ้ากำลังเปิดอยู่
-      if(document.getElementById('org-list-panel').style.display!=='none') renderOrgList();
-    });
-  }catch(e){ console.warn('Firebase DB listener error:',e.message); }
+    }catch(e){ console.warn('Firebase DB listener error:',e.message); }
+  });
 }
 
 function toggleOrgList(){
@@ -1380,7 +1383,10 @@ function loadAllRenewals(){
   if(!list) return;
   list.innerHTML='<div style="color:var(--sub);font-size:.85rem">กำลังโหลด...</div>';
   var labels={letter:'หนังสือขอต่ออายุ',form59:'แบบ สภ.59',payment:'หลักฐานชำระ'};
-  try{
+  var unsubscribe = firebase.auth().onAuthStateChanged(function(user){
+    unsubscribe();
+    if(!user){ list.innerHTML='<div style="color:#ef4444;font-size:.85rem">กรุณาล็อกอินใหม่</div>'; return; }
+    try{
     db.ref('pharma-form/_cpe_renewals').once('value',function(snap){
       var data=snap.val()||{};
       var rows=[];
@@ -1418,6 +1424,7 @@ function loadAllRenewals(){
       list.innerHTML='<div style="color:#ef4444;font-size:.85rem">โหลดไม่ได้: '+err.code+'</div>';
     });
   }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:.85rem">เกิดข้อผิดพลาด</div>'; }
+  }); // end onAuthStateChanged
 }
 
 function loadRenewSubmissions(orgKey){
