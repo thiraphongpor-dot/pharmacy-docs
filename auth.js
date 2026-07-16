@@ -252,13 +252,29 @@ function initFirebase(){
 function syncFirebaseAuth(googleIdToken){
   try{
     initFirebase();
-    if(typeof firebase==='undefined' || !firebase.auth) return Promise.resolve();
+    if(typeof firebase==='undefined'){
+      console.warn('[syncFirebaseAuth] firebase undefined');
+      return Promise.resolve();
+    }
+    if(!firebase.auth){
+      console.warn('[syncFirebaseAuth] firebase.auth missing — auth SDK not loaded');
+      return Promise.resolve();
+    }
+    console.log('[syncFirebaseAuth] starting...');
     var cred = firebase.auth.GoogleAuthProvider.credential(googleIdToken);
     return firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-      .then(function(){ return firebase.auth().signInWithCredential(cred); })
-      .catch(function(e){ console.warn('Firebase Auth sync:', e.message); });
+      .then(function(){
+        console.log('[syncFirebaseAuth] persistence set, signing in...');
+        return firebase.auth().signInWithCredential(cred);
+      })
+      .then(function(result){
+        console.log('[syncFirebaseAuth] ✅ signed in as', result.user.email);
+      })
+      .catch(function(e){
+        console.error('[syncFirebaseAuth] ❌ failed:', e.code, e.message);
+      });
   }catch(e){
-    console.warn('Firebase Auth sync error:', e);
+    console.error('[syncFirebaseAuth] exception:', e);
     return Promise.resolve();
   }
 }
