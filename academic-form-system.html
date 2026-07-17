@@ -3022,9 +3022,10 @@ async function buildWordDoc(p){
     heading('๗. หลักการและเหตุผล'),
     new Table({
       width:{size:100,type:WidthType.PERCENTAGE},
-      borders:tblBorders,
+      borders:{top:{style:BorderStyle.NONE,size:0},bottom:{style:BorderStyle.NONE,size:0},left:{style:BorderStyle.NONE,size:0},right:{style:BorderStyle.NONE,size:0},insideH:{style:BorderStyle.NONE,size:0},insideV:{style:BorderStyle.NONE,size:0}},
       rows:[new TableRow({children:[new TableCell({
-        margins:{top:100,bottom:100,left:150,right:150},
+        margins:{top:0,bottom:0,left:0,right:0},
+        borders:{top:{style:BorderStyle.NONE,size:0},bottom:{style:BorderStyle.NONE,size:0},left:{style:BorderStyle.NONE,size:0},right:{style:BorderStyle.NONE,size:0}},
         children:[multilinePara(p.rationale||'')]
       })]})]
     }),
