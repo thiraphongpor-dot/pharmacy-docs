@@ -11,7 +11,7 @@
  */
 
 var ROOT_FOLDER  = 'CPE เอกสารต่ออายุ';
-var SHEET_NAME   = 'CPE บันทึกการส่งเอกสาร';   // ชื่อ Google Sheet
+var SHEET_NAME   = 'ข้อมูลโครงการบริการวิชาการและ CPE';   // ชื่อ Google Sheet
 
 /* ─── Main POST handler ─── */
 function doPost(e) {
