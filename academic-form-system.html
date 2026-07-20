@@ -1153,6 +1153,10 @@ let currentUser = null;          // set at init from auth.js getUser()
 let currentProjectOwner = null;  // email of the user whose project is being edited/viewed
 let _canonicalEmail = null;      // resolved canonical email after alias lookup
 
+// ── Google Apps Script URL (ใช้ร่วมกับ cpe-form-system) ──
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuFA94GG7lE9rCXUsFgno1IOaNUet8fIE1oTzJ06d0cNx5YD-WfHWbkyXVE9OeLtNm-Q/exec';
+function _logToSheet(payload){ if(APPS_SCRIPT_URL) fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)}).catch(()=>{}); }
+
 function getUserDbKey(email){
   return 'pharma_projects_' + (email||'').toLowerCase().replace(/[^a-z0-9@._-]/g,'_');
 }
@@ -1957,6 +1961,33 @@ function saveForm(){
   const oldProject = idx >= 0 ? projects[idx] : null;
   if(idx>=0) projects[idx]=p; else projects.unshift(p);
   saveProjects(projects, email);
+  // ── Log to Google Sheet (fire-and-forget) ──
+  _logToSheet({
+    action:'log', type:'academic',
+    savedAt:        p.updatedAt,
+    ownerEmail:     email||'',
+    projectName:    p.projectName||'',
+    dept:           p.dept||'',
+    sig1Name:       p.sig1Name||'',
+    coordinators:   (p.coordinators||[]).join(', '),
+    location:       p.location||'',
+    startDate:      p.startDate||'',
+    endDate:        p.endDate||'',
+    budgetTotal:    (p.budget||[]).reduce((s,r)=>s+(parseFloat(r.amount)||0),0).toString(),
+    budgetSource:   p.budgetSource||'',
+    incomeTotal:    p.incomeRegTotal||'',
+    incomeNetText:  p.incomeNetText||'',
+    sdgs:           [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].filter(n=>p['sdg'+n]).join(', '),
+    buuStrategies:  ['buu1','buu2','buu3','buu4'].filter(k=>p[k]).join(', '),
+    mStrategies:    ['m1','m2','m3','m4'].filter(k=>p[k]).join(', '),
+    edpex:          ['edpex1','edpex2','edpex3','edpex4','edpex5','edpex6','edpex7'].filter(k=>p[k]).join(', '),
+    objectives:     (p.objectives||[]).join(' | '),
+    targets:        (p.targets||[]).map(t=>(t.name||'')+(t.count?'('+t.count+'คน)':'')).join(', '),
+    results:        (p.results||[]).join(' | '),
+    kpiQty:         (p.kpiQty||[]).join(' | '),
+    kpiQual:        (p.kpiQual||[]).join(' | '),
+    planYear:       p.planYear||''
+  });
   showToast('✓ บันทึกโครงการสำเร็จ','ok');
   // Drive: สร้างโฟลเดอร์ใหม่ หรือเปลี่ยนชื่อโฟลเดอร์ถ้าชื่อโครงการเปลี่ยน
   if(isNew){
@@ -2949,6 +2980,7 @@ async function buildWordDoc(p){
   const _wIncSvc    = _wCeil10(_wIncTotal * 5 / 112) + _wCeil10(_wIncTotal * 7 / 112);
   const _wIncNet    = _wIncTotal - _wIncSvc;
   const _wFmt = n => n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const _wFmtThai = n => { const thd=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return _wFmt(n).replace(/[0-9]/g,d=>thd[+d]); };
   const _wIncNetTxt = p.incomeNetText || '';
 
   const tblBorder = {style:BorderStyle.SINGLE,size:4,color:'000000'};
@@ -3110,11 +3142,27 @@ async function buildWordDoc(p){
     new Paragraph({spacing:{after:0,line:240,lineRule:'auto'},indent:{left:640},children:[run('ตัวชี้วัดเชิงต้นทุน',{bold:true}),run(' : ค่าใช้จ่ายไม่เกินงบประมาณที่กำหนดไว้')]}),
     // 19
     heading('๑๙. รายละเอียดงบประมาณของโครงการ'),
-    para([run('รายรับ',{bold:true,underline:{type:'single'}})],{indent:{left:640}}),
-    para(`${p.incomeDesc||'ค่าลงทะเบียน'} เป็นเงิน ${_wFmt(_wIncTotal)} บาท`,{indent:{left:960}}),
-    para(`หัก ค่าตอบแทนบริการวิชาการ 12% เป็นเงิน ${_wFmt(_wIncSvc)} บาท`,{indent:{left:960}}),
-    para(`คงเหลือดำเนินการ เป็นเงิน ${_wFmt(_wIncNet)} บาท`,{bold:true,indent:{left:960}}),
-    para(`(${_wIncNetTxt||'............................................บาทถ้วน'})`,{indent:{left:960}}),
+    new Paragraph({spacing:{before:0,after:0,line:240,lineRule:'auto'},children:[new TextRun({text:'รายรับ',font:FONT,size:SZ,bold:true,underline:{type:'single'},language:{value:'th-TH'}})]}),
+    new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:tblBorders,rows:[
+      new TableRow({children:[
+        new TableCell({children:[para(`${p.incomeDesc||'ค่าลงทะเบียน'} เป็นเงิน`)]}),
+        new TableCell({width:{size:2000,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0,line:240,lineRule:'auto'},children:[run(_wFmtThai(_wIncTotal))]})]}),
+        new TableCell({width:{size:500,type:WidthType.DXA},children:[para('บาท')]}),
+      ]}),
+      new TableRow({children:[
+        new TableCell({children:[para('หัก ค่าตอบแทนบริการวิชาการ ๑๒% เป็นเงิน')]}),
+        new TableCell({width:{size:2000,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0,line:240,lineRule:'auto'},children:[run(_wFmtThai(_wIncSvc))]})]}),
+        new TableCell({width:{size:500,type:WidthType.DXA},children:[para('บาท')]}),
+      ]}),
+      new TableRow({children:[
+        new TableCell({children:[para('คงเหลือดำเนินการ เป็นเงิน',{bold:true})]}),
+        new TableCell({width:{size:2000,type:WidthType.DXA},children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0,line:240,lineRule:'auto'},children:[run(_wFmtThai(_wIncNet),{bold:true})]})]}),
+        new TableCell({width:{size:500,type:WidthType.DXA},children:[para('บาท',{bold:true})]}),
+      ]}),
+      new TableRow({children:[
+        new TableCell({columnSpan:3,children:[new Paragraph({alignment:AlignmentType.RIGHT,spacing:{after:0,line:240,lineRule:'auto'},children:[run(`(${_wIncNetTxt||'............................................บาทถ้วน'})`)]})]})
+      ]}),
+    ]}),
     blank(),
     para(`ใช้งบประมาณดำเนินการจากเงิน ${p.budgetSource||'...............'} แผนงาน ${p.budgetPlan||'...............'} งาน ${p.budgetWork||'...............'} หมวดเงิน ${p.budgetType||'...............'} เป็นจำนวนเงิน ${total.toLocaleString('th-TH',{minimumFractionDigits:2})} บาท (${p.budgetTotalText||'...................................'})`,{indent:{left:640}}),
     new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:tblBorders,rows:[

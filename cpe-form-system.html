@@ -935,7 +935,7 @@ var currentUser=null, isAdmin=false;
    GOOGLE DRIVE UPLOAD via Apps Script
 ════════════════════════════════ */
 // ← วาง URL ที่ได้จากการ Deploy Apps Script ที่นี่
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3cAmQtyM5Dr81UYgdk5jNbAdBJ92E28Sdv8aGnjJxUph1abGEJi58Ro4cGA2Lhd4zCA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuFA94GG7lE9rCXUsFgno1IOaNUet8fIE1oTzJ06d0cNx5YD-WfHWbkyXVE9OeLtNm-Q/exec';
 
 function uploadToGDrive(file, orgName, docType){
   return new Promise(function(resolve, reject){
@@ -1378,6 +1378,18 @@ async function submitRenewalDocs(){
     showToast('❌ บันทึกไม่สำเร็จ: '+e.message+' (อาจต้องตรวจสอบ Firebase Rules)','err');
     return;
   }
+  // บันทึกลง Google Sheet
+  if(APPS_SCRIPT_URL){
+    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+      action:'log', type:'renewal',
+      submittedAt: record.submittedAt,
+      orgName:     record.orgName,
+      letterUrl:   record.letter  ? record.letter.url  : '',
+      form59Url:   record.form59  ? record.form59.url  : '',
+      paymentUrl:  record.payment ? record.payment.url : '',
+      status:      record.status
+    })}).catch(function(){});
+  }
   showToast('✅ ส่งเอกสารต่ออายุเรียบร้อยแล้ว ขอบคุณ');
   renewFileStore = { letter:null, form59:null, payment:null };
   ['letter','form59','payment'].forEach(function(t){ clearRenewFile(t); });
@@ -1614,6 +1626,20 @@ async function saveConference(){
 
     const key=emailToFbKey(email);
     await db.ref(`pharma-form/${key}/cpe-conferences/${confId}`).set(record);
+    // บันทึกลง Google Sheet
+    if(APPS_SCRIPT_URL){
+      fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+        action:'log', type:'conference',
+        submittedAt:  record.updatedAt,
+        orgName:      record.orgName,
+        confName:     record.confName,
+        confDate:     (record.dateStart||'')+(record.dateEnd?'–'+record.dateEnd:''),
+        location:     record.location||'',
+        pdfUrl:       record.files?.pdf?.url  || '',
+        wordUrl:      record.files?.word?.url || '',
+        speakers:     record.speakers||[]
+      })}).catch(function(){});
+    }
     showToast('✓ บันทึกข้อมูลประชุมวิชาการแล้ว');
     btn.disabled=false; btn.textContent='💾 บันทึกข้อมูล';
 
