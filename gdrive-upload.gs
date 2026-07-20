@@ -116,9 +116,61 @@ function logToSheet(data) {
       ]);
     }
 
+    // ── แจ้งเตือน admin ทางอีเมล ──
+    sendAdminEmail(data);
+
     return respond({ success:true });
   } catch(err) {
     return respond({ success:false, error:err.toString() });
+  }
+}
+
+/* ─── Email notification ─── */
+var ADMIN_EMAIL = 'thiraphong.ge@go.buu.ac.th';
+
+function sendAdminEmail(data) {
+  try {
+    var formType, subject, body;
+    var now = formatDate(data.submittedAt || data.savedAt);
+
+    if (data.type === 'renewal') {
+      formType = 'ต่ออายุ CPE';
+      subject  = '[แจ้งเตือน] มีการส่งเอกสารต่ออายุ CPE — ' + (data.orgName || '');
+      body     = 'มีการส่งเอกสารใหม่เข้ามาในระบบ\n\n'
+               + 'ประเภทฟอร์ม : ' + formType + '\n'
+               + 'หน่วยงาน   : ' + (data.orgName || '-') + '\n'
+               + 'วันที่-เวลา : ' + now + '\n'
+               + 'สถานะ      : ' + (data.status || 'รอตรวจสอบ') + '\n\n'
+               + 'กรุณาตรวจสอบในระบบหรือ Google Sheet: "ข้อมูลโครงการบริการวิชาการและ CPE" → tab ต่ออายุ CPE';
+
+    } else if (data.type === 'conference') {
+      formType = 'ประชุมวิชาการ';
+      subject  = '[แจ้งเตือน] มีการส่งข้อมูลประชุมวิชาการ — ' + (data.confName || '');
+      body     = 'มีการส่งข้อมูลประชุมวิชาการใหม่เข้ามาในระบบ\n\n'
+               + 'ประเภทฟอร์ม : ' + formType + '\n'
+               + 'หน่วยงาน   : ' + (data.orgName || '-') + '\n'
+               + 'ชื่อประชุม  : ' + (data.confName || '-') + '\n'
+               + 'วันที่-เวลา : ' + now + '\n\n'
+               + 'กรุณาตรวจสอบในระบบหรือ Google Sheet: "ข้อมูลโครงการบริการวิชาการและ CPE" → tab ประชุมวิชาการ';
+
+    } else if (data.type === 'academic') {
+      formType = 'แบบฟอร์มโครงการบริการวิชาการ';
+      subject  = '[แจ้งเตือน] มีการบันทึกโครงการบริการวิชาการ — ' + (data.projectName || '');
+      body     = 'มีการบันทึกโครงการบริการวิชาการใหม่เข้ามาในระบบ\n\n'
+               + 'ประเภทฟอร์ม   : ' + formType + '\n'
+               + 'ชื่อโครงการ   : ' + (data.projectName || '-') + '\n'
+               + 'หน่วยงาน     : ' + (data.dept || '-') + '\n'
+               + 'ผู้รับผิดชอบ  : ' + (data.sig1Name || '-') + '\n'
+               + 'ผู้บันทึก     : ' + (data.ownerEmail || '-') + '\n'
+               + 'วันที่-เวลา   : ' + now + '\n\n'
+               + 'กรุณาตรวจสอบในระบบหรือ Google Sheet: "ข้อมูลโครงการบริการวิชาการและ CPE" → tab โครงการบริการวิชาการ';
+    } else {
+      return; // ไม่ส่งถ้าประเภทไม่รู้จัก
+    }
+
+    MailApp.sendEmail(ADMIN_EMAIL, subject, body);
+  } catch(e) {
+    // ไม่ให้ email error กระทบ main flow
   }
 }
 
