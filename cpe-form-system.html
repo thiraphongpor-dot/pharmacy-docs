@@ -296,7 +296,8 @@ body::before,body::after{display:none !important}
 .org-list-row:last-child{border-bottom:none}
 .org-list-row:hover{background:rgba(90,123,255,.04)}
 .olr-code{font-size:.7rem;font-weight:700;color:#5a7bff;background:rgba(90,123,255,.1);padding:2px 7px;border-radius:6px;flex-shrink:0}
-.olr-name{font-size:.85rem;font-weight:600;color:#16181f;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.olr-name{font-size:.85rem;font-weight:600;color:#16181f;flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:2px}
+.olr-regdate{font-size:.7rem;font-weight:400;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .olr-expiry{font-size:.72rem;white-space:nowrap;flex-shrink:0}
 .olr-expiry.expired{color:#dc2626;font-weight:700}
 .olr-expiry.warning{color:#d97706;font-weight:700}
@@ -1162,9 +1163,13 @@ function renderOrgList(){
     if(!exp||daysLeft<0){ cls='expired'; exLabel='❌ หมดอายุแล้ว'; }
     else if(daysLeft<=60){ cls='warning'; exLabel='⚠️ อีก '+daysLeft+' วัน'; }
     else{ exLabel='✓ อีก '+daysLeft+' วัน'; }
+    var displayCode = o.orgCode || o.code || '';
+    var regMeta = o.registrationDate
+      ? '<span class="olr-regdate">📅 ผ่านรับรอง: '+fmtDate(o.registrationDate)+'</span>'
+      : '';
     return '<div class="org-list-row" id="olr-'+k+'">'
-      +(o.code?'<span class="olr-code">'+o.code+'</span>':'')
-      +'<span class="olr-name" title="'+o.name+'">'+o.name+'</span>'
+      +(displayCode?'<span class="olr-code">'+displayCode+'</span>':'')
+      +'<span class="olr-name" title="'+o.name+'">'+o.name+regMeta+'</span>'
       +'<span class="olr-expiry '+cls+'" title="'+fmtDate(o.expiryDate)+'">'+exLabel+'</span>'
       +'<div class="olr-btns">'
         +'<button class="btn btn-outline btn-sm" onclick="openOrgDetail(\''+k+'\')">📄 รายละเอียด</button>'
@@ -1215,7 +1220,7 @@ function openOrgDetail(key){
     +'<tr><td>ชื่อหน่วยงาน<span class="req-star">*</span></td>'
       +'<td><input type="text" id="odf-name" value="'+v('name')+'" placeholder="ชื่อหน่วยงาน"></td></tr>'
     +'<tr><td>รหัสหน่วยงาน</td>'
-      +'<td><input type="text" id="odf-code" value="'+v('code')+'" placeholder="เช่น 003" style="max-width:120px"></td></tr>'
+      +'<td><input type="text" id="odf-code" value="'+(o.orgCode||o.code||'')+'" placeholder="เช่น 003" style="max-width:120px"></td></tr>'
     +'<tr><td>ที่อยู่</td>'
       +'<td><textarea id="odf-addr">'+((o.address||'')).replace(/</g,'&lt;')+'</textarea></td></tr>'
     +'<tr><td>โทรศัพท์<span class="req-star">*</span></td>'
@@ -1255,9 +1260,11 @@ function saveOrgDetail(){
   var o=allOrgs[key]; if(!o) return;
   var name=document.getElementById('odf-name').value.trim();
   if(!name){ showToast('กรุณากรอกชื่อหน่วยงาน','err'); return; }
+  var codeVal = document.getElementById('odf-code').value.trim();
   var updates={
     name:        name,
-    code:        document.getElementById('odf-code').value.trim(),
+    code:        codeVal,
+    orgCode:     codeVal,
     address:     document.getElementById('odf-addr').value.trim(),
     phone:       document.getElementById('odf-tel').value.trim(),
     fax:         document.getElementById('odf-fax').value.trim(),
