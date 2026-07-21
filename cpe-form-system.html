@@ -141,6 +141,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   color:#059669;font-weight:600;margin-top:6px}
 .rsc-attached .rsc-rm{margin-left:auto;cursor:pointer;opacity:.6;font-size:.9rem}
 .rsc-attached .rsc-rm:hover{opacity:1;color:#dc2626}
+/* Conference doc cards (3 PDF uploads) */
+.conf-doc-cards{display:flex;gap:14px;flex-wrap:wrap}
+.conf-doc-card{flex:1;min-width:200px;border:1.5px solid rgba(90,123,255,.25);border-radius:14px;padding:16px 16px 14px;background:rgba(248,250,255,.9);transition:var(--tr)}
+.conf-doc-card.done{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.03)}
+.cdoc-num{width:26px;height:26px;border-radius:50%;background:rgba(90,123,255,.12);color:#5a7bff;font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.conf-doc-card.done .cdoc-num{background:rgba(16,185,129,.15);color:#059669}
+.cdoc-title{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.cdoc-sub{font-size:.72rem;color:var(--sub);margin-bottom:10px}
+.cdoc-zone{padding:14px 10px !important}
 /* File upload zone */
 .file-zone{border:2px dashed rgba(139,92,246,.3);border-radius:12px;padding:20px;
   text-align:center;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden}
@@ -734,44 +743,74 @@ body::before,body::after{display:none !important}
     </div>
   </div>
 
-  <!-- ── ข้อมูลงานประชุมวิชาการ (ไฟล์ → Google Drive) ── -->
+  <!-- ── เอกสารแนบ PDF ── -->
   <div class="fsec">
-    <div class="fsec-title">📁 ข้อมูลงานประชุมวิชาการ</div>
-    <div class="form-row">
-      <div class="form-group" style="flex:1;min-width:220px">
-        <label>ไฟล์ PDF</label>
-        <div class="file-zone" onclick="document.getElementById('upload-pdf').click()" id="zone-pdf">
-          <input type="file" id="upload-pdf" accept=".pdf" style="display:none" onchange="handleFileSelect('pdf',this)">
-          <div class="fz-icon">📄</div>
-          <div class="fz-label">คลิกเพื่อแนบไฟล์ PDF</div>
-          <div class="fz-sub">รองรับ .pdf</div>
+    <div class="fsec-title">📎 เอกสารแนบ</div>
+    <div class="conf-doc-cards">
+
+      <!-- 1. รายละเอียดโครงการ -->
+      <div class="conf-doc-card" id="cdoc-card-project">
+        <div class="cdoc-num">1</div>
+        <div class="cdoc-title">รายละเอียดโครงการ</div>
+        <div class="cdoc-sub">โครงการ / หนังสือชี้แจง (PDF)</div>
+        <div class="file-zone cdoc-zone" id="zone-project" onclick="document.getElementById('upload-project').click()">
+          <input type="file" id="upload-project" accept=".pdf" style="display:none" onchange="handleFileSelect('project',this)">
+          <div class="fz-icon">📋</div>
+          <div class="fz-label">คลิกเพื่อแนบไฟล์</div>
+          <div class="fz-sub">.pdf เท่านั้น</div>
         </div>
-        <div class="file-attached" id="attached-pdf">
-          <div class="fa-icon">📄</div>
+        <div class="file-attached" id="attached-project">
+          <div class="fa-icon">📋</div>
           <div class="fa-info">
-            <div class="fa-name" id="attached-pdf-name"></div>
-            <div class="fa-size" id="attached-pdf-size"></div>
+            <div class="fa-name" id="attached-project-name"></div>
+            <div class="fa-size" id="attached-project-size"></div>
           </div>
-          <button class="fa-remove" onclick="removeFile('pdf')" title="ลบ">✕</button>
+          <button class="fa-remove" onclick="removeFile('project')" title="ลบ">✕</button>
         </div>
       </div>
-      <div class="form-group" style="flex:1;min-width:220px">
-        <label>ไฟล์ Word</label>
-        <div class="file-zone" onclick="document.getElementById('upload-word').click()" id="zone-word">
-          <input type="file" id="upload-word" accept=".doc,.docx" style="display:none" onchange="handleFileSelect('word',this)">
-          <div class="fz-icon">📝</div>
-          <div class="fz-label">คลิกเพื่อแนบไฟล์ Word</div>
-          <div class="fz-sub">รองรับ .doc, .docx</div>
+
+      <!-- 2. CV วิทยากร -->
+      <div class="conf-doc-card" id="cdoc-card-cvfile">
+        <div class="cdoc-num">2</div>
+        <div class="cdoc-title">CV วิทยากร</div>
+        <div class="cdoc-sub">ประวัติย่อวิทยากรทุกท่าน (PDF)</div>
+        <div class="file-zone cdoc-zone" id="zone-cvfile" onclick="document.getElementById('upload-cvfile').click()">
+          <input type="file" id="upload-cvfile" accept=".pdf" style="display:none" onchange="handleFileSelect('cvfile',this)">
+          <div class="fz-icon">👤</div>
+          <div class="fz-label">คลิกเพื่อแนบไฟล์</div>
+          <div class="fz-sub">.pdf เท่านั้น</div>
         </div>
-        <div class="file-attached" id="attached-word">
-          <div class="fa-icon">📝</div>
+        <div class="file-attached" id="attached-cvfile">
+          <div class="fa-icon">👤</div>
           <div class="fa-info">
-            <div class="fa-name" id="attached-word-name"></div>
-            <div class="fa-size" id="attached-word-size"></div>
+            <div class="fa-name" id="attached-cvfile-name"></div>
+            <div class="fa-size" id="attached-cvfile-size"></div>
           </div>
-          <button class="fa-remove" onclick="removeFile('word')" title="ลบ">✕</button>
+          <button class="fa-remove" onclick="removeFile('cvfile')" title="ลบ">✕</button>
         </div>
       </div>
+
+      <!-- 3. กำหนดการ -->
+      <div class="conf-doc-card" id="cdoc-card-schedule">
+        <div class="cdoc-num">3</div>
+        <div class="cdoc-title">กำหนดการ</div>
+        <div class="cdoc-sub">ตารางเวลา / โปรแกรมงาน (PDF)</div>
+        <div class="file-zone cdoc-zone" id="zone-schedule" onclick="document.getElementById('upload-schedule').click()">
+          <input type="file" id="upload-schedule" accept=".pdf" style="display:none" onchange="handleFileSelect('schedule',this)">
+          <div class="fz-icon">📅</div>
+          <div class="fz-label">คลิกเพื่อแนบไฟล์</div>
+          <div class="fz-sub">.pdf เท่านั้น</div>
+        </div>
+        <div class="file-attached" id="attached-schedule">
+          <div class="fa-icon">📅</div>
+          <div class="fa-info">
+            <div class="fa-name" id="attached-schedule-name"></div>
+            <div class="fa-size" id="attached-schedule-size"></div>
+          </div>
+          <button class="fa-remove" onclick="removeFile('schedule')" title="ลบ">✕</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2046,7 +2085,7 @@ function loadRenewSubmissions(orgKey){
 /* ════════════════════════════════
    FILE UPLOAD → Google Drive
 ════════════════════════════════ */
-const fileStore = { pdf:null, word:null }; // { file, url, name }
+const fileStore = { pdf:null, word:null, project:null, cvfile:null, schedule:null }; // { file, url, name }
 const speakers  = [];
 
 function handleFileSelect(type, input){
@@ -2055,12 +2094,16 @@ function handleFileSelect(type, input){
   document.getElementById('attached-'+type+'-name').textContent = file.name;
   document.getElementById('attached-'+type+'-size').textContent = fmtSize(file.size);
   document.getElementById('attached-'+type).classList.add('show');
+  var card = document.getElementById('cdoc-card-'+type);
+  if(card) card.classList.add('done');
 }
 
 function removeFile(type){
   fileStore[type] = null;
   document.getElementById('attached-'+type).classList.remove('show');
   document.getElementById('upload-'+type).value='';
+  var card = document.getElementById('cdoc-card-'+type);
+  if(card) card.classList.remove('done');
 }
 
 /* ════════════════════════════════
@@ -2151,15 +2194,30 @@ async function saveConference(){
   const orgLabel = currentConf.orgName || confName;
 
   try{
-    // upload conference PDF
+    // upload conference PDF (legacy)
     if(fileStore.pdf?.file){
       const r = await uploadToGDrive(fileStore.pdf.file, orgLabel, 'PDF ประชุม');
       fileStore.pdf.url = r.url;
     }
-    // upload conference Word
+    // upload conference Word (legacy)
     if(fileStore.word?.file){
       const r = await uploadToGDrive(fileStore.word.file, orgLabel, 'Word ประชุม');
       fileStore.word.url = r.url;
+    }
+    // upload รายละเอียดโครงการ
+    if(fileStore.project?.file){
+      const r = await uploadToGDrive(fileStore.project.file, orgLabel, 'รายละเอียดโครงการ');
+      fileStore.project.url = r.url;
+    }
+    // upload CV วิทยากร
+    if(fileStore.cvfile?.file){
+      const r = await uploadToGDrive(fileStore.cvfile.file, orgLabel, 'CV-วิทยากร');
+      fileStore.cvfile.url = r.url;
+    }
+    // upload กำหนดการ
+    if(fileStore.schedule?.file){
+      const r = await uploadToGDrive(fileStore.schedule.file, orgLabel, 'กำหนดการ');
+      fileStore.schedule.url = r.url;
     }
     // upload speaker CVs
     const spkData=[];
@@ -2186,8 +2244,11 @@ async function saveConference(){
       location:  document.getElementById('conf-location').value||'',
       note:      document.getElementById('conf-note').value||'',
       files:{
-        pdf:  fileStore.pdf?.url  ? {name:fileStore.pdf.name,  url:fileStore.pdf.url}  : null,
-        word: fileStore.word?.url ? {name:fileStore.word.name, url:fileStore.word.url} : null,
+        pdf:      fileStore.pdf?.url      ? {name:fileStore.pdf.name,      url:fileStore.pdf.url}      : null,
+        word:     fileStore.word?.url     ? {name:fileStore.word.name,     url:fileStore.word.url}     : null,
+        project:  fileStore.project?.url  ? {name:fileStore.project.name,  url:fileStore.project.url}  : null,
+        cvfile:   fileStore.cvfile?.url   ? {name:fileStore.cvfile.name,   url:fileStore.cvfile.url}   : null,
+        schedule: fileStore.schedule?.url ? {name:fileStore.schedule.name, url:fileStore.schedule.url} : null,
       },
       speakers: spkData,
       createdBy: email,
@@ -2206,8 +2267,11 @@ async function saveConference(){
         confName:     record.confName,
         confDate:     (record.dateStart||'')+(record.dateEnd?'–'+record.dateEnd:''),
         location:     record.location||'',
-        pdfUrl:       record.files?.pdf?.url  || '',
-        wordUrl:      record.files?.word?.url || '',
+        pdfUrl:       record.files?.pdf?.url      || '',
+        wordUrl:      record.files?.word?.url     || '',
+        projectUrl:   record.files?.project?.url  || '',
+        cvfileUrl:    record.files?.cvfile?.url   || '',
+        scheduleUrl:  record.files?.schedule?.url || '',
         speakers:     record.speakers||[]
       })}).catch(function(){});
     }
