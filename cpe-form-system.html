@@ -2373,10 +2373,6 @@ function loadAllCpeConferences(){
           emailInput(1, safeCid, 'อีเมลผู้ทรงคุณวุฒิท่านที่ 1')+
           emailInput(2, safeCid, 'อีเมลผู้ทรงคุณวุฒิท่านที่ 2')+
           emailInput(3, safeCid, 'อีเมลผู้ทรงคุณวุฒิท่านที่ 3')+
-          // message
-          '<div style="font-size:.77rem;color:#6b7280;margin-bottom:6px;margin-top:10px;font-weight:600">📝 รายละเอียด / ข้อความถึงผู้ทรงคุณวุฒิ</div>'+
-          '<textarea id="exmsg-'+safeCid+'" placeholder="ระบุรายละเอียดที่ผู้ทรงคุณวุฒิควรทราบ เช่น วัตถุประสงค์ กรอบเวลาการพิจารณา ฯลฯ" rows="4" '+
-          'style="width:100%;box-sizing:border-box;border:1px solid rgba(200,210,230,.7);border-radius:8px;padding:9px 12px;font-size:.82rem;outline:none;resize:vertical;font-family:inherit"></textarea>'+
           // buttons
           '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">'+
             '<button id="exbtn-'+safeCid+'" onclick="sendToExperts(\''+safeCid+'\',\''+cid+'\')" '+
@@ -2409,7 +2405,6 @@ async function sendToExperts(safeCid, cid){
 
   if(emails.length === 0){ showToast('กรุณาระบุอีเมลอย่างน้อย 1 ท่าน','err'); return; }
 
-  var message = (document.getElementById('exmsg-'+safeCid)||{}).value||'';
   var btn = document.getElementById('exbtn-'+safeCid);
   if(btn){ btn.disabled=true; btn.textContent='⏳ กำลังส่ง...'; }
 
@@ -2425,7 +2420,6 @@ async function sendToExperts(safeCid, cid){
         dateEnd:      c.dateEnd||'',
         location:     c.location||'',
         note:         c.note||'',
-        adminMessage: message,
         expertEmails: emails,
         projectUrl:   c.files&&c.files.project&&c.files.project.url  ||'',
         cvfileUrl:    c.files&&c.files.cvfile&&c.files.cvfile.url    ||'',

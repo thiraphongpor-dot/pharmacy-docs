@@ -285,13 +285,6 @@ function sendExpertEmail(data) {
   if (data.location) html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;border-bottom:1px solid #e5e7eb">สถานที่</td><td style="padding:9px 14px;font-size:.88rem;border-bottom:1px solid #e5e7eb">' + data.location + '</td></tr>';
   html += '</table>';
 
-  if (data.adminMessage) {
-    html += '<div style="background:#eff6ff;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0">';
-    html += '<div style="font-size:.78rem;color:#4338ca;font-weight:700;margin-bottom:4px">📝 ข้อความจากเจ้าหน้าที่</div>';
-    html += '<div style="font-size:.85rem;color:#1e3a8a;white-space:pre-line">' + data.adminMessage + '</div>';
-    html += '</div>';
-  }
-
   html += '<div style="margin:20px 0"><div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px">📎 เอกสารแนบ</div>';
   html += '<div style="display:flex;flex-direction:column;gap:8px">';
   if (data.projectUrl) html += '<a href="' + data.projectUrl + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">📋 รายละเอียดโครงการ</a>';
