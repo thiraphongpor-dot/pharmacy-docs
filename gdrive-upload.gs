@@ -276,7 +276,7 @@ function sendExpertEmail(data) {
   html += '</div>';
   html += '<div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px 28px;border-radius:0 0 12px 12px">';
   html += '<p>เรียน ผู้ทรงคุณวุฒิ</p>';
-  html += '<p>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา ขอความอนุเคราะห์ผู้ทรงคุณวุฒิพิจารณาหน่วยกิต CPE สำหรับงานประชุมวิชาการดังต่อไปนี้</p>';
+  html += '<p>ขอความอนุเคราะห์ผู้ทรงคุณวุฒิพิจารณาหน่วยกิต CPE สำหรับงานประชุมวิชาการดังต่อไปนี้</p>';
 
   html += '<table style="width:100%;border-collapse:collapse;margin:16px 0;background:#f8fafc;border-radius:8px;overflow:hidden">';
   html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;width:130px;border-bottom:1px solid #e5e7eb">ชื่องานประชุม</td><td style="padding:9px 14px;font-size:.88rem;font-weight:700;border-bottom:1px solid #e5e7eb">' + (data.confName || '-') + '</td></tr>';
