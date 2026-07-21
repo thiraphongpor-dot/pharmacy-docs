@@ -88,7 +88,7 @@ function logToSheet(data) {
         'รายละเอียดโครงการ','CV วิทยากร','กำหนดการ',
         'มติ CPE (PDF)','มติ CPE (Word)',
         'จำนวนผู้ทรงคุณวุฒิ','อีเมลผู้ทรงคุณวุฒิ','วันที่ส่งผู้ทรง',
-        'สถานะ','รหัสประชุม','ผลการพิจารณา (Word)','วันที่ยืนยันผล'
+        'สถานะ','รหัสประชุม','ผลการพิจารณา (PDF)','วันที่ยืนยันผล'
       ];
       sheet = getOrCreateTab(ss, 'ประชุมวิชาการ', confHdrs);
       // อัพเดต header ทุกครั้ง
@@ -321,7 +321,7 @@ function updateConferenceRow(data) {
   }
   if (data.sentAt        !== undefined) sheet.getRange(found, 16).setValue(data.sentAt        ? formatDate(data.sentAt) : '');
   if (data.status        !== undefined) sheet.getRange(found, 17).setValue(data.status        || '');
-  if (data.resultWordUrl !== undefined) sheet.getRange(found, 19).setValue(data.resultWordUrl || '');
+  if (data.resultPdfUrl  !== undefined) sheet.getRange(found, 19).setValue(data.resultPdfUrl  || '');
   if (data.confirmedAt   !== undefined) sheet.getRange(found, 20).setValue(data.confirmedAt   ? formatDate(data.confirmedAt) : '');
 
   return respond({ success: true });
@@ -355,11 +355,11 @@ function notifyCpeResult(data) {
   html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280">วันที่จัด</td><td style="padding:9px 14px;font-size:.88rem">' + dateRange + '</td></tr>';
   html += '</table>';
 
-  if (data.resultWordUrl) {
+  if (data.resultPdfUrl) {
     html += '<table style="width:100%;border-collapse:collapse;margin:20px 0">';
     html += '<tr><td colspan="2" style="padding:10px 0 8px;font-size:.88rem;font-weight:700;color:#1a202c;border-bottom:2px solid #059669">ผลการพิจารณา</td></tr>';
     html += '<tr><td style="padding:10px 14px 10px 0;font-size:.85rem;color:#374151;width:290px;border-bottom:1px solid #e5e7eb">เอกสารผลการพิจารณารับรองหน่วยกิต CPE</td>';
-    html += '<td style="padding:10px 0;border-bottom:1px solid #e5e7eb"><a href="' + data.resultWordUrl + '" style="color:#4f46e5;font-weight:700">ดาวน์โหลดเอกสาร</a></td></tr>';
+    html += '<td style="padding:10px 0;border-bottom:1px solid #e5e7eb"><a href="' + data.resultPdfUrl + '" style="color:#4f46e5;font-weight:700">ดาวน์โหลดเอกสาร</a></td></tr>';
     html += '</table>';
   }
 
@@ -373,7 +373,7 @@ function notifyCpeResult(data) {
   // อัพเดต Sheet
   updateConferenceRow({
     confId:        data.confId        || '',
-    resultWordUrl: data.resultWordUrl || '',
+    resultPdfUrl: data.resultPdfUrl || '',
     confirmedAt:   data.confirmedAt,
     status:        'ยืนยันผลแล้ว'
   });
