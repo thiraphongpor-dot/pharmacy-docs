@@ -331,6 +331,25 @@ body::before,body::after{display:none !important}
 .odm-close:hover{background:rgba(220,38,38,.12);color:#dc2626}
 .odm-body{overflow-y:auto;padding:18px 24px;flex:1}
 .odm-footer{display:flex;gap:10px;padding:14px 24px;border-top:1px solid rgba(200,210,230,.4);flex-shrink:0;background:#fafbff}
+/* ── Registration Card ── */
+.reg-card{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(34,211,238,.06),rgba(139,92,246,.08));
+  border:1px solid rgba(34,211,238,.2);border-radius:var(--radius);padding:18px 22px;margin-bottom:16px;cursor:pointer;transition:var(--tr)}
+.reg-card:hover{border-color:rgba(34,211,238,.45);background:linear-gradient(135deg,rgba(34,211,238,.1),rgba(139,92,246,.13))}
+.reg-card-icon{font-size:2.2rem;flex-shrink:0}
+.reg-card-text h3{font-size:.93rem;font-weight:700;color:#22d3ee;margin-bottom:3px}
+.reg-card-text p{font-size:.77rem;color:var(--sub);line-height:1.5}
+.reg-card-btn{margin-left:auto;flex-shrink:0}
+/* ── Registration Modal ── */
+#reg-modal{position:fixed;inset:0;z-index:9100;background:rgba(10,12,24,.6);backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;animation:odm-fade .18s ease}
+#reg-panel{background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(30,50,120,.22);
+  width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;animation:odm-up .22s cubic-bezier(.32,.72,0,1)}
+/* ── Pending Requests ── */
+.req-item{padding:14px 16px;border-bottom:1px solid rgba(200,210,230,.35)}
+.req-item:last-child{border-bottom:none}
+.req-item-name{font-size:.88rem;font-weight:700;color:#16181f;margin-bottom:4px}
+.req-item-meta{font-size:.76rem;color:#6a6d77;margin-bottom:2px}
+.req-item-btns{display:flex;gap:8px;margin-top:8px}
 /* Renewal file-attached bar (shows after file selected, replaces zone visually) */
 .rsc-attached-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   background:rgba(5,150,105,.08);border:2px solid rgba(5,150,105,.35);
@@ -368,6 +387,16 @@ body::before,body::after{display:none !important}
     <p>ค้นหาหน่วยงานเพื่อตรวจสอบสถานะการรับรอง CPE</p>
   </div>
 
+  <!-- Registration Card (ทุกคนเห็น) -->
+  <div class="reg-card" onclick="showRegisterModal()">
+    <div class="reg-card-icon">📋</div>
+    <div class="reg-card-text">
+      <h3>ลงทะเบียนหน่วยงาน CPE</h3>
+      <p>หน่วยงานที่ต้องการขอรับรองหน่วยกิตการศึกษาต่อเนื่อง กรอกข้อมูลเพื่อยื่นคำขอ</p>
+    </div>
+    <button class="btn btn-primary btn-sm reg-card-btn" onclick="showRegisterModal();event.stopPropagation()">ลงทะเบียน →</button>
+  </div>
+
   <!-- Admin: เพิ่มหน่วยงาน -->
   <div id="admin-add-section" style="display:none" class="fsec">
     <div class="fsec-title">⚡ เพิ่ม / จัดการหน่วยงาน (Admin)</div>
@@ -390,6 +419,15 @@ body::before,body::after{display:none !important}
       <button class="btn btn-outline btn-sm" onclick="toggleOrgList()" id="btn-manage">📋 จัดการรายชื่อ</button>
       <button class="btn btn-outline btn-sm" onclick="seedAllOrgs()" id="btn-seed" style="font-size:.72rem">📥 นำเข้าข้อมูลเริ่มต้น</button>
       <button class="btn btn-green btn-sm" onclick="showView('admin-renewals')" style="font-size:.78rem">📁 เอกสารต่ออายุทั้งหมด</button>
+    </div>
+
+    <!-- Pending registration requests (Admin) -->
+    <div id="org-requests-panel" style="display:none;margin-top:18px">
+      <div style="font-size:.8rem;font-weight:700;color:var(--sub);letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        <span>📬 คำขอลงทะเบียนใหม่</span>
+        <span id="req-badge" style="display:none;background:#ef4444;color:#fff;border-radius:99px;padding:1px 9px;font-size:.72rem"></span>
+      </div>
+      <div id="org-requests-wrap" style="border:1px solid rgba(200,210,230,.4);border-radius:10px;overflow:hidden;max-height:400px;overflow-y:auto;background:#fafbff"></div>
     </div>
 
     <!-- Org management list (toggle) -->
@@ -707,6 +745,65 @@ body::before,body::after{display:none !important}
 </div>
 </div>
 
+<!-- REGISTRATION MODAL -->
+<div id="reg-modal" style="display:none" onclick="if(event.target===this)closeRegisterModal()">
+  <div id="reg-panel">
+    <div class="odm-header">
+      <div>
+        <div class="odm-title">📋 ลงทะเบียนหน่วยงาน CPE</div>
+        <div class="odm-sub">ยื่นคำขอรับรองหน่วยกิตการศึกษาต่อเนื่อง · คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div>
+      </div>
+      <button class="odm-close" onclick="closeRegisterModal()">✕</button>
+    </div>
+    <div class="odm-body">
+      <table class="odf-table">
+        <tr>
+          <td>ชื่อสถาบันหลัก</td>
+          <td><span class="odf-static">คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</span></td>
+        </tr>
+        <tr>
+          <td>ชื่อหน่วยงาน <span class="req-star">*</span></td>
+          <td><input type="text" id="rg-name" placeholder="ชื่อหน่วยงานของท่าน"></td>
+        </tr>
+        <tr>
+          <td>ที่อยู่</td>
+          <td><textarea id="rg-address" placeholder="ที่อยู่หน่วยงาน"></textarea></td>
+        </tr>
+        <tr>
+          <td>โทรศัพท์ <span class="req-star">*</span></td>
+          <td><input type="text" id="rg-phone" placeholder="0X-XXXXXXX"></td>
+        </tr>
+        <tr>
+          <td>โทรสาร</td>
+          <td><input type="text" id="rg-fax" placeholder="โทรสาร"></td>
+        </tr>
+        <tr>
+          <td>อีเมล <span class="req-star">*</span></td>
+          <td><input type="text" id="rg-email" placeholder="email@example.com"></td>
+        </tr>
+        <tr>
+          <td>เว็บไซต์</td>
+          <td><input type="text" id="rg-website" placeholder="https://..."></td>
+        </tr>
+        <tr>
+          <td>หัวหน้าหน่วยกิต<br>การศึกษาต่อเนื่อง</td>
+          <td>
+            <span class="odf-static">ดร.ภญ.เบญจพร วีระพล</span><br>
+            <span style="font-size:.8rem;color:#6a6d77">ผู้ช่วยคณบดีฝ่ายพัฒนาวิชาชีพและวิเทศสัมพันธ์</span>
+          </td>
+        </tr>
+      </table>
+      <div style="margin-top:14px;padding:10px 12px;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:8px;font-size:.78rem;color:#6a6d77">
+        หลังจากยื่นคำขอแล้ว ทีมงานจะตรวจสอบและแจ้งผลทางอีเมลที่ท่านกรอกไว้
+      </div>
+    </div>
+    <div class="odm-footer">
+      <button class="btn btn-primary" onclick="submitOrgRegister()">📤 ยื่นคำขอลงทะเบียน</button>
+      <button class="btn btn-outline" onclick="closeRegisterModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <!-- ORG DETAIL MODAL -->
 <div id="org-detail-modal" style="display:none" onclick="if(event.target===this)closeOrgDetail()">
   <div id="org-detail-panel">
@@ -927,7 +1024,7 @@ var currentUser=null, isAdmin=false;
       <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
     </div>`;
   }
-  if(isAdmin) document.getElementById('admin-add-section').style.display='block';
+  if(isAdmin){ document.getElementById('admin-add-section').style.display='block'; loadOrgRequests(); }
   loadAllOrgs();
 })();
 
@@ -935,7 +1032,7 @@ var currentUser=null, isAdmin=false;
    GOOGLE DRIVE UPLOAD via Apps Script
 ════════════════════════════════ */
 // ← วาง URL ที่ได้จากการ Deploy Apps Script ที่นี่
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8X_fsISlZfcyjt4HDXD3lJdDT0GTqvzqhcKRUgKzSMIlizmG7GkAHK2tbbG8sxDMZ1A/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeBHeI5i0RajPb4MnSq-EOcBttxS-TKLhHTN1TvRwNzYDHBG_OtcjUX43psnnIY7LW3Q/exec';
 
 function uploadToGDrive(file, orgName, docType){
   return new Promise(function(resolve, reject){
@@ -1195,6 +1292,136 @@ function deleteOrg(key){
 }
 
 function orgNameToKey(name){ return name.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_ก-๙]/g,''); }
+
+/* ════════════════════════════════
+   REGISTRATION MODAL
+════════════════════════════════ */
+function showRegisterModal(){
+  document.getElementById('reg-modal').style.display='flex';
+}
+function closeRegisterModal(){
+  document.getElementById('reg-modal').style.display='none';
+  ['rg-name','rg-address','rg-phone','rg-fax','rg-email','rg-website'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+}
+
+function submitOrgRegister(){
+  var name  = (document.getElementById('rg-name').value||'').trim();
+  var phone = (document.getElementById('rg-phone').value||'').trim();
+  var email = (document.getElementById('rg-email').value||'').trim();
+  if(!name){  showToast('กรุณากรอกชื่อหน่วยงาน','err'); return; }
+  if(!phone){ showToast('กรุณากรอกเบอร์โทรศัพท์','err'); return; }
+  if(!email){ showToast('กรุณากรอกอีเมล','err'); return; }
+
+  var record = {
+    institutionName: 'คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา',
+    name:        name,
+    address:     (document.getElementById('rg-address').value||'').trim(),
+    phone:       phone,
+    fax:         (document.getElementById('rg-fax').value||'').trim(),
+    email:       email,
+    website:     (document.getElementById('rg-website').value||'').trim(),
+    headName:    'ดร.ภญ.เบญจพร วีระพล',
+    headPosition:'ผู้ช่วยคณบดีฝ่ายพัฒนาวิชาชีพและวิเทศสัมพันธ์',
+    status:      'รอตรวจสอบ',
+    submittedAt: new Date().toISOString(),
+    submittedBy: getCanonicalEmail()||'ไม่ระบุ'
+  };
+
+  showToast('⏳ กำลังส่งคำขอ...');
+  var key = 'req_'+Date.now();
+  db.ref('pharma-form/_org_requests/'+key).set(record)
+    .then(function(){
+      if(APPS_SCRIPT_URL){
+        fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+          action:'log', type:'org_register',
+          submittedAt:  record.submittedAt,
+          submittedBy:  record.submittedBy,
+          orgName:      record.name,
+          address:      record.address,
+          phone:        record.phone,
+          fax:          record.fax,
+          email:        record.email,
+          website:      record.website,
+          headName:     record.headName,
+          headPosition: record.headPosition,
+          status:       record.status
+        })}).catch(function(){});
+      }
+      showToast('✅ ส่งคำขอลงทะเบียนเรียบร้อยแล้ว ทีมงานจะแจ้งผลทางอีเมล');
+      closeRegisterModal();
+    })
+    .catch(function(e){ showToast('❌ บันทึกไม่สำเร็จ: '+e.message,'err'); });
+}
+
+/* ════════════════════════════════
+   ADMIN: ORG REQUESTS
+════════════════════════════════ */
+function loadOrgRequests(){
+  if(!isAdmin) return;
+  document.getElementById('org-requests-panel').style.display='block';
+  db.ref('pharma-form/_org_requests').on('value',function(snap){
+    renderOrgRequests(snap.val()||{});
+  });
+}
+
+function renderOrgRequests(data){
+  var wrap  = document.getElementById('org-requests-wrap');
+  var badge = document.getElementById('req-badge');
+  var pending = Object.entries(data).filter(function(e){ return e[1].status==='รอตรวจสอบ'; });
+  if(pending.length){ badge.textContent=pending.length+' รายการ'; badge.style.display='inline'; }
+  else { badge.style.display='none'; }
+  if(!pending.length){
+    wrap.innerHTML='<div style="padding:18px;text-align:center;color:#6a6d77;font-size:.83rem">ไม่มีคำขอรอตรวจสอบ</div>';
+    return;
+  }
+  wrap.innerHTML = pending.map(function(e){
+    var key=e[0], r=e[1];
+    return '<div class="req-item">'
+      +'<div class="req-item-name">🏢 '+r.name+'</div>'
+      +'<div class="req-item-meta">📧 '+r.email+' &nbsp;·&nbsp; 📞 '+r.phone+'</div>'
+      +(r.address?'<div class="req-item-meta">📍 '+r.address+'</div>':'')
+      +(r.website?'<div class="req-item-meta">🌐 '+r.website+'</div>':'')
+      +'<div class="req-item-meta">ยื่นเมื่อ: '+fmtDate(r.submittedAt)+(r.submittedBy?' &nbsp;|&nbsp; โดย: '+r.submittedBy:'')+'</div>'
+      +'<div class="req-item-btns">'
+      +'<button class="btn btn-green btn-sm" onclick="approveOrgRequest(\''+key+'\')">✅ อนุมัติ</button>'
+      +'<button class="btn btn-sm" style="background:rgba(220,38,38,.1);color:#dc2626;border:1px solid rgba(220,38,38,.25)" onclick="rejectOrgRequest(\''+key+'\')">✕ ปฏิเสธ</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function approveOrgRequest(key){
+  db.ref('pharma-form/_org_requests/'+key).once('value',function(snap){
+    var req=snap.val(); if(!req) return;
+    var orgKey=orgNameToKey(req.name)+'_'+Date.now();
+    var record={
+      name:req.name, address:req.address||'', phone:req.phone||'', fax:req.fax||'',
+      email:req.email||'', website:req.website||'',
+      headName:req.headName||'', headPosition:req.headPosition||'',
+      registrationDate:new Date().toISOString().slice(0,10),
+      expiryDate:'', addedBy:getCanonicalEmail()||'admin',
+      createdAt:new Date().toISOString(), fromRequest:key
+    };
+    db.ref('pharma-form/_cpe_orgs/'+orgKey).set(record)
+      .then(function(){
+        allOrgs[orgKey]=record;
+        return db.ref('pharma-form/_org_requests/'+key).update({
+          status:'อนุมัติแล้ว', approvedAt:new Date().toISOString(), approvedBy:getCanonicalEmail()||''
+        });
+      })
+      .then(function(){ showToast('✅ อนุมัติ "'+req.name+'" แล้ว — อย่าลืมกำหนดวันหมดอายุในรายชื่อสถาบัน'); })
+      .catch(function(e){ showToast('❌ '+e.message,'err'); });
+  });
+}
+
+function rejectOrgRequest(key){
+  if(!confirm('ต้องการปฏิเสธคำขอนี้ใช่หรือไม่?')) return;
+  db.ref('pharma-form/_org_requests/'+key).update({
+    status:'ปฏิเสธ', rejectedAt:new Date().toISOString(), rejectedBy:getCanonicalEmail()||''
+  }).then(function(){ showToast('ปฏิเสธคำขอแล้ว','warn'); })
+    .catch(function(e){ showToast('❌ '+e.message,'err'); });
+}
 
 function addOrg(){
   var name   = document.getElementById('new-org-name').value.trim();

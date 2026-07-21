@@ -81,6 +81,22 @@ function logToSheet(data) {
         data.wordUrl    || '',
         speakers
       ]);
+    } else if (data.type === 'org_register') {
+      sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',
+        ['วันที่ยื่น','ผู้ยื่น','ชื่อหน่วยงาน','ที่อยู่','โทรศัพท์','โทรสาร','อีเมล','เว็บไซต์','หัวหน้าหน่วยกิต','ตำแหน่ง','สถานะ']);
+      sheet.appendRow([
+        formatDate(data.submittedAt),
+        data.submittedBy  || '',
+        data.orgName      || '',
+        data.address      || '',
+        data.phone        || '',
+        data.fax          || '',
+        data.email        || '',
+        data.website      || '',
+        data.headName     || '',
+        data.headPosition || '',
+        data.status       || 'รอตรวจสอบ'
+      ]);
     } else if (data.type === 'academic') {
       sheet = getOrCreateTab(ss, 'โครงการบริการวิชาการ',
         ['วันที่บันทึก','ผู้บันทึก','ชื่อโครงการ','หน่วยงาน','ผู้รับผิดชอบ','ผู้ประสานงาน',
@@ -164,6 +180,20 @@ function sendAdminEmail(data) {
                + 'ผู้บันทึก     : ' + (data.ownerEmail || '-') + '\n'
                + 'วันที่-เวลา   : ' + now + '\n\n'
                + 'กรุณาตรวจสอบในระบบหรือ Google Sheet: "ข้อมูลโครงการบริการวิชาการและ CPE" → tab โครงการบริการวิชาการ';
+    } else if (data.type === 'org_register') {
+      formType = 'ลงทะเบียนหน่วยงาน CPE';
+      subject  = '[แจ้งเตือน] มีคำขอลงทะเบียนหน่วยงานใหม่ — ' + (data.orgName || '');
+      body     = 'มีคำขอลงทะเบียนหน่วยงานใหม่เข้ามาในระบบ\n\n'
+               + 'ประเภท         : ' + formType + '\n'
+               + 'ชื่อหน่วยงาน   : ' + (data.orgName || '-') + '\n'
+               + 'ที่อยู่         : ' + (data.address || '-') + '\n'
+               + 'โทรศัพท์       : ' + (data.phone || '-') + '\n'
+               + 'อีเมล          : ' + (data.email || '-') + '\n'
+               + 'เว็บไซต์       : ' + (data.website || '-') + '\n'
+               + 'ผู้ยื่นคำขอ    : ' + (data.submittedBy || '-') + '\n'
+               + 'วันที่-เวลา    : ' + now + '\n'
+               + 'สถานะ          : ' + (data.status || 'รอตรวจสอบ') + '\n\n'
+               + 'กรุณาเข้าระบบ CPE เพื่ออนุมัติหรือปฏิเสธคำขอในส่วน "เพิ่ม/จัดการหน่วยงาน (Admin)"';
     } else {
       return; // ไม่ส่งถ้าประเภทไม่รู้จัก
     }
