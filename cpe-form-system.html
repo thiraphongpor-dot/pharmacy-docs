@@ -1055,7 +1055,7 @@ var currentUser=null, isAdmin=false;
    GOOGLE DRIVE UPLOAD via Apps Script
 ════════════════════════════════ */
 // ← วาง URL ที่ได้จากการ Deploy Apps Script ที่นี่
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeBHeI5i0RajPb4MnSq-EOcBttxS-TKLhHTN1TvRwNzYDHBG_OtcjUX43psnnIY7LW3Q/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxcoKjADotIlfTrfR2Hm73P8mmVY12955jcuvnJf47TZKO6Of7yVn391vkM0oIuengUFw/exec';
 
 function uploadToGDrive(file, orgName, docType){
   return new Promise(function(resolve, reject){
@@ -1477,7 +1477,18 @@ function approveOrgRequest(key){
           expiryDate:expDate
         });
       })
-      .then(function(){ showToast('✅ อนุมัติ "'+req.name+'" เรียบร้อย รหัส: '+orgCode); })
+      .then(function(){
+        showToast('✅ อนุมัติ "'+req.name+'" เรียบร้อย รหัส: '+orgCode);
+        // อัพเดต Google Sheet — บันทึกข้อมูลการอนุมัติพร้อมรหัสและวันที่
+        if(APPS_SCRIPT_URL){
+          fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+            action:'log', type:'org_register_approved',
+            orgName:req.name, submittedBy:req.submittedBy||'',
+            orgCode:orgCode, registrationDate:regDate, expiryDate:expDate,
+            approvedAt:new Date().toISOString(), approvedBy:getCanonicalEmail()||''
+          })}).catch(function(){});
+        }
+      })
       .catch(function(e){ showToast('❌ '+e.message,'err'); });
   });
 }

@@ -83,7 +83,8 @@ function logToSheet(data) {
       ]);
     } else if (data.type === 'org_register') {
       sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',
-        ['วันที่ยื่น','ผู้ยื่น','ชื่อหน่วยงาน','ที่อยู่','โทรศัพท์','โทรสาร','อีเมล','เว็บไซต์','หัวหน้าหน่วยกิต','ตำแหน่ง','สถานะ']);
+        ['วันที่ยื่น','ผู้ยื่น','ชื่อหน่วยงาน','ที่อยู่','โทรศัพท์','โทรสาร','อีเมล','เว็บไซต์',
+         'หัวหน้าหน่วยกิต','ตำแหน่ง','สถานะ','รหัสหน่วยงาน','วันที่ผ่านการรับรอง','วันหมดอายุ','วันที่อนุมัติ','ผู้อนุมัติ']);
       sheet.appendRow([
         formatDate(data.submittedAt),
         data.submittedBy  || '',
@@ -95,8 +96,48 @@ function logToSheet(data) {
         data.website      || '',
         data.headName     || '',
         data.headPosition || '',
-        data.status       || 'รอตรวจสอบ'
+        data.status       || 'รอตรวจสอบ',
+        '', '', '', '', ''
       ]);
+
+    } else if (data.type === 'org_register_approved') {
+      // ค้นหาแถวของหน่วยงานใน Sheet แล้วอัพเดตข้อมูลการอนุมัติ
+      sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',
+        ['วันที่ยื่น','ผู้ยื่น','ชื่อหน่วยงาน','ที่อยู่','โทรศัพท์','โทรสาร','อีเมล','เว็บไซต์',
+         'หัวหน้าหน่วยกิต','ตำแหน่ง','สถานะ','รหัสหน่วยงาน','วันที่ผ่านการรับรอง','วันหมดอายุ','วันที่อนุมัติ','ผู้อนุมัติ']);
+      // เติม header คอลัมน์ที่อาจยังไม่มี (กรณี Sheet เก่า)
+      var hdrRange = sheet.getRange(1, 1, 1, 16).getValues()[0];
+      var extraHdrs = ['รหัสหน่วยงาน','วันที่ผ่านการรับรอง','วันหมดอายุ','วันที่อนุมัติ','ผู้อนุมัติ'];
+      for (var h = 0; h < extraHdrs.length; h++) {
+        if (!hdrRange[11 + h]) {
+          sheet.getRange(1, 12 + h).setValue(extraHdrs[h]).setFontWeight('bold').setBackground('#d0e4f7');
+        }
+      }
+      // ค้นหาแถวที่ตรงกับชื่อหน่วยงาน แล้วอัพเดต
+      var lastRow = sheet.getLastRow();
+      var found   = false;
+      for (var i = 2; i <= lastRow; i++) {
+        if (sheet.getRange(i, 3).getValue() === (data.orgName || '')) {
+          sheet.getRange(i, 11).setValue('อนุมัติแล้ว');
+          sheet.getRange(i, 12).setValue(data.orgCode        || '');
+          sheet.getRange(i, 13).setValue(data.registrationDate|| '');
+          sheet.getRange(i, 14).setValue(data.expiryDate     || '');
+          sheet.getRange(i, 15).setValue(formatDate(data.approvedAt));
+          sheet.getRange(i, 16).setValue(data.approvedBy     || '');
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        // ถ้าหาไม่เจอ (เช่น submit ก่อน deploy ใหม่) ให้ append แถวใหม่แทน
+        sheet.appendRow([
+          formatDate(data.approvedAt), data.submittedBy||'', data.orgName||'',
+          '','','','','','','','อนุมัติแล้ว',
+          data.orgCode||'', data.registrationDate||'', data.expiryDate||'',
+          formatDate(data.approvedAt), data.approvedBy||''
+        ]);
+      }
+
     } else if (data.type === 'academic') {
       sheet = getOrCreateTab(ss, 'โครงการบริการวิชาการ',
         ['วันที่บันทึก','ผู้บันทึก','ชื่อโครงการ','หน่วยงาน','ผู้รับผิดชอบ','ผู้ประสานงาน',
@@ -194,6 +235,8 @@ function sendAdminEmail(data) {
                + 'วันที่-เวลา    : ' + now + '\n'
                + 'สถานะ          : ' + (data.status || 'รอตรวจสอบ') + '\n\n'
                + 'กรุณาเข้าระบบ CPE เพื่ออนุมัติหรือปฏิเสธคำขอในส่วน "เพิ่ม/จัดการหน่วยงาน (Admin)"';
+    } else if (data.type === 'org_register_approved') {
+      return; // admin เป็นคนทำเอง ไม่ต้องส่งอีเมลซ้ำ
     } else {
       return; // ไม่ส่งถ้าประเภทไม่รู้จัก
     }
