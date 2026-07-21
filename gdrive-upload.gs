@@ -33,6 +33,11 @@ function doPost(e) {
       return updateConferenceRow(data);
     }
 
+    // action: 'notify_cpe_result' → admin ยืนยันผลการพิจารณา → ส่งอีเมลแจ้ง user + อัพเดต Sheet
+    if (data.action === 'notify_cpe_result') {
+      return notifyCpeResult(data);
+    }
+
     // action: 'upload' (default) → อัปโหลดไฟล์ไปยัง Drive
     var b64     = data.fileBase64;
     var name    = data.fileName  || 'file';
@@ -83,7 +88,7 @@ function logToSheet(data) {
         'รายละเอียดโครงการ','CV วิทยากร','กำหนดการ',
         'มติ CPE (PDF)','มติ CPE (Word)',
         'จำนวนผู้ทรงคุณวุฒิ','อีเมลผู้ทรงคุณวุฒิ','วันที่ส่งผู้ทรง',
-        'สถานะ','รหัสประชุม'
+        'สถานะ','รหัสประชุม','ผลการพิจารณา (Word)','วันที่ยืนยันผล'
       ];
       sheet = getOrCreateTab(ss, 'ประชุมวิชาการ', confHdrs);
       // อัพเดต header ทุกครั้ง
@@ -112,7 +117,9 @@ function logToSheet(data) {
         '',                             // 15 อีเมลผู้ทรงคุณวุฒิ
         '',                             // 16 วันที่ส่งผู้ทรง
         'รอพิจารณา',                   // 17 สถานะ
-        data.confId       || ''         // 18 รหัสประชุม
+        data.confId       || '',        // 18 รหัสประชุม
+        '',                             // 19 ผลการพิจารณา (Word)
+        ''                              // 20 วันที่ยืนยันผล
       ]);
     } else if (data.type === 'org_register') {
       sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',
@@ -305,15 +312,71 @@ function updateConferenceRow(data) {
   if (found < 0) return respond({ success: false, error: 'ไม่พบ row confId: ' + confId });
 
   // อัพเดตเฉพาะ field ที่ส่งมา
-  if (data.matiPdfUrl   !== undefined) sheet.getRange(found, 12).setValue(data.matiPdfUrl  || '');
-  if (data.matiWordUrl  !== undefined) sheet.getRange(found, 13).setValue(data.matiWordUrl || '');
-  if (data.expertEmails !== undefined) {
+  if (data.matiPdfUrl    !== undefined) sheet.getRange(found, 12).setValue(data.matiPdfUrl    || '');
+  if (data.matiWordUrl   !== undefined) sheet.getRange(found, 13).setValue(data.matiWordUrl   || '');
+  if (data.expertEmails  !== undefined) {
     var emails = data.expertEmails || [];
     sheet.getRange(found, 14).setValue(emails.length);
     sheet.getRange(found, 15).setValue(emails.join(', '));
   }
-  if (data.sentAt  !== undefined) sheet.getRange(found, 16).setValue(data.sentAt  ? formatDate(data.sentAt) : '');
-  if (data.status  !== undefined) sheet.getRange(found, 17).setValue(data.status  || '');
+  if (data.sentAt        !== undefined) sheet.getRange(found, 16).setValue(data.sentAt        ? formatDate(data.sentAt) : '');
+  if (data.status        !== undefined) sheet.getRange(found, 17).setValue(data.status        || '');
+  if (data.resultWordUrl !== undefined) sheet.getRange(found, 19).setValue(data.resultWordUrl || '');
+  if (data.confirmedAt   !== undefined) sheet.getRange(found, 20).setValue(data.confirmedAt   ? formatDate(data.confirmedAt) : '');
+
+  return respond({ success: true });
+}
+
+/* ─── Notify user: CPE result confirmed ─── */
+function notifyCpeResult(data) {
+  var userEmail = data.userEmail || '';
+  if (!userEmail || userEmail.indexOf('@') < 0) {
+    return respond({ success: false, error: 'ไม่มีอีเมล user' });
+  }
+
+  var confName  = data.confName  || 'ประชุมวิชาการ';
+  var orgName   = data.orgName   || '';
+  var dateRange = data.dateStart || '-';
+  if (data.dateEnd && data.dateEnd !== data.dateStart) dateRange += ' – ' + data.dateEnd;
+
+  var subject = '[CPE] ผลการพิจารณารับรองหน่วยกิต CPE: ' + confName;
+
+  var html = '<div style="font-family:\'Sarabun\',sans-serif;max-width:600px;margin:0 auto;color:#1a202c">';
+  html += '<div style="background:linear-gradient(135deg,#059669,#10b981);padding:24px 28px;border-radius:12px 12px 0 0">';
+  html += '<div style="color:#fff;font-size:1.2rem;font-weight:700">✅ ผลการพิจารณารับรองหน่วยกิต CPE</div>';
+  html += '<div style="color:rgba(255,255,255,.8);font-size:.85rem;margin-top:4px">คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div>';
+  html += '</div>';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px 28px;border-radius:0 0 12px 12px">';
+  html += '<p>เรียน ผู้ส่งคำขอพิจารณาหน่วยกิต CPE</p>';
+  html += '<p>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา ได้พิจารณาผลการรับรองหน่วยกิต CPE สำหรับงานประชุมวิชาการดังต่อไปนี้เรียบร้อยแล้ว</p>';
+  html += '<table style="width:100%;border-collapse:collapse;margin:16px 0;background:#f0fdf4;border-radius:8px;overflow:hidden">';
+  html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;width:160px;border-bottom:1px solid #d1fae5">ชื่องานประชุม</td><td style="padding:9px 14px;font-size:.88rem;font-weight:700;border-bottom:1px solid #d1fae5">' + confName + '</td></tr>';
+  html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;border-bottom:1px solid #d1fae5">หน่วยงาน</td><td style="padding:9px 14px;font-size:.88rem;border-bottom:1px solid #d1fae5">' + orgName + '</td></tr>';
+  html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280">วันที่จัด</td><td style="padding:9px 14px;font-size:.88rem">' + dateRange + '</td></tr>';
+  html += '</table>';
+
+  if (data.resultWordUrl) {
+    html += '<table style="width:100%;border-collapse:collapse;margin:20px 0">';
+    html += '<tr><td colspan="2" style="padding:10px 0 8px;font-size:.88rem;font-weight:700;color:#1a202c;border-bottom:2px solid #059669">ผลการพิจารณา</td></tr>';
+    html += '<tr><td style="padding:10px 14px 10px 0;font-size:.85rem;color:#374151;width:290px;border-bottom:1px solid #e5e7eb">เอกสารผลการพิจารณารับรองหน่วยกิต CPE</td>';
+    html += '<td style="padding:10px 0;border-bottom:1px solid #e5e7eb"><a href="' + data.resultWordUrl + '" style="color:#4f46e5;font-weight:700">ดาวน์โหลดเอกสาร</a></td></tr>';
+    html += '</table>';
+  }
+
+  html += '<p style="font-size:.85rem;color:#6b7280;margin-top:20px">หากมีข้อสงสัยกรุณาติดต่อ คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</p>';
+  html += '</div></div>';
+
+  try {
+    MailApp.sendEmail({ to: userEmail, subject: subject, htmlBody: html });
+  } catch(e) { /* ไม่ให้ email error กระทบ main flow */ }
+
+  // อัพเดต Sheet
+  updateConferenceRow({
+    confId:        data.confId        || '',
+    resultWordUrl: data.resultWordUrl || '',
+    confirmedAt:   data.confirmedAt,
+    status:        'ยืนยันผลแล้ว'
+  });
 
   return respond({ success: true });
 }

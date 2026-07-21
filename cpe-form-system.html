@@ -1771,15 +1771,34 @@ function injectConfStatuses(){
   Object.entries(_myConfs).forEach(function(oe){
     var orgKeyId = oe[0];
     var orgConfs = oe[1];
-    var hasPending = orgConfs.some(function(c){ return (c.status||'pending_review') === 'pending_review' || c.status === 'sent_to_experts'; });
     var el = document.getElementById('conf-status-'+orgKeyId);
     if(!el) return;
-    el.innerHTML = hasPending
-      ? '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:5px 12px">'+
-          '<span style="width:7px;height:7px;border-radius:50%;background:#4338ca;display:inline-block;animation:pulse-dot 1.4s ease infinite;flex-shrink:0"></span>'+
-          '<span style="font-size:.73rem;font-weight:700;color:#4338ca">⏳ อยู่ระหว่างการพิจารณาหน่วยกิตจากผู้ทรงคุณวุฒิ</span>'+
-        '</span>'
-      : '';
+
+    var parts = [];
+    orgConfs.forEach(function(c){
+      var st = c.status || 'pending_review';
+      if(st === 'result_confirmed'){
+        var dlLink = (c.files&&c.files.result_word&&c.files.result_word.url)
+          ? ' <a href="'+c.files.result_word.url+'" target="_blank" '+
+              'style="color:#059669;font-weight:700;font-size:.73rem;text-decoration:underline">ดาวน์โหลดเอกสาร</a>'
+          : '';
+        parts.push(
+          '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.3);border-radius:16px;padding:5px 12px">'+
+            '<span style="font-size:.73rem;font-weight:700;color:#059669">✅ ผลการพิจารณารับรองหน่วยกิต CPE</span>'+
+            dlLink+
+          '</span>'
+        );
+      } else if(st === 'pending_review' || st === 'sent_to_experts'){
+        parts.push(
+          '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:5px 12px">'+
+            '<span style="width:7px;height:7px;border-radius:50%;background:#4338ca;display:inline-block;animation:pulse-dot 1.4s ease infinite;flex-shrink:0"></span>'+
+            '<span style="font-size:.73rem;font-weight:700;color:#4338ca">⏳ อยู่ระหว่างการพิจารณาหน่วยกิตจากผู้ทรงคุณวุฒิ</span>'+
+          '</span>'
+        );
+      }
+    });
+
+    el.innerHTML = parts.join('<div style="margin:3px 0"></div>');
   });
 }
 
@@ -2327,10 +2346,11 @@ function loadAllCpeConferences(){
       var dateRange = c.dateStart ? fd(c.dateStart)+(c.dateEnd&&c.dateEnd!==c.dateStart?' – '+fd(c.dateEnd):'') : '-';
       var st = c.status||'pending_review';
       var stMap = {
-        'pending_review':   { color:'#4338ca', label:'⏳ รอพิจารณา' },
-        'sent_to_experts':  { color:'#0891b2', label:'📧 ส่งผู้ทรงคุณวุฒิแล้ว' },
-        'approved':         { color:'#059669', label:'✅ ผ่านการพิจารณา' },
-        'rejected':         { color:'#dc2626', label:'❌ ไม่ผ่านการพิจารณา' },
+        'pending_review':    { color:'#4338ca', label:'⏳ รอพิจารณา' },
+        'sent_to_experts':   { color:'#0891b2', label:'📧 ส่งผู้ทรงคุณวุฒิแล้ว' },
+        'result_confirmed':  { color:'#059669', label:'✅ ผลการพิจารณารับรองหน่วยกิต CPE' },
+        'approved':          { color:'#059669', label:'✅ ผ่านการพิจารณา' },
+        'rejected':          { color:'#dc2626', label:'❌ ไม่ผ่านการพิจารณา' },
       };
       var sm = stMap[st] || stMap['pending_review'];
       var sentInfo = st==='sent_to_experts' && c.sentAt
@@ -2416,6 +2436,46 @@ function loadAllCpeConferences(){
             'ยกเลิก</button>'+
           '</div>'+
         '</div>'+
+      '</div>'+
+      // ─── ยืนยันผลการพิจารณา ───
+      (st==='sent_to_experts'
+        ? '<div style="margin-top:12px;border-top:1px solid rgba(200,210,230,.35);padding-top:12px">'+
+            '<button onclick="toggleResultPanel(\''+safeCid+'\')" '+
+              'style="display:inline-flex;align-items:center;gap:7px;background:#059669;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:.78rem;font-weight:700;cursor:pointer">'+
+              '✅ ยืนยันผลการพิจารณาหน่วยกิต CPE'+
+            '</button>'+
+            '<div id="rp-'+safeCid+'" style="display:none;margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px">'+
+              '<div style="font-size:.85rem;font-weight:800;color:#059669;margin-bottom:8px">✅ ยืนยันผลการพิจารณารับรองหน่วยกิต CPE</div>'+
+              '<div style="font-size:.78rem;color:#374151;margin-bottom:12px">แนบเอกสารผลการพิจารณา (ไฟล์ Word) เพื่อส่งให้ผู้ส่งคำขอรับทราบทางอีเมล <span style="color:#6b7280">(ไม่บังคับ)</span></div>'+
+              '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
+                '<label for="result-word-'+safeCid+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#fff;color:#059669;border:1px solid #86efac;border-radius:8px;padding:6px 14px;font-size:.78rem;font-weight:700">'+
+                  '📎 แนบไฟล์ Word'+
+                '</label>'+
+                '<input type="file" id="result-word-'+safeCid+'" accept=".doc,.docx" style="display:none" onchange="previewResultFile(\''+safeCid+'\',this)">'+
+                '<span id="result-fname-'+safeCid+'" style="font-size:.75rem;color:#374151"></span>'+
+              '</div>'+
+              '<div style="display:flex;gap:8px">'+
+                '<button onclick="confirmCPEResult(\''+safeCid+'\',\''+cid+'\')" '+
+                  'style="background:#059669;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:.82rem;font-weight:700;cursor:pointer">'+
+                  '✅ ยืนยัน & แจ้ง User'+
+                '</button>'+
+                '<button onclick="toggleResultPanel(\''+safeCid+'\')" '+
+                  'style="background:transparent;color:#6b7280;border:1px solid rgba(200,210,230,.7);border-radius:8px;padding:8px 14px;font-size:.82rem;cursor:pointer">'+
+                  'ยกเลิก'+
+                '</button>'+
+              '</div>'+
+            '</div>'+
+          '</div>'
+        : (st==='result_confirmed'
+            ? '<div style="margin-top:12px;border-top:1px solid rgba(200,210,230,.35);padding-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+                '<span style="font-size:.78rem;font-weight:700;color:#059669">✅ ยืนยันผลการพิจารณาแล้ว</span>'+
+                (c.confirmedAt ? '<span style="font-size:.72rem;color:#6b7280">เมื่อ '+fd(c.confirmedAt)+'</span>' : '')+
+                (c.files&&c.files.result_word&&c.files.result_word.url
+                  ? '<a href="'+c.files.result_word.url+'" target="_blank" style="font-size:.72rem;color:#4f46e5;font-weight:700;text-decoration:none;border:1px solid rgba(79,70,229,.3);border-radius:6px;padding:3px 8px">📥 ดาวน์โหลดผลการพิจารณา</a>'
+                  : '')+
+              '</div>'
+            : '')
+      )+
       '</div>';
     }).join('');
   });
@@ -2424,6 +2484,98 @@ function loadAllCpeConferences(){
 function toggleExpertPanel(safeCid){
   var p = document.getElementById('ep-'+safeCid);
   if(p) p.style.display = p.style.display==='none'?'block':'none';
+}
+
+function toggleResultPanel(safeCid){
+  var p = document.getElementById('rp-'+safeCid);
+  if(p) p.style.display = p.style.display==='none'?'block':'none';
+}
+
+function previewResultFile(safeCid, input){
+  var span = document.getElementById('result-fname-'+safeCid);
+  if(span) span.textContent = input.files[0] ? '📄 '+input.files[0].name : '';
+}
+
+async function confirmCPEResult(safeCid, cid){
+  var c = _adminConfs[cid];
+  if(!c){ showToast('ไม่พบข้อมูลประชุม','err'); return; }
+
+  var fileInput = document.getElementById('result-word-'+safeCid);
+  var file = fileInput ? fileInput.files[0] : null;
+  var resultWordUrl = '', resultWordName = '';
+
+  if(file){
+    if(file.size > 20*1024*1024){ showToast('ไฟล์ใหญ่เกิน 20 MB','err'); return; }
+    showToast('⏳ กำลังอัพโหลดเอกสารผลการพิจารณา...');
+    try{
+      var b64 = await new Promise(function(resolve,reject){
+        var reader = new FileReader();
+        reader.onload = function(){ resolve(reader.result.split(',')[1]); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      var res = await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+        action:'upload', fileBase64:b64, fileName:file.name,
+        mimeType:file.type||'application/octet-stream', orgName:c.orgName||'ประชุมวิชาการ'
+      })});
+      var _t = await res.text(); var json;
+      try{ json=JSON.parse(_t); }catch(_){ json={error:'ตอบกลับไม่ถูกต้อง'}; }
+      if(json.success){ resultWordUrl=json.url; resultWordName=file.name; }
+      else{ showToast('อัพโหลดไม่สำเร็จ: '+(json.error||''),'err'); return; }
+    }catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'err'); return; }
+  }
+
+  showToast('⏳ กำลังยืนยันผลการพิจารณา...');
+  var now = new Date().toISOString();
+
+  try{
+    // อัพเดต Firebase path admin
+    await db.ref('pharma-form/_all_cpe_conferences/'+cid).update({
+      status:'result_confirmed', confirmedAt:now
+    });
+    if(resultWordUrl){
+      await db.ref('pharma-form/_all_cpe_conferences/'+cid+'/files/result_word').set({
+        url:resultWordUrl, name:resultWordName, uploadedAt:now
+      });
+    }
+    // fan-out ไป user path
+    var userKey = emailToFbKey(c.createdBy||'');
+    var uKey = c.id||cid;
+    if(userKey && uKey){
+      db.ref('pharma-form/'+userKey+'/cpe-conferences/'+uKey).update({
+        status:'result_confirmed', confirmedAt:now
+      }).catch(function(){});
+      if(resultWordUrl){
+        db.ref('pharma-form/'+userKey+'/cpe-conferences/'+uKey+'/files/result_word').set({
+          url:resultWordUrl, name:resultWordName, uploadedAt:now
+        }).catch(function(){});
+      }
+    }
+    // แจ้ง user ทางอีเมล + อัพเดต Sheet
+    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+      action:'notify_cpe_result',
+      confId:       cid,
+      confName:     c.confName||'',
+      orgName:      c.orgName||'',
+      dateStart:    c.dateStart||'',
+      dateEnd:      c.dateEnd||'',
+      userEmail:    c.createdBy||'',
+      resultWordUrl:resultWordUrl,
+      confirmedAt:  now
+    })}).catch(function(){});
+
+    // อัพเดต local cache แล้ว re-render
+    if(_adminConfs[cid]){
+      _adminConfs[cid].status='result_confirmed';
+      _adminConfs[cid].confirmedAt=now;
+      if(resultWordUrl){
+        if(!_adminConfs[cid].files) _adminConfs[cid].files={};
+        _adminConfs[cid].files.result_word={url:resultWordUrl,name:resultWordName,uploadedAt:now};
+      }
+    }
+    renderAdminConfs();
+    showToast('✅ ยืนยันผลการพิจารณาเรียบร้อย — แจ้ง User แล้ว');
+  }catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'err'); }
 }
 
 async function uploadResolutionFile(safeCid, cid, inputEl, fileType){
