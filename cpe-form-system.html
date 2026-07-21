@@ -1601,19 +1601,42 @@ function loadMyOrgRequests(){
               '</div></div>';
           }
           if(req.expiryDate){
-            var nowD=new Date(),expD=new Date(req.expiryDate);
-            var ec=expD<nowD?'#dc2626':(expD-nowD)<90*86400000?'#d97706':'#059669';
+            var nowD=new Date(),expD=new Date(req.expiryDate+'T00:00:00');
+            nowD.setHours(0,0,0,0);
+            var daysLeftCard=Math.ceil((expD-nowD)/86400000);
+            var ec=daysLeftCard<0?'#dc2626':daysLeftCard<=90?'#d97706':'#059669';
             extraHtml += '<div style="min-width:140px">'+
               '<div style="font-size:.7rem;color:'+ec+';font-weight:700;margin-bottom:2px">วันหมดอายุ</div>'+
               '<div style="font-size:.88rem;font-weight:700;color:'+ec+'">'+
-              new Date(req.expiryDate).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})+
-              (expD<nowD?' (หมดอายุแล้ว)':'')+
+              expD.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})+
+              (daysLeftCard<0?' (หมดอายุแล้ว)':daysLeftCard<=90?' (อีก '+daysLeftCard+' วัน)':'')+
               '</div></div>';
           }
           extraHtml += '</div>';
         }
-        extraHtml += '<div style="font-size:.75rem;color:#059669;margin-top:6px">'+
-          'หน่วยงานนี้สามารถยื่นเอกสารต่ออายุ CPE ได้แล้ว</div>';
+        // ปุ่มต่ออายุ — แสดงเฉพาะเมื่อใกล้หมดอายุ (≤90 วัน) หรือหมดอายุแล้ว
+        if(req.expiryDate){
+          var _expD2=new Date(req.expiryDate+'T00:00:00'),_now2=new Date();_now2.setHours(0,0,0,0);
+          var _days2=Math.ceil((_expD2-_now2)/86400000);
+          if(_days2<=90){
+            var _rk=(req.orgKey||'').replace(/'/g,"\\'");
+            var _rn=(req.name||'').replace(/'/g,"\\'");
+            var _isExp=_days2<0;
+            var _btnClr=_isExp?'background:#dc2626;border-color:#dc2626':'background:#d97706;border-color:#d97706';
+            var _btnTxt=_isExp?'🚨 ต่ออายุด่วน':'🔄 ต่ออายุล่วงหน้า';
+            extraHtml += '<div style="margin-top:12px">'+
+              '<button class="btn btn-sm" style="'+_btnClr+';color:#fff;font-weight:700;padding:7px 18px;border-radius:8px;cursor:pointer" '+
+              'onclick="showView(\'renew\',\''+_rk+'\',\''+_rn+'\')">'+_btnTxt+'</button>'+
+              (_isExp
+                ? '<span style="font-size:.72rem;color:#dc2626;margin-left:10px">⚠️ กรุณาต่ออายุเพื่อดำเนินกิจกรรม CPE ต่อ</span>'
+                : '<span style="font-size:.72rem;color:#d97706;margin-left:10px">แนะนำให้ดำเนินการก่อนหมดอายุ</span>')+
+              '</div>';
+          }
+        }
+        if(!req.expiryDate || Math.ceil((new Date(req.expiryDate+'T00:00:00')-new Date())/86400000)>90){
+          extraHtml += '<div style="font-size:.75rem;color:#059669;margin-top:6px">'+
+            'หน่วยงานนี้สามารถยื่นเอกสารต่ออายุ CPE ได้แล้ว</div>';
+        }
       } else if(st==='ปฏิเสธ'){
         extraHtml = '<div style="font-size:.76rem;color:#dc2626;margin-top:6px">'+
           '❌ ถูกปฏิเสธเมื่อ '+fmtDate(req.rejectedAt)+
