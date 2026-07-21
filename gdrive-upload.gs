@@ -285,15 +285,12 @@ function sendExpertEmail(data) {
   if (data.location) html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;border-bottom:1px solid #e5e7eb">สถานที่</td><td style="padding:9px 14px;font-size:.88rem;border-bottom:1px solid #e5e7eb">' + data.location + '</td></tr>';
   html += '</table>';
 
-  html += '<div style="margin:20px 0"><div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px">📎 เอกสารแนบ</div>';
-  html += '<div style="display:flex;flex-direction:column;gap:8px">';
-  if (data.projectUrl) html += '<a href="' + data.projectUrl + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">📋 รายละเอียดโครงการ</a>';
-  if (data.cvfileUrl)  html += '<a href="' + data.cvfileUrl  + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">👤 CV วิทยากร</a>';
-  if (data.scheduleUrl) html += '<a href="' + data.scheduleUrl + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">📅 กำหนดการ</a>';
-  html += '</div></div>';
-
-  html += '<hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0">';
-  html += '<p style="font-size:.78rem;color:#9ca3af">อีเมลนี้ส่งโดยระบบบริหารหน่วยกิต CPE คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา<br>กรุณาอย่าตอบกลับอีเมลนี้โดยตรง</p>';
+  html += '<table style="width:100%;border-collapse:collapse;margin:20px 0">';
+  html += '<tr><td colspan="2" style="padding:10px 0 8px;font-size:.88rem;font-weight:700;color:#1a202c;border-bottom:2px solid #4f46e5">เอกสารแนบ</td></tr>';
+  if (data.projectUrl) html += '<tr><td style="padding:10px 14px 10px 0;font-size:.85rem;color:#374151;border-bottom:1px solid #e5e7eb">รายละเอียดโครงการ</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb"><a href="' + data.projectUrl + '" style="color:#4f46e5;font-weight:700">เปิดเอกสาร</a></td></tr>';
+  if (data.cvfileUrl)  html += '<tr><td style="padding:10px 14px 10px 0;font-size:.85rem;color:#374151;border-bottom:1px solid #e5e7eb">CV วิทยากร</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb"><a href="' + data.cvfileUrl + '" style="color:#4f46e5;font-weight:700">เปิดเอกสาร</a></td></tr>';
+  if (data.scheduleUrl) html += '<tr><td style="padding:10px 14px 10px 0;font-size:.85rem;color:#374151;border-bottom:1px solid #e5e7eb">กำหนดการ</td><td style="padding:10px 0;border-bottom:1px solid #e5e7eb"><a href="' + data.scheduleUrl + '" style="color:#4f46e5;font-weight:700">เปิดเอกสาร</a></td></tr>';
+  html += '</table>';
   html += '</div></div>';
 
   var sent = 0;
