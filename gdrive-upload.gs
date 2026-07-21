@@ -267,7 +267,7 @@ function sendExpertEmail(data) {
   var dateRange = data.dateStart || '-';
   if (data.dateEnd && data.dateEnd !== data.dateStart) dateRange += ' – ' + data.dateEnd;
 
-  var subject = '📋 ขอเรียนเชิญพิจารณาหน่วยกิต CPE: ' + (data.confName || 'ประชุมวิชาการ');
+  var subject = '[CPE] ขอเรียนเชิญพิจารณาหน่วยกิต CPE: ' + (data.confName || 'ประชุมวิชาการ');
 
   var html = '<div style="font-family:\'Sarabun\',sans-serif;max-width:600px;margin:0 auto;color:#1a202c">';
   html += '<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 28px;border-radius:12px 12px 0 0">';
@@ -304,14 +304,27 @@ function sendExpertEmail(data) {
   html += '</div></div>';
 
   var sent = 0;
+  var errors = [];
   expertEmails.forEach(function(email) {
     email = (email || '').trim();
     if (email && email.indexOf('@') > 0) {
-      MailApp.sendEmail({ to: email, subject: subject, htmlBody: html });
-      sent++;
+      try {
+        MailApp.sendEmail({
+          to: email,
+          subject: subject,
+          htmlBody: html,
+          name: 'ระบบ CPE คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา'
+        });
+        sent++;
+      } catch(mailErr) {
+        errors.push(email + ': ' + mailErr.message);
+      }
     }
   });
 
+  if (errors.length > 0) {
+    return respond({ success: false, sent: sent, error: errors.join('; ') });
+  }
   return respond({ success: true, sent: sent });
 }
 

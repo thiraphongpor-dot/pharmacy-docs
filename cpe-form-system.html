@@ -1157,7 +1157,7 @@ var currentUser=null, isAdmin=false;
    GOOGLE DRIVE UPLOAD via Apps Script
 ════════════════════════════════ */
 // ← วาง URL ที่ได้จากการ Deploy Apps Script ที่นี่
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwH4AikXcGDON6q-_bjBDPj0rwwfdUylucodePwpA4PNLewuBdfm1PChqH5v1hOvnbZyA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynKEQ8EfexOr4lwm-5xq9jgMo9EyLGzdU6JsvhxZg9DRjwojO49QdvE2yBJLBeaaDw/exec';
 
 function uploadToGDrive(file, orgName, docType){
   return new Promise(function(resolve, reject){
@@ -2432,8 +2432,10 @@ async function sendToExperts(safeCid, cid){
         scheduleUrl:  c.files&&c.files.schedule&&c.files.schedule.url||'',
       })
     });
-    var json = await res.json().catch(function(){ return {success:true}; });
-    if(!json.error){
+    var _text = await res.text();
+    var json;
+    try { json = JSON.parse(_text); } catch(_){ json = {error:'ตอบกลับไม่ถูกต้อง: '+_text.substring(0,120)}; }
+    if(json.success && !json.error){
       showToast('✓ ส่งอีเมลให้ผู้ทรงคุณวุฒิ '+emails.length+' ท่านแล้ว');
       var now = new Date().toISOString();
       db.ref('pharma-form/_all_cpe_conferences/'+cid).update({
