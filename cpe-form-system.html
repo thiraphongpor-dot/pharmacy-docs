@@ -1239,7 +1239,7 @@ function openOrgDetail(key){
     +'<tr><td>ผู้ประสานงานหลัก<span class="req-star">*</span></td>'
       +'<td><input type="text" id="odf-coord" value="'+v('coordinator')+'" placeholder="ชื่อ-นามสกุล"></td></tr>'
     +'<tr><td>วันที่ผ่านการรับรอง</td>'
-      +'<td><input type="date" id="odf-app" value="'+v('approvalDate')+'" style="max-width:180px"></td></tr>'
+      +'<td><input type="date" id="odf-app" value="'+(o.registrationDate||o.approvalDate||'')+'" style="max-width:180px"></td></tr>'
     +'<tr><td>วันที่หมดอายุ</td>'
       +'<td><input type="date" id="odf-exp" value="'+v('expiryDate')+'" style="max-width:180px"></td></tr>'
     +'</tbody>';
@@ -1273,7 +1273,8 @@ function saveOrgDetail(){
     headName:    document.getElementById('odf-head').value.trim(),
     headPosition:document.getElementById('odf-headpos').value.trim(),
     coordinator: document.getElementById('odf-coord').value.trim(),
-    approvalDate:document.getElementById('odf-app').value,
+    approvalDate:    document.getElementById('odf-app').value,
+    registrationDate:document.getElementById('odf-app').value,
     expiryDate:  document.getElementById('odf-exp').value,
     updatedAt:   new Date().toISOString()
   };
