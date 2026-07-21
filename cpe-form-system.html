@@ -1715,12 +1715,12 @@ function loadMyOrgRequests(){
         // ปุ่มประชุมวิชาการ — แสดงสำหรับออร์กที่อนุมัติแล้วทุกกรณี
         var _ck=(req.orgKey||'').replace(/'/g,"\\'");
         var _cn=(req.name||'').replace(/'/g,"\\'");
-        var _orgKeyId=(req.orgKey||'').replace(/[^a-zA-Z0-9_-]/g,'_');
+        var _orgNameId=(req.name||'').replace(/[^a-zA-Z0-9_-]/g,'_');
         extraHtml += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(16,185,129,.18);display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
           '<button class="btn btn-sm" style="background:rgba(90,123,255,.1);color:#5a7bff;border:1px solid rgba(90,123,255,.35);font-weight:700;padding:7px 16px;border-radius:8px;cursor:pointer;white-space:nowrap" '+
           'onclick="goToConfFromMyRequest(\''+_ck+'\',\''+_cn+'\')">'+
           '🎓 กรอกข้อมูลประชุมวิชาการ</button>'+
-          '<div id="conf-status-'+_orgKeyId+'"></div>'+
+          '<div id="conf-status-'+_orgNameId+'"></div>'+
           '</div>';
       } else if(st==='ปฏิเสธ'){
         extraHtml = '<div style="font-size:.76rem;color:#dc2626;margin-top:6px">'+
@@ -1783,10 +1783,10 @@ function loadMyConferences(){
     _myConfs = {};
     Object.entries(data).forEach(function(e){
       var c = e[1];
-      var orgKeyId = (c.orgKey||'').replace(/[^a-zA-Z0-9_-]/g,'_');
-      if(!orgKeyId) return;
-      if(!_myConfs[orgKeyId]) _myConfs[orgKeyId] = [];
-      _myConfs[orgKeyId].push(c);
+      var orgNameId = (c.orgName||'').replace(/[^a-zA-Z0-9_-]/g,'_');
+      if(!orgNameId) return;
+      if(!_myConfs[orgNameId]) _myConfs[orgNameId] = [];
+      _myConfs[orgNameId].push(c);
     });
     injectConfStatuses();
   });
