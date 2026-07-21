@@ -1154,7 +1154,7 @@ let currentProjectOwner = null;  // email of the user whose project is being edi
 let _canonicalEmail = null;      // resolved canonical email after alias lookup
 
 // ── Google Apps Script URL (ใช้ร่วมกับ cpe-form-system) ──
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw020RksOBPwNw0R5DckN1n3HkicF-s5PEtw0EssnhpKIMp7x9Hxgu1A3QvhSAEu17fgg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwH4AikXcGDON6q-_bjBDPj0rwwfdUylucodePwpA4PNLewuBdfm1PChqH5v1hOvnbZyA/exec';
 function _logToSheet(payload){ if(APPS_SCRIPT_URL) fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)}).catch(()=>{}); }
 
 function getUserDbKey(email){
