@@ -438,11 +438,7 @@ body::before,body::after{display:none !important}
     <div id="my-requests-wrap"></div>
   </div>
 
-  <!-- My Conference Submissions -->
-  <div id="my-conf-section" style="display:none" class="fsec">
-    <div class="fsec-title">🎓 สถานะการยื่นขอพิจารณาหน่วยกิต CPE</div>
-    <div id="my-conf-wrap"></div>
-  </div>
+  <!-- Conference status injected inline next to each org's conference button -->
 
   <!-- Admin: เพิ่มหน่วยงาน -->
   <div id="admin-add-section" style="display:none" class="fsec">
@@ -1647,7 +1643,7 @@ function loadMyOrgRequests(){
       });
     }
 
-    wrap.innerHTML = myReqs.map(function(e){
+    wrap.innerHTML = myReqs.map(function(e){ // eslint-disable-line
       var req = e[1];
       var st  = req.status || 'รอตรวจสอบ';
       var badgeCls = st==='อนุมัติแล้ว' ? 'badge-approved' : st==='ปฏิเสธ' ? 'badge-rejected' : 'badge-pending';
@@ -1719,11 +1715,12 @@ function loadMyOrgRequests(){
         // ปุ่มประชุมวิชาการ — แสดงสำหรับออร์กที่อนุมัติแล้วทุกกรณี
         var _ck=(req.orgKey||'').replace(/'/g,"\\'");
         var _cn=(req.name||'').replace(/'/g,"\\'");
+        var _orgKeyId=(req.orgKey||'').replace(/[^a-zA-Z0-9_-]/g,'_');
         extraHtml += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(16,185,129,.18);display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
           '<button class="btn btn-sm" style="background:rgba(90,123,255,.1);color:#5a7bff;border:1px solid rgba(90,123,255,.35);font-weight:700;padding:7px 16px;border-radius:8px;cursor:pointer;white-space:nowrap" '+
           'onclick="goToConfFromMyRequest(\''+_ck+'\',\''+_cn+'\')">'+
           '🎓 กรอกข้อมูลประชุมวิชาการ</button>'+
-          '<span style="font-size:.72rem;color:#6b7280">สำหรับแจ้งข้อมูลการจัดประชุม/อบรมในหน่วยงาน</span>'+
+          '<div id="conf-status-'+_orgKeyId+'"></div>'+
           '</div>';
       } else if(st==='ปฏิเสธ'){
         extraHtml = '<div style="font-size:.76rem;color:#dc2626;margin-top:6px">'+
@@ -1750,76 +1747,48 @@ function loadMyOrgRequests(){
         '<span class="req-status-badge '+badgeCls+'">'+st+'</span>'+
       '</div>';
     }).join('');
+    injectConfStatuses(); // ใส่ status badge ข้าง ๆ ปุ่มประชุม
   });
 }
 
 /* ════════════════════════════════
    USER: ประชุมวิชาการของฉัน
 ════════════════════════════════ */
+var _myConfs = {}; // orgKeyId → [conference, ...]
+
+function injectConfStatuses(){
+  Object.entries(_myConfs).forEach(function(oe){
+    var orgKeyId = oe[0];
+    var orgConfs = oe[1];
+    var hasPending = orgConfs.some(function(c){ return (c.status||'pending_review') === 'pending_review'; });
+    var el = document.getElementById('conf-status-'+orgKeyId);
+    if(!el) return;
+    el.innerHTML = hasPending
+      ? '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:5px 12px">'+
+          '<span style="width:7px;height:7px;border-radius:50%;background:#4338ca;display:inline-block;animation:pulse-dot 1.4s ease infinite;flex-shrink:0"></span>'+
+          '<span style="font-size:.73rem;font-weight:700;color:#4338ca">⏳ อยู่ระหว่างการพิจารณาหน่วยกิตจากผู้ทรงคุณวุฒิ</span>'+
+        '</span>'
+      : '';
+  });
+}
+
 function loadMyConferences(){
   var user = currentUser || getUser();
   if(!user) return;
   var myEmail = ((user._canonicalEmail || user.email) || '').toLowerCase();
   if(!myEmail) return;
   var key = emailToFbKey(myEmail);
-  console.log('[conf] email='+myEmail+' key='+key);
   db.ref('pharma-form/'+key+'/cpe-conferences').on('value', function(snap){
-    console.log('[conf] snap=', snap.val());
     var data = snap.val()||{};
-    var confs = Object.entries(data).sort(function(a,b){
-      return (b[1].createdAt||'').localeCompare(a[1].createdAt||'');
+    _myConfs = {};
+    Object.entries(data).forEach(function(e){
+      var c = e[1];
+      var orgKeyId = (c.orgKey||'').replace(/[^a-zA-Z0-9_-]/g,'_');
+      if(!orgKeyId) return;
+      if(!_myConfs[orgKeyId]) _myConfs[orgKeyId] = [];
+      _myConfs[orgKeyId].push(c);
     });
-
-    var section = document.getElementById('my-conf-section');
-    var wrap    = document.getElementById('my-conf-wrap');
-    if(!section||!wrap) return;
-    section.style.display = 'block';
-    if(confs.length === 0){
-      wrap.innerHTML = '<div style="font-size:.82rem;color:#9ca3af;padding:12px 0">ยังไม่มีข้อมูลการยื่นขอพิจารณาหน่วยกิต</div>';
-      return;
-    }
-
-    function fmtDateC(iso){
-      if(!iso) return '-';
-      return new Date(iso).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'});
-    }
-
-    var statusMap = {
-      'pending_review': { label:'อยู่ระหว่างการพิจารณาหน่วยกิตจากผู้ทรงคุณวุฒิ', color:'#4338ca', bg:'rgba(99,102,241,.08)', border:'rgba(99,102,241,.25)', icon:'⏳', dot:true },
-      'approved':       { label:'ผ่านการพิจารณา', color:'#059669', bg:'rgba(16,185,129,.08)', border:'rgba(16,185,129,.25)', icon:'✅', dot:false },
-      'rejected':       { label:'ไม่ผ่านการพิจารณา', color:'#dc2626', bg:'rgba(220,38,38,.07)', border:'rgba(220,38,38,.2)', icon:'❌', dot:false },
-    };
-
-    wrap.innerHTML = confs.map(function(e){
-      var c  = e[1];
-      var st = c.status || 'pending_review';
-      var sm = statusMap[st] || statusMap['pending_review'];
-
-      var dateRange = c.dateStart ? fmtDateC(c.dateStart)+(c.dateEnd&&c.dateEnd!==c.dateStart?' – '+fmtDateC(c.dateEnd):'') : '-';
-
-      var dotHtml = sm.dot
-        ? '<span style="width:7px;height:7px;border-radius:50%;background:'+sm.color+';display:inline-block;animation:pulse-dot 1.4s ease infinite;flex-shrink:0"></span>'
-        : '';
-
-      return '<div style="background:'+sm.bg+';border:1px solid '+sm.border+';border-radius:12px;padding:16px 18px;margin-bottom:10px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
-          '<div style="flex:1;min-width:0">'+
-            '<div style="font-size:.93rem;font-weight:700;color:var(--text);margin-bottom:3px">'+
-              (c.confName||'-')+
-            '</div>'+
-            '<div style="font-size:.77rem;color:var(--sub);margin-bottom:8px">'+
-              'วันจัด: '+dateRange+
-              (c.orgName ? ' · '+c.orgName : '')+
-              ' · ยื่นเมื่อ '+fmtDateC(c.createdAt)+
-            '</div>'+
-            '<div style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.6);border:1px solid '+sm.border+';border-radius:16px;padding:5px 13px">'+
-              dotHtml+
-              '<span style="font-size:.78rem;font-weight:700;color:'+sm.color+'">'+sm.icon+' '+sm.label+'</span>'+
-            '</div>'+
-          '</div>'+
-        '</div>'+
-      '</div>';
-    }).join('');
+    injectConfStatuses();
   });
 }
 
