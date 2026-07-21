@@ -2254,13 +2254,14 @@ async function saveConference(){
       fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
         action:'log', type:'conference',
         submittedAt:  record.updatedAt,
+        submittedBy:  record.createdBy  || '',
         confId:       confId,
-        orgName:      record.orgName,
-        confName:     record.confName,
-        confDate:     (record.dateStart||'')+(record.dateEnd?'–'+record.dateEnd:''),
-        location:     record.location||'',
-        pdfUrl:       record.files?.pdf?.url      || '',
-        wordUrl:      record.files?.word?.url     || '',
+        orgName:      record.orgName    || '',
+        confName:     record.confName   || '',
+        dateStart:    record.dateStart  || '',
+        dateEnd:      record.dateEnd    || '',
+        location:     record.location   || '',
+        note:         record.note       || '',
         projectUrl:   record.files?.project?.url  || '',
         cvfileUrl:    record.files?.cvfile?.url   || '',
         scheduleUrl:  record.files?.schedule?.url || ''
@@ -2534,7 +2535,8 @@ async function sendToExperts(safeCid, cid){
         action:'update_conference_row',
         confId: cid,
         expertEmails: emails,
-        sentAt: now
+        sentAt: now,
+        status: 'ส่งผู้ทรงแล้ว'
       })}).catch(function(){});
       toggleExpertPanel(safeCid);
     } else {

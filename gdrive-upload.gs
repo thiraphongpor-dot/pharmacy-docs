@@ -77,7 +77,14 @@ function logToSheet(data) {
         data.status    || 'รอตรวจสอบ'
       ]);
     } else if (data.type === 'conference') {
-      var confHdrs = ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ','มติ CPE (PDF)','มติ CPE (Word)','ส่งผู้ทรงคุณวุฒิ','วันที่ส่งผู้ทรง','รหัสประชุม'];
+      var confHdrs = [
+        'วันที่-เวลาที่ส่ง','ผู้ส่ง','หน่วยงาน','ชื่อประชุม',
+        'วันที่เริ่มงาน','วันที่สิ้นสุดงาน','สถานที่','หมายเหตุ',
+        'รายละเอียดโครงการ','CV วิทยากร','กำหนดการ',
+        'มติ CPE (PDF)','มติ CPE (Word)',
+        'จำนวนผู้ทรงคุณวุฒิ','อีเมลผู้ทรงคุณวุฒิ','วันที่ส่งผู้ทรง',
+        'สถานะ','รหัสประชุม'
+      ];
       sheet = getOrCreateTab(ss, 'ประชุมวิชาการ', confHdrs);
       // อัพเดต header ทุกครั้ง
       for (var ch = 0; ch < confHdrs.length; ch++) {
@@ -88,18 +95,24 @@ function logToSheet(data) {
         sheet.deleteColumns(confHdrs.length + 1, sheet.getLastColumn() - confHdrs.length);
       }
       sheet.appendRow([
-        formatDate(data.submittedAt),
-        data.orgName      || '',
-        data.confName     || '',
-        data.confDate     || '',
-        data.projectUrl   || '',
-        data.cvfileUrl    || '',
-        data.scheduleUrl  || '',
-        '',   // มติ CPE PDF — อัพเดตโดย admin ภายหลัง
-        '',   // มติ CPE Word
-        '',   // ส่งผู้ทรงคุณวุฒิ
-        '',   // วันที่ส่งผู้ทรง
-        data.confId       || ''
+        formatDate(data.submittedAt),   // 1 วันที่-เวลา
+        data.submittedBy  || '',        // 2 ผู้ส่ง
+        data.orgName      || '',        // 3 หน่วยงาน
+        data.confName     || '',        // 4 ชื่อประชุม
+        data.dateStart    || '',        // 5 วันที่เริ่มงาน
+        data.dateEnd      || '',        // 6 วันที่สิ้นสุดงาน
+        data.location     || '',        // 7 สถานที่
+        data.note         || '',        // 8 หมายเหตุ
+        data.projectUrl   || '',        // 9 รายละเอียดโครงการ
+        data.cvfileUrl    || '',        // 10 CV วิทยากร
+        data.scheduleUrl  || '',        // 11 กำหนดการ
+        '',                             // 12 มติ CPE PDF
+        '',                             // 13 มติ CPE Word
+        '',                             // 14 จำนวนผู้ทรงคุณวุฒิ
+        '',                             // 15 อีเมลผู้ทรงคุณวุฒิ
+        '',                             // 16 วันที่ส่งผู้ทรง
+        'รอพิจารณา',                   // 17 สถานะ
+        data.confId       || ''         // 18 รหัสประชุม
       ]);
     } else if (data.type === 'org_register') {
       sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',
@@ -268,6 +281,13 @@ function sendAdminEmail(data) {
 }
 
 /* ─── Update conference row by confId ─── */
+// คอลัมน์ใน tab ประชุมวิชาการ (18 คอลัมน์):
+//  1 วันที่-เวลาที่ส่ง  2 ผู้ส่ง  3 หน่วยงาน  4 ชื่อประชุม
+//  5 วันที่เริ่มงาน  6 วันที่สิ้นสุดงาน  7 สถานที่  8 หมายเหตุ
+//  9 รายละเอียดโครงการ  10 CV วิทยากร  11 กำหนดการ
+//  12 มติ CPE (PDF)  13 มติ CPE (Word)
+//  14 จำนวนผู้ทรงคุณวุฒิ  15 อีเมลผู้ทรงคุณวุฒิ  16 วันที่ส่งผู้ทรง
+//  17 สถานะ  18 รหัสประชุม
 function updateConferenceRow(data) {
   var ss    = getOrCreateSheet();
   var sheet = ss.getSheetByName('ประชุมวิชาการ');
@@ -276,19 +296,24 @@ function updateConferenceRow(data) {
   var confId = data.confId || '';
   if (!confId) return respond({ success: false, error: 'ไม่มี confId' });
 
-  // ค้นหา row ที่มี confId ใน column 12
+  // ค้นหา row ที่มี confId ใน column 18
   var lastRow = sheet.getLastRow();
   var found   = -1;
   for (var r = 2; r <= lastRow; r++) {
-    if (sheet.getRange(r, 12).getValue() === confId) { found = r; break; }
+    if (sheet.getRange(r, 18).getValue() === confId) { found = r; break; }
   }
   if (found < 0) return respond({ success: false, error: 'ไม่พบ row confId: ' + confId });
 
-  // อัพเดตเฉพาะ column ที่ส่งมา
-  if (data.matiPdfUrl  !== undefined) sheet.getRange(found, 8).setValue(data.matiPdfUrl  || '');
-  if (data.matiWordUrl !== undefined) sheet.getRange(found, 9).setValue(data.matiWordUrl || '');
-  if (data.expertEmails !== undefined) sheet.getRange(found, 10).setValue((data.expertEmails||[]).join(', '));
-  if (data.sentAt !== undefined) sheet.getRange(found, 11).setValue(data.sentAt ? formatDate(data.sentAt) : '');
+  // อัพเดตเฉพาะ field ที่ส่งมา
+  if (data.matiPdfUrl   !== undefined) sheet.getRange(found, 12).setValue(data.matiPdfUrl  || '');
+  if (data.matiWordUrl  !== undefined) sheet.getRange(found, 13).setValue(data.matiWordUrl || '');
+  if (data.expertEmails !== undefined) {
+    var emails = data.expertEmails || [];
+    sheet.getRange(found, 14).setValue(emails.length);
+    sheet.getRange(found, 15).setValue(emails.join(', '));
+  }
+  if (data.sentAt  !== undefined) sheet.getRange(found, 16).setValue(data.sentAt  ? formatDate(data.sentAt) : '');
+  if (data.status  !== undefined) sheet.getRange(found, 17).setValue(data.status  || '');
 
   return respond({ success: true });
 }
