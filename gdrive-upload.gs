@@ -67,8 +67,16 @@ function logToSheet(data) {
         data.status    || 'รอตรวจสอบ'
       ]);
     } else if (data.type === 'conference') {
-      sheet = getOrCreateTab(ss, 'ประชุมวิชาการ',
-        ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ']);
+      var confHdrs = ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ'];
+      sheet = getOrCreateTab(ss, 'ประชุมวิชาการ', confHdrs);
+      // อัพเดต header ทุกครั้งเพื่อแก้ column เก่า (ไฟล์ PDF, ไฟล์ Word, ผู้บรรยาย)
+      for (var ch = 0; ch < confHdrs.length; ch++) {
+        sheet.getRange(1, ch + 1).setValue(confHdrs[ch]).setFontWeight('bold').setBackground('#d0e4f7');
+      }
+      // ลบ column ที่เกิน (ถ้ามี)
+      if (sheet.getLastColumn() > confHdrs.length) {
+        sheet.deleteColumns(confHdrs.length + 1, sheet.getLastColumn() - confHdrs.length);
+      }
       sheet.appendRow([
         formatDate(data.submittedAt),
         data.orgName      || '',
