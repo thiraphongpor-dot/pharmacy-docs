@@ -23,6 +23,11 @@ function doPost(e) {
       return logToSheet(data);
     }
 
+    // action: 'send_expert_email' → ส่งอีเมลให้ผู้ทรงคุณวุฒิ
+    if (data.action === 'send_expert_email') {
+      return sendExpertEmail(data);
+    }
+
     // action: 'upload' (default) → อัปโหลดไฟล์ไปยัง Drive
     var b64     = data.fileBase64;
     var name    = data.fileName  || 'file';
@@ -250,6 +255,64 @@ function sendAdminEmail(data) {
   } catch(e) {
     // ไม่ให้ email error กระทบ main flow
   }
+}
+
+/* ─── Send expert email ─── */
+function sendExpertEmail(data) {
+  var expertEmails = data.expertEmails || [];
+  if (expertEmails.length === 0) {
+    return respond({ success: false, error: 'ไม่มีอีเมลผู้ทรงคุณวุฒิ' });
+  }
+
+  var dateRange = data.dateStart || '-';
+  if (data.dateEnd && data.dateEnd !== data.dateStart) dateRange += ' – ' + data.dateEnd;
+
+  var subject = '📋 ขอเรียนเชิญพิจารณาหน่วยกิต CPE: ' + (data.confName || 'ประชุมวิชาการ');
+
+  var html = '<div style="font-family:\'Sarabun\',sans-serif;max-width:600px;margin:0 auto;color:#1a202c">';
+  html += '<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 28px;border-radius:12px 12px 0 0">';
+  html += '<div style="color:#fff;font-size:1.2rem;font-weight:700">🎓 คำขอพิจารณาหน่วยกิต CPE</div>';
+  html += '<div style="color:rgba(255,255,255,.8);font-size:.85rem;margin-top:4px">คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา</div>';
+  html += '</div>';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px 28px;border-radius:0 0 12px 12px">';
+  html += '<p>เรียน ผู้ทรงคุณวุฒิ</p>';
+  html += '<p>คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา ขอเรียนเชิญพิจารณาหน่วยกิต CPE สำหรับงานประชุมวิชาการดังต่อไปนี้</p>';
+
+  html += '<table style="width:100%;border-collapse:collapse;margin:16px 0;background:#f8fafc;border-radius:8px;overflow:hidden">';
+  html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;width:130px;border-bottom:1px solid #e5e7eb">ชื่องานประชุม</td><td style="padding:9px 14px;font-size:.88rem;font-weight:700;border-bottom:1px solid #e5e7eb">' + (data.confName || '-') + '</td></tr>';
+  html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;border-bottom:1px solid #e5e7eb">หน่วยงาน</td><td style="padding:9px 14px;font-size:.88rem;border-bottom:1px solid #e5e7eb">' + (data.orgName || '-') + '</td></tr>';
+  html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;border-bottom:1px solid #e5e7eb">วันที่จัด</td><td style="padding:9px 14px;font-size:.88rem;border-bottom:1px solid #e5e7eb">' + dateRange + '</td></tr>';
+  if (data.location) html += '<tr><td style="padding:9px 14px;font-size:.82rem;color:#6b7280;border-bottom:1px solid #e5e7eb">สถานที่</td><td style="padding:9px 14px;font-size:.88rem;border-bottom:1px solid #e5e7eb">' + data.location + '</td></tr>';
+  html += '</table>';
+
+  if (data.adminMessage) {
+    html += '<div style="background:#eff6ff;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0">';
+    html += '<div style="font-size:.78rem;color:#4338ca;font-weight:700;margin-bottom:4px">📝 ข้อความจากเจ้าหน้าที่</div>';
+    html += '<div style="font-size:.85rem;color:#1e3a8a;white-space:pre-line">' + data.adminMessage + '</div>';
+    html += '</div>';
+  }
+
+  html += '<div style="margin:20px 0"><div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:10px">📎 เอกสารแนบ</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px">';
+  if (data.projectUrl) html += '<a href="' + data.projectUrl + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">📋 รายละเอียดโครงการ</a>';
+  if (data.cvfileUrl)  html += '<a href="' + data.cvfileUrl  + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">👤 CV วิทยากร</a>';
+  if (data.scheduleUrl) html += '<a href="' + data.scheduleUrl + '" style="color:#4f46e5;text-decoration:none;font-size:.85rem">📅 กำหนดการ</a>';
+  html += '</div></div>';
+
+  html += '<hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0">';
+  html += '<p style="font-size:.78rem;color:#9ca3af">อีเมลนี้ส่งโดยระบบบริหารหน่วยกิต CPE คณะเภสัชศาสตร์ มหาวิทยาลัยบูรพา<br>กรุณาอย่าตอบกลับอีเมลนี้โดยตรง</p>';
+  html += '</div></div>';
+
+  var sent = 0;
+  expertEmails.forEach(function(email) {
+    email = (email || '').trim();
+    if (email && email.indexOf('@') > 0) {
+      MailApp.sendEmail({ to: email, subject: subject, htmlBody: html });
+      sent++;
+    }
+  });
+
+  return respond({ success: true, sent: sent });
 }
 
 /* ─── Sheet helpers ─── */
