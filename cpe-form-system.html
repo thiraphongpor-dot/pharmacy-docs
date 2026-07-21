@@ -320,6 +320,14 @@ body::before,body::after{display:none !important}
 .odf-table input:focus,.odf-table textarea:focus{border-color:rgba(90,123,255,.5);box-shadow:0 0 0 2px rgba(90,123,255,.1);background:#fff}
 .odf-static{font-size:.84rem;color:#16181f;font-weight:600}
 .req-star{color:#dc2626;margin-left:2px}
+/* Expiry Notice Modal */
+#expiry-notice-modal{position:fixed;inset:0;z-index:9100;background:rgba(10,12,24,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;animation:odm-fade .2s ease}
+#expiry-notice-panel{background:#fff;border-radius:20px;box-shadow:0 24px 80px rgba(30,50,120,.25);width:100%;max-width:420px;padding:32px 28px 24px;text-align:center;animation:odm-up .22s cubic-bezier(.32,.72,0,1)}
+#en-icon{font-size:2.8rem;line-height:1;margin-bottom:10px}
+#en-title{font-size:1.05rem;font-weight:800;color:#16181f;margin-bottom:4px}
+#expiry-notice-panel.expired #en-title{color:#dc2626}
+#expiry-notice-panel.warning #en-title{color:#d97706}
+#en-footer{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
 /* Org Detail Modal */
 #org-detail-modal{position:fixed;inset:0;z-index:9000;background:rgba(10,12,24,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;animation:odm-fade .18s ease}
 @keyframes odm-fade{from{opacity:0}to{opacity:1}}
@@ -823,6 +831,20 @@ body::before,body::after{display:none !important}
     <div class="odm-footer">
       <button class="btn btn-primary" onclick="submitOrgRegister()">📤 ยื่นคำขอลงทะเบียน</button>
       <button class="btn btn-outline" onclick="closeRegisterModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPIRY NOTICE MODAL -->
+<div id="expiry-notice-modal" style="display:none" onclick="if(event.target===this)closeExpiryNotice()">
+  <div id="expiry-notice-panel">
+    <div id="en-icon">⚠️</div>
+    <div id="en-title">หน่วยงานของท่านใกล้หมดอายุ</div>
+    <div id="en-org-name" style="font-size:.85rem;font-weight:600;color:var(--text);margin:6px 0 10px"></div>
+    <div id="en-body" style="font-size:.82rem;color:#555;line-height:1.6"></div>
+    <div id="en-footer">
+      <button class="btn btn-primary" onclick="goToRenewFromNotice()">🔄 ต่ออายุเลย</button>
+      <button class="btn btn-outline" onclick="closeExpiryNotice()">ปิดชั่วคราว</button>
     </div>
   </div>
 </div>
@@ -1482,7 +1504,8 @@ function approveOrgRequest(key){
           approvedBy:getCanonicalEmail()||'',
           orgCode:orgCode,
           registrationDate:regDate,
-          expiryDate:expDate
+          expiryDate:expDate,
+          orgKey:orgKey
         });
       })
       .then(function(){
@@ -1526,6 +1549,24 @@ function loadMyOrgRequests(){
     if(!section||!wrap) return;
     if(myReqs.length === 0){ section.style.display='none'; return; }
     section.style.display = 'block';
+
+    // ตรวจสอบหมดอายุของออร์กที่อนุมัติแล้ว (แสดงครั้งเดียวต่อ session)
+    if(!window._expiryNoticeDone){
+      myReqs.forEach(function(e){
+        var req = e[1];
+        if(req.status !== 'อนุมัติแล้ว' || !req.expiryDate) return;
+        var expD = new Date(req.expiryDate+'T00:00:00');
+        var nowD = new Date(); nowD.setHours(0,0,0,0);
+        var daysLeft = Math.ceil((expD - nowD) / 86400000);
+        if(daysLeft < 0){
+          window._expiryNoticeDone = true;
+          showExpiryNotice('expired', req.name||'', req.expiryDate, req.orgKey||'', daysLeft);
+        } else if(daysLeft <= 90){
+          window._expiryNoticeDone = true;
+          showExpiryNotice('warning', req.name||'', req.expiryDate, req.orgKey||'', daysLeft);
+        }
+      });
+    }
 
     wrap.innerHTML = myReqs.map(function(e){
       var req = e[1];
@@ -1599,6 +1640,49 @@ function loadMyOrgRequests(){
       '</div>';
     }).join('');
   });
+}
+
+/* ════════════════════════════════
+   EXPIRY NOTICE
+════════════════════════════════ */
+var _expiryRenewOrgKey = '', _expiryRenewOrgName = '';
+
+function showExpiryNotice(type, orgName, expiryDate, orgKey, daysLeft){
+  _expiryRenewOrgKey  = orgKey;
+  _expiryRenewOrgName = orgName;
+  var modal = document.getElementById('expiry-notice-modal');
+  var panel = document.getElementById('expiry-notice-panel');
+  var expStr = expiryDate
+    ? new Date(expiryDate+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'long',year:'numeric'})
+    : '';
+  if(type === 'expired'){
+    panel.className = 'expired';
+    document.getElementById('en-icon').textContent  = '🚨';
+    document.getElementById('en-title').textContent = 'การรับรองหน่วยงานของท่านหมดอายุแล้ว';
+    document.getElementById('en-body').innerHTML =
+      'หน่วยงาน <strong>'+orgName+'</strong> หมดอายุการรับรองเมื่อ <strong>'+expStr+'</strong><br>'+
+      'กรุณาต่ออายุโดยเร็วเพื่อให้สามารถดำเนินกิจกรรม CPE ได้ต่อเนื่อง';
+  } else {
+    panel.className = 'warning';
+    document.getElementById('en-icon').textContent  = '⏰';
+    document.getElementById('en-title').textContent = 'การรับรองหน่วยงานของท่านใกล้หมดอายุ';
+    document.getElementById('en-body').innerHTML =
+      'หน่วยงาน <strong>'+orgName+'</strong> จะหมดอายุในอีก <strong>'+daysLeft+' วัน</strong> '+
+      '('+expStr+')<br>แนะนำให้ดำเนินการต่ออายุล่วงหน้าเพื่อความต่อเนื่อง';
+  }
+  document.getElementById('en-org-name').textContent = '';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExpiryNotice(){
+  document.getElementById('expiry-notice-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function goToRenewFromNotice(){
+  closeExpiryNotice();
+  showView('renew', _expiryRenewOrgKey, _expiryRenewOrgName);
 }
 
 function addOrg(){
