@@ -68,10 +68,7 @@ function logToSheet(data) {
       ]);
     } else if (data.type === 'conference') {
       sheet = getOrCreateTab(ss, 'ประชุมวิชาการ',
-        ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ','ผู้บรรยาย (ชื่อ | CV URL)']);
-      var speakers = (data.speakers || []).map(function(s){
-        return s.name + (s.cvUrl ? ' | '+s.cvUrl : '');
-      }).join('\n');
+        ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ']);
       sheet.appendRow([
         formatDate(data.submittedAt),
         data.orgName      || '',
@@ -79,8 +76,7 @@ function logToSheet(data) {
         data.confDate     || '',
         data.projectUrl   || '',
         data.cvfileUrl    || '',
-        data.scheduleUrl  || '',
-        speakers
+        data.scheduleUrl  || ''
       ]);
     } else if (data.type === 'org_register') {
       sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',

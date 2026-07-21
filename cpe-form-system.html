@@ -814,13 +814,6 @@ body::before,body::after{display:none !important}
     </div>
   </div>
 
-  <!-- ── CV วิทยากร ── -->
-  <div class="fsec">
-    <div class="fsec-title">👤 CV วิทยากร</div>
-    <div id="speakers-list"></div>
-    <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="addSpeaker()">＋ เพิ่มวิทยากร</button>
-  </div>
-
   <!-- Actions -->
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
     <button class="btn btn-primary" onclick="saveConference()" id="btn-save-conf">💾 บันทึกข้อมูล</button>
@@ -2086,7 +2079,6 @@ function loadRenewSubmissions(orgKey){
    FILE UPLOAD → Google Drive
 ════════════════════════════════ */
 const fileStore = { pdf:null, word:null, project:null, cvfile:null, schedule:null }; // { file, url, name }
-const speakers  = [];
 
 function handleFileSelect(type, input){
   const file = input.files[0]; if(!file) return;
@@ -2106,76 +2098,6 @@ function removeFile(type){
   if(card) card.classList.remove('done');
 }
 
-/* ════════════════════════════════
-   SPEAKER MANAGEMENT
-════════════════════════════════ */
-let speakerCount = 0;
-
-function addSpeaker(){
-  const idx = speakerCount++;
-  const wrap = document.getElementById('speakers-list');
-  const card = document.createElement('div');
-  card.className='speaker-card'; card.id=`speaker-${idx}`;
-  card.innerHTML=`
-    <div class="speaker-card-header">
-      <span class="speaker-num">วิทยากรคนที่ ${idx+1}</span>
-      <button class="btn-del-speaker" onclick="removeSpeaker(${idx})">✕ ลบ</button>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>ชื่อ-นามสกุล</label>
-        <input type="text" id="spk-name-${idx}" placeholder="ชื่อ-นามสกุล...">
-      </div>
-      <div class="form-group"><label>ตำแหน่ง</label>
-        <input type="text" id="spk-pos-${idx}" placeholder="ตำแหน่ง...">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group full"><label>สังกัด / หน่วยงาน</label>
-        <input type="text" id="spk-org-${idx}" placeholder="สังกัด...">
-      </div>
-    </div>
-    <div class="form-group full" style="margin-top:4px">
-      <label>CV วิทยากร (PDF)</label>
-      <div class="file-zone" id="spk-zone-${idx}"
-        onclick="document.getElementById('spk-cv-${idx}').click()">
-        <input type="file" id="spk-cv-${idx}" accept=".pdf" style="display:none"
-          onchange="handleSpeakerCV(${idx},this)">
-        <div class="fz-icon">👤</div>
-        <div class="fz-label">คลิกเพื่อแนบ CV (PDF)</div>
-        <div class="fz-sub">รองรับ .pdf</div>
-      </div>
-      <div class="file-attached" id="spk-attached-${idx}">
-        <div class="fa-icon">👤</div>
-        <div class="fa-info">
-          <div class="fa-name" id="spk-aname-${idx}"></div>
-          <div class="fa-size" id="spk-asize-${idx}"></div>
-        </div>
-        <button class="fa-remove" onclick="removeSpeakerCV(${idx})">✕</button>
-      </div>
-    </div>`;
-  wrap.appendChild(card);
-  speakers[idx] = { name:'', position:'', affiliation:'', cvFile:null, cvUrl:null, cvName:'' };
-}
-
-function handleSpeakerCV(idx, input){
-  const file=input.files[0]; if(!file) return;
-  speakers[idx].cvFile=file; speakers[idx].cvName=file.name;
-  document.getElementById('spk-aname-'+idx).textContent=file.name;
-  document.getElementById('spk-asize-'+idx).textContent=fmtSize(file.size);
-  document.getElementById('spk-attached-'+idx).classList.add('show');
-}
-
-function removeSpeakerCV(idx){
-  if(speakers[idx]){ speakers[idx].cvFile=null; speakers[idx].cvUrl=null; speakers[idx].cvName=''; }
-  document.getElementById('spk-attached-'+idx).classList.remove('show');
-  document.getElementById('spk-cv-'+idx).value='';
-}
-
-function removeSpeaker(idx){
-  const card=document.getElementById('speaker-'+idx);
-  if(card) card.remove();
-  if(speakers[idx]) speakers[idx]=null;
-}
 
 /* ════════════════════════════════
    CONFERENCE SAVE
@@ -2219,20 +2141,6 @@ async function saveConference(){
       const r = await uploadToGDrive(fileStore.schedule.file, orgLabel, 'กำหนดการ');
       fileStore.schedule.url = r.url;
     }
-    // upload speaker CVs
-    const spkData=[];
-    for(let i=0;i<speakers.length;i++){
-      const s=speakers[i]; if(!s) continue;
-      s.name=(document.getElementById('spk-name-'+i)?.value||'').trim();
-      s.position=(document.getElementById('spk-pos-'+i)?.value||'').trim();
-      s.affiliation=(document.getElementById('spk-org-'+i)?.value||'').trim();
-      if(s.cvFile){
-        const r = await uploadToGDrive(s.cvFile, orgLabel, 'CV-'+s.name);
-        s.cvUrl = r.url; s.cvName = r.name;
-      }
-      if(s.name) spkData.push({ name:s.name, position:s.position, affiliation:s.affiliation,
-        cvUrl:s.cvUrl||'', cvName:s.cvName||'' });
-    }
 
     const record={
       id: confId,
@@ -2250,7 +2158,6 @@ async function saveConference(){
         cvfile:   fileStore.cvfile?.url   ? {name:fileStore.cvfile.name,   url:fileStore.cvfile.url}   : null,
         schedule: fileStore.schedule?.url ? {name:fileStore.schedule.name, url:fileStore.schedule.url} : null,
       },
-      speakers: spkData,
       createdBy: email,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -2271,8 +2178,7 @@ async function saveConference(){
         wordUrl:      record.files?.word?.url     || '',
         projectUrl:   record.files?.project?.url  || '',
         cvfileUrl:    record.files?.cvfile?.url   || '',
-        scheduleUrl:  record.files?.schedule?.url || '',
-        speakers:     record.speakers||[]
+        scheduleUrl:  record.files?.schedule?.url || ''
       })}).catch(function(){});
     }
     showToast('✓ บันทึกข้อมูลประชุมวิชาการแล้ว');
