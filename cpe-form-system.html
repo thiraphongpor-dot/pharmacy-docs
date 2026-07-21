@@ -2254,6 +2254,7 @@ async function saveConference(){
       fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
         action:'log', type:'conference',
         submittedAt:  record.updatedAt,
+        confId:       confId,
         orgName:      record.orgName,
         confName:     record.confName,
         confDate:     (record.dateStart||'')+(record.dateEnd?'–'+record.dateEnd:''),
@@ -2461,6 +2462,11 @@ async function uploadResolutionFile(safeCid, cid, inputEl, fileType){
         if(userKey && c.id){
           db.ref('pharma-form/'+userKey+'/cpe-conferences/'+c.id+'/files/'+fbKey).set(resData).catch(function(){});
         }
+        // อัพเดต Google Sheet
+        var sheetUpdate = { action:'update_conference_row', confId: cid };
+        if(fileType==='word') sheetUpdate.matiWordUrl = json.url;
+        else sheetUpdate.matiPdfUrl = json.url;
+        fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(sheetUpdate)}).catch(function(){});
         showToast('✓ อัพโหลดมติ CPE ('+typeLabel+') เรียบร้อยแล้ว');
       } else {
         showToast('อัพโหลดไม่สำเร็จ: '+(json.error||''),'err');
@@ -2523,6 +2529,13 @@ async function sendToExperts(safeCid, cid){
           status:'sent_to_experts', sentAt:now
         }).catch(function(){});
       }
+      // อัพเดต Google Sheet
+      fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+        action:'update_conference_row',
+        confId: cid,
+        expertEmails: emails,
+        sentAt: now
+      })}).catch(function(){});
       toggleExpertPanel(safeCid);
     } else {
       showToast('เกิดข้อผิดพลาด: '+json.error,'err');

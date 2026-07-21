@@ -28,6 +28,11 @@ function doPost(e) {
       return sendExpertEmail(data);
     }
 
+    // action: 'update_conference_row' → admin อัพเดต row ใน Sheet ด้วย confId
+    if (data.action === 'update_conference_row') {
+      return updateConferenceRow(data);
+    }
+
     // action: 'upload' (default) → อัปโหลดไฟล์ไปยัง Drive
     var b64     = data.fileBase64;
     var name    = data.fileName  || 'file';
@@ -72,9 +77,9 @@ function logToSheet(data) {
         data.status    || 'รอตรวจสอบ'
       ]);
     } else if (data.type === 'conference') {
-      var confHdrs = ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ'];
+      var confHdrs = ['วันที่-เวลา','หน่วยงาน','ชื่อประชุม','วันจัด','รายละเอียดโครงการ','CV วิทยากร','กำหนดการ','มติ CPE (PDF)','มติ CPE (Word)','ส่งผู้ทรงคุณวุฒิ','วันที่ส่งผู้ทรง','รหัสประชุม'];
       sheet = getOrCreateTab(ss, 'ประชุมวิชาการ', confHdrs);
-      // อัพเดต header ทุกครั้งเพื่อแก้ column เก่า (ไฟล์ PDF, ไฟล์ Word, ผู้บรรยาย)
+      // อัพเดต header ทุกครั้ง
       for (var ch = 0; ch < confHdrs.length; ch++) {
         sheet.getRange(1, ch + 1).setValue(confHdrs[ch]).setFontWeight('bold').setBackground('#d0e4f7');
       }
@@ -89,7 +94,12 @@ function logToSheet(data) {
         data.confDate     || '',
         data.projectUrl   || '',
         data.cvfileUrl    || '',
-        data.scheduleUrl  || ''
+        data.scheduleUrl  || '',
+        '',   // มติ CPE PDF — อัพเดตโดย admin ภายหลัง
+        '',   // มติ CPE Word
+        '',   // ส่งผู้ทรงคุณวุฒิ
+        '',   // วันที่ส่งผู้ทรง
+        data.confId       || ''
       ]);
     } else if (data.type === 'org_register') {
       sheet = getOrCreateTab(ss, 'ลงทะเบียนหน่วยงาน',
@@ -255,6 +265,32 @@ function sendAdminEmail(data) {
   } catch(e) {
     // ไม่ให้ email error กระทบ main flow
   }
+}
+
+/* ─── Update conference row by confId ─── */
+function updateConferenceRow(data) {
+  var ss    = getOrCreateSheet();
+  var sheet = ss.getSheetByName('ประชุมวิชาการ');
+  if (!sheet) return respond({ success: false, error: 'ไม่พบ tab ประชุมวิชาการ' });
+
+  var confId = data.confId || '';
+  if (!confId) return respond({ success: false, error: 'ไม่มี confId' });
+
+  // ค้นหา row ที่มี confId ใน column 12
+  var lastRow = sheet.getLastRow();
+  var found   = -1;
+  for (var r = 2; r <= lastRow; r++) {
+    if (sheet.getRange(r, 12).getValue() === confId) { found = r; break; }
+  }
+  if (found < 0) return respond({ success: false, error: 'ไม่พบ row confId: ' + confId });
+
+  // อัพเดตเฉพาะ column ที่ส่งมา
+  if (data.matiPdfUrl  !== undefined) sheet.getRange(found, 8).setValue(data.matiPdfUrl  || '');
+  if (data.matiWordUrl !== undefined) sheet.getRange(found, 9).setValue(data.matiWordUrl || '');
+  if (data.expertEmails !== undefined) sheet.getRange(found, 10).setValue((data.expertEmails||[]).join(', '));
+  if (data.sentAt !== undefined) sheet.getRange(found, 11).setValue(data.sentAt ? formatDate(data.sentAt) : '');
+
+  return respond({ success: true });
 }
 
 /* ─── Send expert email ─── */
