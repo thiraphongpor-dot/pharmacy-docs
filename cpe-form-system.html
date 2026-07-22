@@ -392,6 +392,21 @@ body::before,body::after{display:none !important}
   border-radius:12px;padding:10px 14px;margin-top:0}
 .rbar-check{font-size:1.1rem;color:#059669;flex-shrink:0}
 .rbar-name{font-size:.8rem;font-weight:600;color:#059669;flex:1;word-break:break-all;min-width:0}
+/* ── Main Tab Bar ── */
+.main-tab-bar{
+  display:flex;gap:4px;flex-wrap:wrap;
+  background:rgba(249,250,255,.88);border:1px solid rgba(200,210,230,.45);
+  border-radius:12px;padding:5px;margin:14px 0 4px;
+}
+.mtab{
+  flex:1;min-width:80px;font-size:.72rem;font-weight:600;color:#6b7280;
+  background:transparent;border:none;border-radius:8px;
+  padding:8px 10px;cursor:pointer;white-space:nowrap;
+  transition:background .12s,color .12s;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.mtab:hover{ background:rgba(200,210,230,.35);color:#374151; }
+.mtab.active{ background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.1);color:#4f46e5;font-weight:700; }
 </style>
 </head>
 <body>
@@ -433,8 +448,16 @@ body::before,body::after{display:none !important}
     <button class="btn btn-primary btn-sm reg-card-btn" onclick="showRegisterModal();event.stopPropagation()">ลงทะเบียน →</button>
   </div>
 
-  <!-- My Registration Status (เห็นเฉพาะ user ที่เคยยื่นคำขอ) -->
-  <div id="my-requests-section" style="display:none" class="fsec">
+  <!-- Main Tab Bar (shown after login) -->
+  <div id="main-tab-bar" style="display:none" class="main-tab-bar">
+    <button id="tab-btn-admin-conf"   onclick="switchTab('admin-conf')"   class="mtab" style="display:none">🎓 ประชุมวิชาการ</button>
+    <button id="tab-btn-admin-manage" onclick="switchTab('admin-manage')" class="mtab" style="display:none">⚡ จัดการหน่วยงาน</button>
+    <button id="tab-btn-my-requests"  onclick="switchTab('my-requests')"  class="mtab" style="display:none">📋 คำขอของฉัน</button>
+    <button id="tab-btn-search"       onclick="switchTab('search')"       class="mtab active">🔍 ค้นหาหน่วยงาน</button>
+  </div>
+
+  <!-- My Registration Status -->
+  <div id="my-requests-section" data-tab="my-requests" style="display:none" class="fsec">
     <div class="fsec-title">📋 สถานะคำขอลงทะเบียนของฉัน</div>
     <div id="my-requests-wrap"></div>
   </div>
@@ -442,13 +465,13 @@ body::before,body::after{display:none !important}
   <!-- Conference status injected inline next to each org's conference button -->
 
   <!-- Admin: ประชุมวิชาการทั้งหมด -->
-  <div id="admin-conf-section" style="display:none" class="fsec">
+  <div id="admin-conf-section" data-tab="admin-conf" style="display:none" class="fsec">
     <div class="fsec-title">🎓 ข้อมูลประชุมวิชาการที่ได้รับ (Admin)</div>
     <div id="admin-conf-wrap"><div style="font-size:.82rem;color:#9ca3af;padding:8px 0">กำลังโหลด...</div></div>
   </div>
 
   <!-- Admin: เพิ่มหน่วยงาน -->
-  <div id="admin-add-section" style="display:none" class="fsec">
+  <div id="admin-add-section" data-tab="admin-manage" style="display:none" class="fsec">
     <div class="fsec-title">⚡ เพิ่ม / จัดการหน่วยงาน (Admin)</div>
     <div class="form-row">
       <div class="form-group" style="flex:2">
@@ -488,7 +511,7 @@ body::before,body::after{display:none !important}
   </div>
 
   <!-- ค้นหา -->
-  <div class="fsec">
+  <div class="fsec" id="search-section" data-tab="search" style="display:none">
     <div class="fsec-title">🔍 ค้นหาหน่วยงาน</div>
     <div class="search-wrap">
       <input type="text" id="org-search" placeholder="พิมพ์ชื่อหน่วยงาน..." oninput="searchOrgs(this.value)" autocomplete="off">
@@ -1143,11 +1166,16 @@ var currentUser=null, isAdmin=false;
       <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
     </div>`;
   }
+  // Show tab bar for all logged-in users
+  document.getElementById('main-tab-bar').style.display = 'flex';
   if(isAdmin){
-    document.getElementById('admin-add-section').style.display='block';
-    document.getElementById('admin-conf-section').style.display='block';
+    document.getElementById('tab-btn-admin-conf').style.display   = 'flex';
+    document.getElementById('tab-btn-admin-manage').style.display = 'flex';
+    switchTab('admin-conf');
     loadOrgRequests();
     loadAllCpeConferences();
+  } else {
+    switchTab('search');
   }
   loadMyOrgRequests();
   loadMyConferences();
@@ -1191,6 +1219,21 @@ function uploadToGDrive(file, orgName, docType){
 /* ════════════════════════════════
    VIEW NAVIGATION
 ════════════════════════════════ */
+function switchTab(id){
+  // hide all tab panels
+  document.querySelectorAll('[data-tab]').forEach(function(el){
+    el.style.display = 'none';
+  });
+  // show selected panel
+  var panel = document.querySelector('[data-tab="'+id+'"]');
+  if(panel) panel.style.display = 'block';
+  // update tab button active state
+  document.querySelectorAll('.mtab').forEach(function(btn){ btn.classList.remove('active'); });
+  var activeBtn = document.getElementById('tab-btn-'+id);
+  if(activeBtn) activeBtn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 function showView(id, orgKey, orgName){
   ['status','renew','conference','admin-renewals'].forEach(v=>document.getElementById('view-'+v).style.display='none');
   // ซ่อน renew success prompt เมื่อออกจากหน้า renew
@@ -1634,8 +1677,12 @@ function loadMyOrgRequests(){
     var section = document.getElementById('my-requests-section');
     var wrap    = document.getElementById('my-requests-wrap');
     if(!section||!wrap) return;
-    if(myReqs.length === 0){ section.style.display='none'; return; }
-    section.style.display = 'block';
+    var tabBtn = document.getElementById('tab-btn-my-requests');
+    if(myReqs.length === 0){ if(tabBtn) tabBtn.style.display='none'; return; }
+    // Show the "คำขอของฉัน" tab button
+    if(tabBtn) tabBtn.style.display = 'flex';
+    // For non-admin users, auto-switch to this tab (admin stays on their default)
+    if(!isAdmin) switchTab('my-requests');
 
     // ตรวจสอบหมดอายุของออร์กที่อนุมัติแล้ว (แสดงครั้งเดียวต่อ session)
     if(!window._expiryNoticeDone){
