@@ -2596,9 +2596,9 @@ function loadAllCpeConferences(){
           '<span style="width:3px;height:15px;background:#059669;border-radius:2px;display:inline-block"></span>'+
           '<span style="font-size:.78rem;font-weight:700;color:#059669">เสร็จสิ้น</span>'+
           '<span style="font-size:.66rem;font-weight:700;background:rgba(5,150,105,.08);color:#059669;border:1px solid rgba(5,150,105,.25);border-radius:20px;padding:1px 8px">'+_done.length+' รายการ</span>'+
-          '<button onclick="var s=document.getElementById(\''+_doneId+'\');s.style.display=s.style.display===\'none\'?\'block\':\'none\'" style="margin-left:auto;font-size:.7rem;color:#6b7280;background:none;border:none;cursor:pointer;padding:0">แสดง / ซ่อน ▾</button>'+
+          '<button onclick="var s=document.getElementById(\''+_doneId+'\');s.style.display=s.style.display===\'none\'?\'block\':\'none\'" style="margin-left:auto;font-size:.7rem;color:#6b7280;background:none;border:none;cursor:pointer;padding:0">ซ่อน / แสดง ▾</button>'+
         '</div>'+
-        '<div id="'+_doneId+'" style="display:none">'+_done.map(function(e){ return buildAdminCard(e,0); }).join('')+'</div>'+
+        '<div id="'+_doneId+'">'+_done.map(function(e){ return buildAdminCard(e,0); }).join('')+'</div>'+
         '<div style="background:rgba(5,150,105,.04);border:1px solid rgba(5,150,105,.18);border-radius:10px;padding:8px 14px;display:flex;align-items:center;gap:8px">'+
           '<span style="font-size:15px">🏆</span>'+
           '<span style="font-size:.72rem;color:#065f46">'+_done.length+' รายการดำเนินการเสร็จสมบูรณ์แล้ว</span>'+
