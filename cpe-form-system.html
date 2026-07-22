@@ -361,7 +361,7 @@ body::before,body::after{display:none !important}
 .reg-card-btn{margin-left:auto;flex-shrink:0}
 /* ── My Request Status ── */
 .my-req-card{border:1px solid rgba(200,210,230,.35);border-radius:10px;padding:14px 18px;margin-bottom:10px;
-  background:#fafbff;display:flex;align-items:flex-start;gap:16px;transition:var(--tr)}
+  background:#fafbff;position:relative;transition:var(--tr)}
 .my-req-card.approved{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.04)}
 .my-req-card.rejected{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.03)}
 .req-status-badge{padding:4px 13px;border-radius:99px;font-size:.73rem;font-weight:700;white-space:nowrap;flex-shrink:0}
@@ -1865,18 +1865,18 @@ function loadMyOrgRequests(){
       }
 
       return '<div class="my-req-card '+cardCls+'">'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:.93rem;font-weight:700;color:var(--text);margin-bottom:3px">'+
-            (req.name||'-')+
-          '</div>'+
-          '<div style="font-size:.77rem;color:var(--sub)">'+
-            'ยื่นเมื่อ '+fmtDate(req.submittedAt)+
-            (req.address ? ' · '+req.address : '')+
+          '<span class="req-status-badge '+badgeCls+'" style="position:absolute;top:14px;right:18px">'+st+'</span>'+
+          '<div style="padding-right:90px">'+
+            '<div style="font-size:.93rem;font-weight:700;color:var(--text);margin-bottom:3px">'+
+              (req.name||'-')+
+            '</div>'+
+            '<div style="font-size:.77rem;color:var(--sub)">'+
+              'ยื่นเมื่อ '+fmtDate(req.submittedAt)+
+              (req.address ? ' · '+req.address : '')+
+            '</div>'+
           '</div>'+
           extraHtml+
-        '</div>'+
-        '<span class="req-status-badge '+badgeCls+'">'+st+'</span>'+
-      '</div>';
+        '</div>';
     }).join('');
     injectConfStatuses(); // ใส่ status badge ข้าง ๆ ปุ่มประชุม
   });
