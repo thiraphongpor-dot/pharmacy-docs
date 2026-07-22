@@ -1766,33 +1766,48 @@ function loadMyOrgRequests(){
           (req.approvedBy?' โดย '+req.approvedBy:'')+
           '</div>';
         if(req.orgCode||req.registrationDate||req.expiryDate){
-          extraHtml += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;'+
-            'background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.25);border-radius:8px;justify-content:center;text-align:center">';
+          var _fields = [];
           if(req.orgCode){
-            extraHtml += '<div style="min-width:120px">'+
-              '<div style="font-size:.7rem;color:#059669;font-weight:700;margin-bottom:2px">รหัสหน่วยงาน</div>'+
-              '<div style="font-size:.9rem;font-weight:700;color:var(--text)">'+req.orgCode+'</div></div>';
+            _fields.push(
+              '<div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid rgba(16,185,129,.2)">'+
+                '<div style="font-size:.7rem;color:#059669;font-weight:700;margin-bottom:2px">รหัสหน่วยงาน</div>'+
+                '<div style="font-size:.9rem;font-weight:700;color:var(--text)">'+req.orgCode+'</div>'+
+              '</div>'
+            );
           }
           if(req.registrationDate){
-            extraHtml += '<div style="min-width:140px">'+
-              '<div style="font-size:.7rem;color:#059669;font-weight:700;margin-bottom:2px">วันที่ผ่านการรับรอง</div>'+
-              '<div style="font-size:.88rem;font-weight:700;color:var(--text)">'+
-              new Date(req.registrationDate).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})+
-              '</div></div>';
+            _fields.push(
+              '<div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid rgba(16,185,129,.2)">'+
+                '<div style="font-size:.7rem;color:#059669;font-weight:700;margin-bottom:2px">วันที่ผ่านการรับรอง</div>'+
+                '<div style="font-size:.88rem;font-weight:700;color:var(--text)">'+
+                new Date(req.registrationDate).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})+
+                '</div>'+
+              '</div>'
+            );
           }
           if(req.expiryDate){
             var nowD=new Date(),expD=new Date(req.expiryDate+'T00:00:00');
             nowD.setHours(0,0,0,0);
             var daysLeftCard=Math.ceil((expD-nowD)/86400000);
             var ec=daysLeftCard<0?'#dc2626':daysLeftCard<=90?'#d97706':'#059669';
-            extraHtml += '<div style="min-width:140px">'+
-              '<div style="font-size:.7rem;color:'+ec+';font-weight:700;margin-bottom:2px">วันหมดอายุ</div>'+
-              '<div style="font-size:.88rem;font-weight:700;color:'+ec+'">'+
-              expD.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})+
-              (daysLeftCard<0?' (หมดอายุแล้ว)':daysLeftCard<=90?' (อีก '+daysLeftCard+' วัน)':'')+
-              '</div></div>';
+            _fields.push(
+              '<div style="flex:1;padding:10px 12px;text-align:center">'+
+                '<div style="font-size:.7rem;color:'+ec+';font-weight:700;margin-bottom:2px">วันหมดอายุ</div>'+
+                '<div style="font-size:.88rem;font-weight:700;color:'+ec+'">'+
+                expD.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})+
+                (daysLeftCard<0?' (หมดอายุแล้ว)':daysLeftCard<=90?' (อีก '+daysLeftCard+' วัน)':'')+
+                '</div>'+
+              '</div>'
+            );
           }
-          extraHtml += '</div>';
+          // strip trailing border-right from last field
+          if(_fields.length>0){
+            _fields[_fields.length-1] = _fields[_fields.length-1].replace('border-right:1px solid rgba(16,185,129,.2);','');
+          }
+          extraHtml += '<div style="display:flex;width:100%;box-sizing:border-box;margin-top:10px;'+
+            'background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.25);border-radius:8px;overflow:hidden">'+
+            _fields.join('')+
+          '</div>';
         }
         // ปุ่มต่ออายุ — แสดงเฉพาะเมื่อใกล้หมดอายุ (≤90 วัน) หรือหมดอายุแล้ว
         if(req.expiryDate){
@@ -1804,12 +1819,12 @@ function loadMyOrgRequests(){
             var _isExp=_days2<0;
             var _btnClr=_isExp?'background:#dc2626;border-color:#dc2626':'background:#d97706;border-color:#d97706';
             var _btnTxt=_isExp?'🚨 ต่ออายุด่วน':'🔄 ต่ออายุล่วงหน้า';
-            extraHtml += '<div style="margin-top:12px">'+
-              '<button class="btn btn-sm" style="'+_btnClr+';color:#fff;font-weight:700;padding:7px 18px;border-radius:8px;cursor:pointer" '+
+            extraHtml += '<div style="margin-top:12px;display:flex;flex-direction:column;align-items:stretch;gap:6px">'+
+              '<button class="btn btn-sm" style="'+_btnClr+';color:#fff;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px" '+
               'onclick="showView(\'renew\',\''+_rk+'\',\''+_rn+'\')">'+_btnTxt+'</button>'+
               (_isExp
-                ? '<span style="font-size:.72rem;color:#dc2626;margin-left:10px">⚠️ กรุณาต่ออายุเพื่อดำเนินกิจกรรม CPE ต่อ</span>'
-                : '<span style="font-size:.72rem;color:#d97706;margin-left:10px">แนะนำให้ดำเนินการก่อนหมดอายุ</span>')+
+                ? '<div style="font-size:.72rem;color:#dc2626;text-align:center">⚠️ กรุณาต่ออายุเพื่อดำเนินกิจกรรม CPE ต่อ</div>'
+                : '<div style="font-size:.72rem;color:#d97706;text-align:center">แนะนำให้ดำเนินการก่อนหมดอายุ</div>')+
               '</div>';
           }
         }
@@ -1828,12 +1843,15 @@ function loadMyOrgRequests(){
               'font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer" '+
               'onclick="goToConfFromMyRequest(\''+_ck+'\',\''+_cn+'\')">'+
               '🎓 กรอกข้อมูลประชุมวิชาการ</button>'+
-            '<div style="display:flex;align-items:center;gap:10px;margin:12px 0 10px">'+
+            '<div style="display:flex;align-items:center;gap:10px;margin:12px 0 6px;cursor:pointer" onclick="toggleConfStatus(\''+_orgNameId+'\')">'+
               '<div style="flex:1;height:1px;background:rgba(200,210,230,.5)"></div>'+
-              '<span style="font-size:.7rem;color:#94a3b8;white-space:nowrap;letter-spacing:.03em">ผลการพิจารณาหน่วยกิต</span>'+
+              '<span style="font-size:.7rem;color:#94a3b8;white-space:nowrap;letter-spacing:.03em;display:flex;align-items:center;gap:5px;user-select:none">'+
+                'ผลการพิจารณาหน่วยกิต'+
+                '<span id="cstoggle-'+_orgNameId+'" style="font-size:.65rem;color:#cbd5e1">▼</span>'+
+              '</span>'+
               '<div style="flex:1;height:1px;background:rgba(200,210,230,.5)"></div>'+
             '</div>'+
-            '<div id="conf-status-'+_orgNameId+'"></div>'+
+            '<div id="conf-status-'+_orgNameId+'" style="display:none"></div>'+
           '</div>';
       } else if(st==='ปฏิเสธ'){
         extraHtml = '<div style="font-size:.76rem;color:#dc2626;margin-top:6px">'+
@@ -2115,6 +2133,15 @@ function goToConfFromRenew(){
   currentConf.orgKey  = orgKey;
   document.getElementById('conf-org-label').textContent = 'หน่วยงาน: '+orgName;
   showView('conference');
+}
+
+function toggleConfStatus(id){
+  var el = document.getElementById('conf-status-'+id);
+  var arrow = document.getElementById('cstoggle-'+id);
+  if(!el) return;
+  var hidden = el.style.display === 'none';
+  el.style.display = hidden ? 'block' : 'none';
+  if(arrow) arrow.textContent = hidden ? '▲' : '▼';
 }
 
 function goToConfFromMyRequest(orgKey, orgName){
