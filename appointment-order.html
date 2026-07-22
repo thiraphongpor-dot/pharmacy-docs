@@ -895,21 +895,12 @@ async function _uploadApptToDrive(pid, data){
     const projName = data.projectName || pid;
     const filename = 'คำสั่งแต่งตั้ง_' + projName + '.pdf';
 
-    // อ่าน driveFileId เก่าจาก Firebase เพื่อลบก่อน upload
-    const apptRef = _fbApptRef(currentUser.email, pid);
-    const prevSnap = apptRef ? await apptRef.once('value') : null;
-    const prevFileId = prevSnap?.val()?.driveFileId || null;
-    if(prevFileId){
-      _apptDriveCall({action:'deleteFile', fileId:prevFileId}).catch(()=>{});
-    }
-
     const result = await _apptDriveCall({
       action:'uploadFile', folderId:_apptDriveFolderId,
       filename, base64:pdfB64, mimeType:'application/pdf'
     });
 
     if(result?.success){
-      if(apptRef) apptRef.update({ driveFileId: result.fileId, driveFileUrl: result.fileUrl }).catch(()=>{});
       showToast('📁 บันทึก PDF ลง Drive แล้ว','ok');
     } else {
       console.warn('[Drive] upload appt failed:', result);
