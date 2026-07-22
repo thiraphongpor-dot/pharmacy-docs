@@ -800,7 +800,9 @@ const _APPT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbz7n_WT63VSW_BH
 async function _apptDriveCall(data){
   if(!_APPT_DRIVE_URL) return null;
   try{
-    if(data.action !== 'uploadFile'){
+    // POST สำหรับ action ที่มี payload ใหญ่ (base64 หรือ JSON committees)
+    const postActions = ['uploadFile','log_appt'];
+    if(!postActions.includes(data.action)){
       const params = new URLSearchParams(data);
       const res = await fetch(_APPT_DRIVE_URL + '?' + params.toString());
       return await res.json();
@@ -808,6 +810,33 @@ async function _apptDriveCall(data){
     const res = await fetch(_APPT_DRIVE_URL, {method:'POST', body:JSON.stringify(data)});
     return await res.json();
   }catch(e){ console.warn('[Drive] appt error:', e); return null; }
+}
+
+async function _logApptToSheet(pid, data, pdfUrl, folderId){
+  try{
+    await _apptDriveCall({
+      action       : 'log_appt',
+      pid          : pid,
+      projectName  : data.projectName   || '',
+      email        : currentUser.email,
+      orderNumber  : data.orderNumber   || '',
+      academicYear : data.academicYear  || '',
+      committeeTitle: data.committeeTitle|| '',
+      preamble     : data.preamble      || '',
+      orderDate    : data.orderDate     || '',
+      signerName   : data.signerName    || '',
+      signerTitle  : data.signerTitle   || '',
+      signerPos1   : data.signerPos1    || '',
+      signerPos2   : data.signerPos2    || '',
+      signerPos3   : data.signerPos3    || '',
+      copyName     : data.copyName      || '',
+      copyPos      : data.copyPos       || '',
+      advisors     : JSON.stringify(data.advisors    || []),
+      committees   : JSON.stringify(data.committees  || []),
+      pdfUrl       : pdfUrl  || '',
+      folderId     : folderId|| ''
+    });
+  }catch(e){ console.warn('[Sheet] log appt error:', e); }
 }
 
 // อ่าน driveFolderId ของโครงการจาก Firebase (พร้อม resolve alias email)
@@ -956,6 +985,8 @@ async function _uploadApptToDrive(pid, data){
 
     if(result?.success){
       showToast('📁 บันทึก PDF ลง Drive แล้ว','ok');
+      // บันทึกข้อมูลคำสั่งแต่งตั้งลง Google Sheet เพื่อวิเคราะห์ในอนาคต
+      _logApptToSheet(pid, data, result.fileUrl || '', _apptDriveFolderId || '');
     } else {
       console.warn('[Drive] upload appt failed:', result);
       showToast('Drive: อัปโหลดล้มเหลว','err');

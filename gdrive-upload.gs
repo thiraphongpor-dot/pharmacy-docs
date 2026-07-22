@@ -38,6 +38,11 @@ function doPost(e) {
       return notifyCpeResult(data);
     }
 
+    // action: 'log_appt' → บันทึกข้อมูลคำสั่งแต่งตั้งลง Sheet tab "คำสั่งแต่งตั้ง"
+    if (data.action === 'log_appt') {
+      return logApptToSheet(data);
+    }
+
     // action: 'uploadFile' → อัปโหลดไฟล์เข้า folder ที่ระบุ (ใช้กับ approved-docs)
     if (data.action === 'uploadFile') {
       var folderId  = data.folderId  || '';
@@ -387,6 +392,21 @@ function sendAdminEmail(data) {
                + 'วันที่-เวลา    : ' + now + '\n'
                + 'สถานะ          : ' + (data.status || 'รอตรวจสอบ') + '\n\n'
                + 'กรุณาเข้าระบบ CPE เพื่ออนุมัติหรือปฏิเสธคำขอในส่วน "เพิ่ม/จัดการหน่วยงาน (Admin)"';
+    } else if (data.type === 'appt_order') {
+      formType = 'คำสั่งแต่งตั้ง';
+      subject  = '[แจ้งเตือน] มีการบันทึกคำสั่งแต่งตั้ง — ' + (data.projectName || data.pid || '');
+      body     = 'มีการบันทึกคำสั่งแต่งตั้งใหม่เข้ามาในระบบ\n\n'
+               + 'ประเภทฟอร์ม   : ' + formType + '\n'
+               + 'ชื่อโครงการ   : ' + (data.projectName || '-') + '\n'
+               + 'รหัสโครงการ   : ' + (data.pid || '-') + '\n'
+               + 'คำสั่งที่      : ' + (data.orderNumber || '-') + '\n'
+               + 'ปีการศึกษา    : ' + (data.academicYear || '-') + '\n'
+               + 'ชื่อคณะกรรมการ: ' + (data.committeeTitle || '-') + '\n'
+               + 'ผู้ลงนาม      : ' + (data.signerName || '-') + '\n'
+               + 'ผู้บันทึก     : ' + (data.email || '-') + '\n'
+               + 'URL PDF       : ' + (data.pdfUrl || '-') + '\n\n'
+               + 'กรุณาตรวจสอบในระบบหรือ Google Sheet: "ข้อมูลโครงการบริการวิชาการและ CPE" → tab คำสั่งแต่งตั้ง';
+
     } else if (data.type === 'org_register_approved') {
       return; // admin เป็นคนทำเอง ไม่ต้องส่งอีเมลซ้ำ
     } else {
@@ -562,6 +582,102 @@ function sendExpertEmail(data) {
     return respond({ success: false, sent: sent, error: errors.join('; ') });
   }
   return respond({ success: true, sent: sent });
+}
+
+/* ─── Log appointment order to Sheet ─── */
+function logApptToSheet(data) {
+  try {
+    var ss = getOrCreateSheet();
+    var headers = [
+      'timestamp','รหัสโครงการ','ชื่อโครงการ','อีเมลผู้บันทึก',
+      'คำสั่งที่','ปีการศึกษา','ชื่อคณะกรรมการ','คำปรารภ',
+      'วันที่ออกคำสั่ง','ผู้ลงนาม','ตำแหน่งผู้ลงนาม',
+      'ตำแหน่งบรรจัดที่1','ตำแหน่งบรรจัดที่2','ตำแหน่งบรรจัดที่3',
+      'ชื่อผู้รับสำเนา','ตำแหน่งผู้รับสำเนา',
+      'จำนวนที่ปรึกษา','รายชื่อที่ปรึกษา',
+      'จำนวนหมวดคณะกรรมการ','จำนวนกรรมการรวม','รายชื่อกรรมการ',
+      'URL PDF Drive','ID โฟลเดอร์โครงการ'
+    ];
+    var sheet = getOrCreateTab(ss, 'คำสั่งแต่งตั้ง', headers);
+
+    // อัพเดต header แถวแรกเสมอ (กรณี tab มีอยู่แล้วแต่ยังขาด column)
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers])
+         .setFontWeight('bold').setBackground('#d0e4f7');
+
+    // parse advisors / committees (ส่งมาเป็น JSON string)
+    var advisors = [];
+    var committees = [];
+    try { advisors = JSON.parse(data.advisors || '[]'); } catch(e) { advisors = []; }
+    try { committees = JSON.parse(data.committees || '[]'); } catch(e) { committees = []; }
+
+    var advisorNames = advisors.map(function(a){ return a.name || ''; }).filter(Boolean).join(', ');
+
+    var totalMembers = 0;
+    var memberNames  = [];
+    committees.forEach(function(c) {
+      (c.members || []).forEach(function(m) {
+        totalMembers++;
+        if (m.name) memberNames.push(m.name + (m.role ? ' (' + m.role + ')' : ''));
+      });
+    });
+
+    var pid = data.pid || '';
+    var rowData = [
+      formatDate(new Date().toISOString()),   // 1  timestamp
+      pid,                                     // 2  รหัสโครงการ
+      data.projectName   || '',                // 3  ชื่อโครงการ
+      data.email         || '',                // 4  อีเมลผู้บันทึก
+      data.orderNumber   || '',                // 5  คำสั่งที่
+      data.academicYear  || '',                // 6  ปีการศึกษา
+      data.committeeTitle|| '',                // 7  ชื่อคณะกรรมการ
+      data.preamble      || '',                // 8  คำปรารภ
+      data.orderDate     || '',                // 9  วันที่ออกคำสั่ง
+      data.signerName    || '',                // 10 ผู้ลงนาม
+      data.signerTitle   || '',                // 11 ตำแหน่งผู้ลงนาม
+      data.signerPos1    || '',                // 12 ตำแหน่งบรรจัดที่1
+      data.signerPos2    || '',                // 13 ตำแหน่งบรรจัดที่2
+      data.signerPos3    || '',                // 14 ตำแหน่งบรรจัดที่3
+      data.copyName      || '',                // 15 ชื่อผู้รับสำเนา
+      data.copyPos       || '',                // 16 ตำแหน่งผู้รับสำเนา
+      advisors.length,                         // 17 จำนวนที่ปรึกษา
+      advisorNames,                            // 18 รายชื่อที่ปรึกษา
+      committees.length,                       // 19 จำนวนหมวดคณะกรรมการ
+      totalMembers,                            // 20 จำนวนกรรมการรวม
+      memberNames.join(', '),                  // 21 รายชื่อกรรมการ
+      data.pdfUrl        || '',                // 22 URL PDF Drive
+      data.folderId      || ''                 // 23 ID โฟลเดอร์โครงการ
+    ];
+
+    // upsert ตาม pid (col 2)
+    var existingRow = -1;
+    var lastRow = sheet.getLastRow();
+    if (lastRow >= 2 && pid) {
+      var pidVals = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+      for (var i = 0; i < pidVals.length; i++) {
+        if (String(pidVals[i][0] || '') === pid) { existingRow = i + 2; break; }
+      }
+    }
+
+    if (existingRow > 0) {
+      sheet.getRange(existingRow, 1, 1, rowData.length).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+
+    // แจ้งเตือน admin ทางอีเมล
+    sendAdminEmail({ type:'appt_order', pid:pid,
+      projectName:    data.projectName,
+      orderNumber:    data.orderNumber,
+      academicYear:   data.academicYear,
+      committeeTitle: data.committeeTitle,
+      signerName:     data.signerName,
+      email:          data.email,
+      pdfUrl:         data.pdfUrl });
+
+    return respond({ success: true });
+  } catch(err) {
+    return respond({ success: false, error: err.toString() });
+  }
 }
 
 /* ─── Sheet helpers ─── */
