@@ -1002,6 +1002,8 @@ async function saveAppt(){
   saveApptToStorage(projectId, data);
   _fbApptWrite(currentUser.email, projectId, data);
   showToast('บันทึกคำสั่งแต่งตั้งแล้ว ✓', 'ok');
+  // log Sheet ทันที (ไม่ต้องรอ Drive) — pdfUrl จะถูก upsert อีกครั้งหลัง upload สำเร็จ
+  _logApptToSheet(projectId, data, '', _apptDriveFolderId || '');
   _uploadApptToDrive(projectId, data); // อัปโหลด PDF เข้า Drive โฟลเดอร์โครงการ
 }
 
