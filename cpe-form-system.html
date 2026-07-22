@@ -3143,7 +3143,6 @@ function submitPaymentInfo(confId){
 
     fetch(APPS_SCRIPT_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     })
     .then(function(r){ return r.json(); })
