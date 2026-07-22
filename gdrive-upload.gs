@@ -415,8 +415,18 @@ function sendAdminEmail(data) {
 
     MailApp.sendEmail(ADMIN_EMAIL, subject, body);
   } catch(e) {
-    // ไม่ให้ email error กระทบ main flow
+    Logger.log('[sendAdminEmail] error: ' + e.toString());
   }
+}
+
+/* ─── Test email (รันด้วยมือใน Apps Script editor เพื่อ authorize MailApp) ─── */
+function testSendAdminEmail() {
+  MailApp.sendEmail(
+    ADMIN_EMAIL,
+    '[CPE] ทดสอบการแจ้งเตือน',
+    'ถ้าเห็นอีเมลนี้แสดงว่า MailApp ทำงานได้ปกติ'
+  );
+  Logger.log('Test email sent to ' + ADMIN_EMAIL);
 }
 
 /* ─── Update conference row by confId ─── */
@@ -664,15 +674,17 @@ function logApptToSheet(data) {
       sheet.appendRow(rowData);
     }
 
-    // แจ้งเตือน admin ทางอีเมล
-    sendAdminEmail({ type:'appt_order', pid:pid,
-      projectName:    data.projectName,
-      orderNumber:    data.orderNumber,
-      academicYear:   data.academicYear,
-      committeeTitle: data.committeeTitle,
-      signerName:     data.signerName,
-      email:          data.email,
-      pdfUrl:         data.pdfUrl });
+    // แจ้งเตือน admin ทางอีเมล — เฉพาะเมื่อมี pdfUrl (Drive upload สำเร็จ)
+    if (data.pdfUrl) {
+      sendAdminEmail({ type:'appt_order', pid:pid,
+        projectName:    data.projectName,
+        orderNumber:    data.orderNumber,
+        academicYear:   data.academicYear,
+        committeeTitle: data.committeeTitle,
+        signerName:     data.signerName,
+        email:          data.email,
+        pdfUrl:         data.pdfUrl });
+    }
 
     return respond({ success: true });
   } catch(err) {
