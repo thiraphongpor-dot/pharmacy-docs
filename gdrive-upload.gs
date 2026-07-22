@@ -213,17 +213,40 @@ function logToSheet(data) {
         data.projectId    || ''
       ];
       var acadProjectId = data.projectId || '';
-      var acadFound = -1;
-      if (acadProjectId) {
-        var acadLastRow = sheet.getLastRow();
-        // รหัสโครงการ อยู่ที่คอลัมน์ 24
-        for (var ai = 2; ai <= acadLastRow; ai++) {
-          if (String(sheet.getRange(ai, 24).getValue()) === String(acadProjectId)) {
-            acadFound = ai;
-            break;
+      var acadEmail     = data.ownerEmail || '';
+      var acadName      = data.projectName || '';
+      var acadFound     = -1;
+
+      var acadLastRow = sheet.getLastRow();
+      if (acadLastRow >= 2) {
+        // อ่านทั้ง sheet ครั้งเดียว (เร็วกว่า cell-by-cell)
+        var acadAllVals = sheet.getRange(2, 1, acadLastRow - 1, 24).getValues();
+        for (var ai = 0; ai < acadAllVals.length; ai++) {
+          var rowId    = String(acadAllVals[ai][23] || ''); // col 24 = รหัสโครงการ
+          var rowEmail = String(acadAllVals[ai][1]  || ''); // col 2  = ownerEmail
+          var rowName  = String(acadAllVals[ai][2]  || ''); // col 3  = projectName
+          // 1) ค้นหาด้วย projectId ก่อน (แม่นยำที่สุด)
+          if (acadProjectId && rowId === acadProjectId) {
+            acadFound = ai + 2; break;
+          }
+          // 2) fallback: email + ชื่อโครงการ (ใช้กับ row เก่าที่ยังไม่มี projectId)
+          if (!acadProjectId && acadEmail && acadName &&
+              rowEmail === acadEmail && rowName === acadName) {
+            acadFound = ai + 2; break;
+          }
+        }
+        // 3) fallback เสมอ: ถ้าไม่เจอด้วย projectId ให้ลองค้นด้วย email+name อีกรอบ
+        if (acadFound < 0 && acadEmail && acadName) {
+          for (var ai2 = 0; ai2 < acadAllVals.length; ai2++) {
+            var r2Email = String(acadAllVals[ai2][1] || '');
+            var r2Name  = String(acadAllVals[ai2][2] || '');
+            if (r2Email === acadEmail && r2Name === acadName) {
+              acadFound = ai2 + 2; break;
+            }
           }
         }
       }
+
       if (acadFound > 0) {
         // อัปเดตแถวเดิม
         sheet.getRange(acadFound, 1, 1, acadRowData.length).setValues([acadRowData]);
