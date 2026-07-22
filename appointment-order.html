@@ -971,8 +971,11 @@ function chkAppt(v){
 // EXPORT PDF
 // ══════════════════════════════════════════
 function exportPDF(){
-  saveAppt();
-  const d = getFormData();
+  // บันทึก localStorage + Firebase เท่านั้น (ไม่อัพโหลด Drive)
+  const _d = getFormData();
+  saveApptToStorage(projectId, _d);
+  _fbApptWrite(currentUser.email, projectId, _d);
+  const d = _d;
   const win = window.open('','_blank');
   if(!win){
     showToast('ป๊อปอัปถูกบล็อก — กรุณาอนุญาตป๊อปอัปในเบราว์เซอร์ก่อนครับ','err');
