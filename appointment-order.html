@@ -805,13 +805,18 @@ async function _apptDriveCall(data){
   }catch(e){ console.warn('[Drive] appt error:', e); return null; }
 }
 
-// อ่าน driveFolderId ของโครงการจาก Firebase
+// อ่าน driveFolderId ของโครงการจาก Firebase (พร้อม resolve alias email)
 async function _loadProjectFolderFromFB(email, pid){
   try{
     initFirebase();
     if(typeof firebase==='undefined') return null;
+    // resolve canonical email ถ้าเป็น alias (เช่น gmail → BUU email)
+    const aliasSnap = await firebase.database()
+      .ref('pharma-form/_aliases/' + emailToFbKey(email))
+      .once('value');
+    const canonicalEmail = aliasSnap.val() || email;
     const snap = await firebase.database()
-      .ref('pharma-form/' + emailToFbKey(email) + '/projects')
+      .ref('pharma-form/' + emailToFbKey(canonicalEmail) + '/projects')
       .once('value');
     const val = snap.val();
     const arr = Array.isArray(val) ? val : (val ? Object.values(val) : []);
