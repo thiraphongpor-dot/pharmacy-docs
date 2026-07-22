@@ -185,8 +185,8 @@ function logToSheet(data) {
          'รายรับรวม (บาท)','รายรับสุทธิ',
          'SDGs','ยุทธศาสตร์ มบ.','ยุทธศาสตร์ ม.','EdPEx',
          'วัตถุประสงค์','กลุ่มเป้าหมาย',
-         'ผลที่คาดว่าจะได้รับ','KPI เชิงปริมาณ','KPI เชิงคุณภาพ','ปีแผน']);
-      sheet.appendRow([
+         'ผลที่คาดว่าจะได้รับ','KPI เชิงปริมาณ','KPI เชิงคุณภาพ','ปีแผน','รหัสโครงการ']);
+      var acadRowData = [
         formatDate(data.savedAt),
         data.ownerEmail   || '',
         data.projectName  || '',
@@ -209,8 +209,28 @@ function logToSheet(data) {
         data.results      || '',
         data.kpiQty       || '',
         data.kpiQual      || '',
-        data.planYear     || ''
-      ]);
+        data.planYear     || '',
+        data.projectId    || ''
+      ];
+      var acadProjectId = data.projectId || '';
+      var acadFound = -1;
+      if (acadProjectId) {
+        var acadLastRow = sheet.getLastRow();
+        // รหัสโครงการ อยู่ที่คอลัมน์ 24
+        for (var ai = 2; ai <= acadLastRow; ai++) {
+          if (String(sheet.getRange(ai, 24).getValue()) === String(acadProjectId)) {
+            acadFound = ai;
+            break;
+          }
+        }
+      }
+      if (acadFound > 0) {
+        // อัปเดตแถวเดิม
+        sheet.getRange(acadFound, 1, 1, acadRowData.length).setValues([acadRowData]);
+      } else {
+        // เพิ่มแถวใหม่
+        sheet.appendRow(acadRowData);
+      }
     }
 
     // ── แจ้งเตือน admin ทางอีเมล ──

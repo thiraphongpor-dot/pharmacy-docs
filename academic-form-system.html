@@ -1964,6 +1964,7 @@ function saveForm(){
   // ── Log to Google Sheet (fire-and-forget) ──
   _logToSheet({
     action:'log', type:'academic',
+    projectId:      p.id||'',
     savedAt:        p.updatedAt,
     ownerEmail:     email||'',
     projectName:    p.projectName||'',
