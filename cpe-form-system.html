@@ -1816,10 +1816,17 @@ function injectConfStatuses(){
               detailBtn+
             '</div>'+
             (hasResult
-              ? '<a href="'+c.files.result_pdf.url+'" target="_blank" '+
-                  'style="margin-top:9px;display:inline-flex;align-items:center;gap:5px;font-size:.73rem;font-weight:700;'+
-                  'color:#fff;background:#059669;border-radius:7px;padding:5px 12px;text-decoration:none">'+
-                  '📥 ดาวน์โหลดเอกสารผล</a>'
+              ? '<div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap">'+
+                  '<a href="'+c.files.result_pdf.url+'" target="_blank" '+
+                    'style="display:inline-flex;align-items:center;gap:5px;font-size:.73rem;font-weight:700;'+
+                    'color:#fff;background:#059669;border-radius:7px;padding:5px 12px;text-decoration:none">'+
+                    '📥 ดาวน์โหลดเอกสารผล</a>'+
+                  '<button onclick="openPaymentModal(\''+cidSafe+'\')" '+
+                    'style="display:inline-flex;align-items:center;gap:5px;font-size:.73rem;font-weight:700;'+
+                    'color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:7px;'+
+                    'padding:5px 12px;cursor:pointer;font-family:inherit">'+
+                    '💳 ชำระค่าธรรมเนียม</button>'+
+                '</div>'
               : '')+
           '</div>'
         );
@@ -2911,6 +2918,162 @@ function closeConfDetailModal(){
 }
 
 /* ════════════════════════════════
+   PAYMENT MODAL
+════════════════════════════════ */
+function openPaymentModal(confId){
+  var c = _myConfsById[confId];
+  var confName = c ? (c.confName || 'ประชุมวิชาการ') : 'ประชุมวิชาการ';
+
+  var inner = document.getElementById('payment-modal-inner');
+  inner.innerHTML =
+    // Header
+    '<div style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:1.25rem 1.5rem;position:relative">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💳</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<p style="margin:0;font-size:1rem;font-weight:700;color:#fff">ชำระค่าธรรมเนียม</p>' +
+          '<p style="margin:0;font-size:.73rem;color:rgba(255,255,255,.75);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+confName+'</p>' +
+        '</div>' +
+        '<button onclick="closePaymentModal()" style="background:rgba(255,255,255,.2);border:none;cursor:pointer;width:28px;height:28px;border-radius:7px;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>' +
+      '</div>' +
+    '</div>' +
+
+    // Bank info card
+    '<div style="padding:1.1rem 1.25rem;border-bottom:1px solid #e2e8f0">' +
+      '<p style="margin:0 0 10px;font-size:.78rem;font-weight:700;color:#64748b;display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:14px">🏦</span> ข้อมูลบัญชีสำหรับโอนเงิน' +
+      '</p>' +
+      '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid rgba(14,165,233,.2);border-radius:10px;padding:14px 16px">' +
+        '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center">' +
+          '<span style="font-size:.72rem;color:#64748b;white-space:nowrap">ชื่อบัญชี</span>' +
+          '<span style="font-size:.83rem;font-weight:700;color:#0f172a">มหาวิทยาลัยบูรพา</span>' +
+          '<span style="font-size:.72rem;color:#64748b;white-space:nowrap">ธนาคาร</span>' +
+          '<span style="font-size:.83rem;font-weight:700;color:#0f172a">กรุงไทย</span>' +
+          '<span style="font-size:.72rem;color:#64748b;white-space:nowrap">สาขา</span>' +
+          '<span style="font-size:.83rem;font-weight:700;color:#0f172a">มหาวิทยาลัยบูรพา</span>' +
+          '<span style="font-size:.72rem;color:#64748b;white-space:nowrap">เลขที่บัญชี</span>' +
+          '<div style="display:flex;align-items:center;gap:7px">' +
+            '<span style="font-size:.9rem;font-weight:700;color:#0369a1;letter-spacing:.04em">386-1-004462-9</span>' +
+            '<button onclick="navigator.clipboard.writeText(\'3861004462-9\');this.textContent=\'✅\';setTimeout(()=>this.textContent=\'📋\',1500)" ' +
+              'style="background:rgba(14,165,233,.12);border:none;cursor:pointer;border-radius:5px;padding:2px 7px;font-size:.65rem;color:#0369a1;font-weight:700">📋</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // Form section
+    '<div style="padding:1.1rem 1.25rem">' +
+      '<p style="margin:0 0 12px;font-size:.78rem;font-weight:700;color:#64748b;display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:14px">📝</span> ข้อมูลสำหรับออกใบเสร็จ' +
+      '</p>' +
+      '<div style="display:flex;flex-direction:column;gap:11px">' +
+
+        // Tax ID
+        '<div>' +
+          '<label style="display:block;font-size:.74rem;font-weight:700;color:#374151;margin-bottom:5px">' +
+            '<span style="color:#ef4444">*</span> เลขประจำตัวผู้เสียภาษี' +
+          '</label>' +
+          '<div style="position:relative">' +
+            '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px">🪪</span>' +
+            '<input id="pay-taxid" type="text" placeholder="กรอกเลข 13 หลัก" maxlength="13" '+
+              'oninput="this.value=this.value.replace(/\\D/g,\'\')" '+
+              'style="width:100%;box-sizing:border-box;padding:8px 10px 8px 32px;border:1px solid #e2e8f0;border-radius:8px;font-size:.84rem;outline:none;font-family:inherit" '+
+              'onfocus="this.style.borderColor=\'#6366f1\'" onblur="this.style.borderColor=\'#e2e8f0\'"/>' +
+          '</div>' +
+        '</div>' +
+
+        // Name
+        '<div>' +
+          '<label style="display:block;font-size:.74rem;font-weight:700;color:#374151;margin-bottom:5px">' +
+            '<span style="color:#ef4444">*</span> ชื่อ-นามสกุล (พร้อมคำนำหน้า) ผู้ชำระค่าธรรมเนียม' +
+          '</label>' +
+          '<div style="position:relative">' +
+            '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px">👤</span>' +
+            '<input id="pay-name" type="text" placeholder="เช่น ภก. สมชาย ใจดี" '+
+              'style="width:100%;box-sizing:border-box;padding:8px 10px 8px 32px;border:1px solid #e2e8f0;border-radius:8px;font-size:.84rem;outline:none;font-family:inherit" '+
+              'onfocus="this.style.borderColor=\'#6366f1\'" onblur="this.style.borderColor=\'#e2e8f0\'"/>' +
+          '</div>' +
+        '</div>' +
+
+        // Address
+        '<div>' +
+          '<label style="display:block;font-size:.74rem;font-weight:700;color:#374151;margin-bottom:5px">' +
+            '<span style="color:#ef4444">*</span> ที่อยู่' +
+          '</label>' +
+          '<div style="position:relative">' +
+            '<span style="position:absolute;left:10px;top:11px;font-size:14px">📍</span>' +
+            '<textarea id="pay-address" rows="2" placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" '+
+              'style="width:100%;box-sizing:border-box;padding:8px 10px 8px 32px;border:1px solid #e2e8f0;border-radius:8px;font-size:.84rem;outline:none;font-family:inherit;resize:vertical;min-height:60px" '+
+              'onfocus="this.style.borderColor=\'#6366f1\'" onblur="this.style.borderColor=\'#e2e8f0\'"></textarea>' +
+          '</div>' +
+        '</div>' +
+
+        // Amount
+        '<div>' +
+          '<label style="display:block;font-size:.74rem;font-weight:700;color:#374151;margin-bottom:5px">' +
+            '<span style="color:#ef4444">*</span> จำนวนเงินที่ชำระค่าธรรมเนียม (บาท)' +
+          '</label>' +
+          '<div style="position:relative">' +
+            '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px">💰</span>' +
+            '<input id="pay-amount" type="number" placeholder="0.00" min="0" step="0.01" '+
+              'style="width:100%;box-sizing:border-box;padding:8px 10px 8px 32px;border:1px solid #e2e8f0;border-radius:8px;font-size:.84rem;outline:none;font-family:inherit" '+
+              'onfocus="this.style.borderColor=\'#6366f1\'" onblur="this.style.borderColor=\'#e2e8f0\'"/>' +
+            '<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.72rem;color:#94a3b8;pointer-events:none">บาท</span>' +
+          '</div>' +
+        '</div>' +
+
+      '</div>' +
+    '</div>' +
+
+    // Footer
+    '<div style="padding:.9rem 1.25rem 1.25rem;display:flex;gap:8px">' +
+      '<button onclick="closePaymentModal()" '+
+        'style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:8px;font-size:.84rem;font-weight:700;color:#64748b;cursor:pointer;font-family:inherit">ยกเลิก</button>' +
+      '<button onclick="submitPaymentInfo(\''+confId+'\')" '+
+        'style="flex:2;padding:9px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;border-radius:8px;font-size:.84rem;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">'+
+        '✅ ยืนยันการชำระค่าธรรมเนียม</button>' +
+    '</div>';
+
+  var modal = document.getElementById('payment-modal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){ var el=document.getElementById('pay-taxid'); if(el) el.focus(); }, 100);
+}
+
+function closePaymentModal(){
+  document.getElementById('payment-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function submitPaymentInfo(confId){
+  var taxId   = (document.getElementById('pay-taxid')   || {}).value || '';
+  var name    = (document.getElementById('pay-name')    || {}).value || '';
+  var address = (document.getElementById('pay-address') || {}).value || '';
+  var amount  = (document.getElementById('pay-amount')  || {}).value || '';
+
+  if(!taxId || taxId.length < 13){ alert('กรุณากรอกเลขประจำตัวผู้เสียภาษี 13 หลักให้ครบ'); return; }
+  if(!name.trim()){ alert('กรุณากรอกชื่อ-นามสกุล'); return; }
+  if(!address.trim()){ alert('กรุณากรอกที่อยู่'); return; }
+  if(!amount || parseFloat(amount) <= 0){ alert('กรุณากรอกจำนวนเงิน'); return; }
+
+  var c = _myConfsById[confId];
+  var user = currentUser || getUser();
+  var db = firebase.database();
+  var key = emailToFbKey(((user && (user._canonicalEmail||user.email))||'').toLowerCase());
+  var payload = {
+    taxId: taxId, payerName: name, address: address, amount: parseFloat(amount),
+    confName: c ? (c.confName||'') : '', paidAt: new Date().toISOString(), status: 'pending_receipt'
+  };
+
+  db.ref('pharma-form/'+key+'/cpe-conferences/'+confId+'/payment').set(payload)
+    .then(function(){
+      closePaymentModal();
+      showToast('บันทึกข้อมูลการชำระค่าธรรมเนียมแล้ว ✓', 'ok');
+    })
+    .catch(function(e){ alert('เกิดข้อผิดพลาด: ' + e.message); });
+}
+
+/* ════════════════════════════════
    AURA REACTIVE MOUSE
 ════════════════════════════════ */
 (function(){
@@ -2937,6 +3100,14 @@ document.addEventListener('keydown',function(e){
   }
 });
 </script>
+
+<!-- ── Payment Modal ── -->
+<div id="payment-modal" onclick="if(event.target===this)closePaymentModal()"
+  style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.5);padding:20px 16px;overflow-y:auto;align-items:flex-start;justify-content:center">
+  <div id="payment-modal-inner"
+    style="max-width:460px;width:100%;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.2)">
+  </div>
+</div>
 
 <!-- ── Conference Detail Modal ── -->
 <div id="conf-detail-modal" onclick="if(event.target===this)closeConfDetailModal()"
