@@ -2764,10 +2764,12 @@ function loadAllCpeConferences(){
       '</div>'+
     '</div>';
 
+    var _secDiv = '<hr style="border:none;border-top:1px solid rgba(200,210,230,.45);margin:28px 0">';
     wrap.innerHTML = _guideHtml +
       buildAdminSection('ต้องดำเนินการ','#b45309','rgba(217,119,6,.08)','rgba(217,119,6,.25)',_needAction,true) +
+      _secDiv +
       buildAdminSection('รอดำเนินการจากฝ่ายอื่น','#0369a1','rgba(14,165,233,.08)','rgba(14,165,233,.25)',_waiting,true) +
-      _doneHtml;
+      (_doneHtml ? _secDiv + _doneHtml : '');
   });
 }
 
