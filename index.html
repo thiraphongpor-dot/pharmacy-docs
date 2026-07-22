@@ -332,6 +332,20 @@ footer{
 .dash-amt{font-variant-numeric:tabular-nums;font-weight:600;color:#16181f}
 .dash-last-upd{font-size:.72rem;color:#9ba3b2;text-align:right;padding:4px 0 8px}
 
+/* tab switcher */
+.idx-tabs{display:flex;gap:3px;background:rgba(255,255,255,.38);border:1px solid rgba(255,255,255,.85);border-radius:10px;padding:3px}
+.idx-tab{font-family:'Prompt',sans-serif;font-size:.75rem;font-weight:600;padding:5px 16px;border-radius:7px;border:none;cursor:pointer;background:transparent;color:#4a4d57;transition:all .15s}
+.idx-tab.active{background:white;color:#5a7bff;box-shadow:0 2px 8px rgba(80,100,200,.14)}
+.idx-tab:hover:not(.active){background:rgba(255,255,255,.55)}
+
+/* CPE KPI accent */
+.dash-kpi-cpe{border:1px solid rgba(168,85,247,.22)!important;background:linear-gradient(135deg,rgba(255,255,255,.44),rgba(168,85,247,.06))!important}
+/* CPE status badges */
+.cpe-s-pending{background:rgba(245,158,11,.12);color:#92400e}
+.cpe-s-sent{background:rgba(34,211,238,.12);color:#0e7490}
+.cpe-s-result{background:rgba(52,211,153,.12);color:#065f46}
+.cpe-org-chip{display:inline-block;background:rgba(139,92,246,.08);color:#6d28d9;border:1px solid rgba(139,92,246,.2);border-radius:6px;padding:2px 7px;font-size:.7rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+
 @media(max-width:960px){
   .dash-section{padding:0 24px 60px}
   .dash-kpi-row{grid-template-columns:repeat(2,1fr)}
@@ -566,38 +580,6 @@ footer{
       <span class="acard-arrow">เปิดแบบฟอร์ม →</span>
     </a>
 
-    <!-- DASHBOARD โครงการ -->
-    <a class="acard" id="dash-proj-card" href="dashboard.html" style="--fd:5.1s;--fdelay:.6s;animation-delay:.42s">
-      <div class="acard-icon">📊</div>
-      <div>
-        <div class="acard-num" style="font-size:26px;line-height:1.15">Dashboard</div>
-        <div class="acard-title">โครงการบริการวิชาการ</div>
-      </div>
-      <div class="acard-pills">
-        <span class="acard-pill">📁 โครงการ</span>
-        <span class="acard-pill">📈 กราฟ Real-time</span>
-        <span class="acard-pill">📅 ปฏิทิน</span>
-      </div>
-      <p class="acard-desc">ภาพรวมโครงการบริการวิชาการ KPI งบประมาณ กราฟ และตารางอัปเดตแบบ Real-time</p>
-      <span class="acard-arrow">เปิด Dashboard →</span>
-    </a>
-
-    <!-- DASHBOARD CPE -->
-    <a class="acard" id="dash-cpe-card" href="dashboard-cpe.html" style="--fd:4.9s;--fdelay:.7s;animation-delay:.5s">
-      <div class="acard-icon">🎓</div>
-      <div>
-        <div class="acard-num" style="font-size:26px;line-height:1.15">Dashboard CPE</div>
-        <div class="acard-title">ประชุมวิชาการ CPE</div>
-      </div>
-      <div class="acard-pills">
-        <span class="acard-pill">🎓 CPE</span>
-        <span class="acard-pill">📊 สถานะ</span>
-        <span class="acard-pill">📅 ปฏิทิน</span>
-      </div>
-      <p class="acard-desc">ภาพรวมประชุมวิชาการ CPE สถานะ รายเดือน และตารางประชุมอัปเดตแบบ Real-time</p>
-      <span class="acard-arrow">เปิด Dashboard →</span>
-    </a>
-
   </div>
 </div>
 
@@ -608,9 +590,9 @@ footer{
   <div class="dash-section-hd">
     <span class="section-label" style="margin-bottom:0">[ ข้อมูล REAL-TIME ] DASHBOARD</span>
     <div style="display:flex;align-items:center;gap:10px">
-      <div style="display:flex;gap:3px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.85);border-radius:10px;padding:3px">
-        <a href="dashboard.html" style="font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:7px;text-decoration:none;background:white;color:#5a7bff;box-shadow:0 2px 8px rgba(80,100,200,.12)">📁 โครงการ</a>
-        <a href="dashboard-cpe.html" style="font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:7px;text-decoration:none;color:#4a4d57">🎓 CPE</a>
+      <div class="idx-tabs" id="idxTabs">
+        <button class="idx-tab active" id="tabBtnProject" onclick="switchDashTab('project')">📁 โครงการ</button>
+        <button class="idx-tab" id="tabBtnCpe" onclick="switchDashTab('cpe')">🎓 CPE</button>
       </div>
       <div class="dash-status-pill loading" id="idxStatusPill">
         <div class="dash-dot"></div><span id="idxStatusTxt">กำลังเชื่อมต่อ...</span>
@@ -618,82 +600,159 @@ footer{
     </div>
   </div>
 
-  <!-- KPI cards -->
-  <div class="dash-kpi-row">
-    <div class="dash-kpi">
-      <div class="dash-kpi-icon">📁</div>
-      <div class="dash-kpi-val" id="idxKProjects">—</div>
-      <div class="dash-kpi-lbl">โครงการทั้งหมด</div>
-      <div class="dash-kpi-sub" id="idxDProjects">—</div>
-    </div>
-    <div class="dash-kpi">
-      <div class="dash-kpi-icon">💰</div>
-      <div class="dash-kpi-val" id="idxKBudget">—</div>
-      <div class="dash-kpi-lbl">งบประมาณรวม (บาท)</div>
-      <div class="dash-kpi-sub" id="idxDBudget">—</div>
-    </div>
-    <div class="dash-kpi">
-      <div class="dash-kpi-icon">👥</div>
-      <div class="dash-kpi-val" id="idxKUsers">—</div>
-      <div class="dash-kpi-lbl">ผู้ใช้งาน</div>
-      <div class="dash-kpi-sub" id="idxDUsers">—</div>
-    </div>
-    <div class="dash-kpi">
-      <div class="dash-kpi-icon">📄</div>
-      <div class="dash-kpi-val" id="idxKDocs">—</div>
-      <div class="dash-kpi-lbl">เอกสารที่อนุมัติแล้ว</div>
-      <div class="dash-kpi-sub" id="idxDDocs">—</div>
-    </div>
-  </div>
+  <!-- ── TAB: โครงการ ── -->
+  <div id="tab-project">
 
-  <!-- Line + Donut -->
-  <div class="dash-chart-row">
+    <!-- KPI cards -->
+    <div class="dash-kpi-row">
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">📁</div>
+        <div class="dash-kpi-val" id="idxKProjects">—</div>
+        <div class="dash-kpi-lbl">โครงการทั้งหมด</div>
+        <div class="dash-kpi-sub" id="idxDProjects">—</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">💰</div>
+        <div class="dash-kpi-val" id="idxKBudget">—</div>
+        <div class="dash-kpi-lbl">งบประมาณรวม (บาท)</div>
+        <div class="dash-kpi-sub" id="idxDBudget">—</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">👥</div>
+        <div class="dash-kpi-val" id="idxKUsers">—</div>
+        <div class="dash-kpi-lbl">ผู้ใช้งาน</div>
+        <div class="dash-kpi-sub" id="idxDUsers">—</div>
+      </div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">📄</div>
+        <div class="dash-kpi-val" id="idxKDocs">—</div>
+        <div class="dash-kpi-lbl">เอกสารที่อนุมัติแล้ว</div>
+        <div class="dash-kpi-sub" id="idxDDocs">—</div>
+      </div>
+    </div>
+
+    <!-- Line + Donut -->
+    <div class="dash-chart-row">
+      <div class="dash-card">
+        <div class="dash-card-hd">
+          <span class="dash-card-title">โครงการรายเดือน (6 เดือนล่าสุด)</span>
+          <span class="dash-card-badge" id="idxLineTotal">0 โครงการ</span>
+        </div>
+        <canvas id="idxLineChart" height="160"></canvas>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-hd">
+          <span class="dash-card-title">งบประมาณรายผู้ใช้</span>
+          <span class="dash-card-badge" id="idxDonutTotal">฿0</span>
+        </div>
+        <canvas id="idxDonutChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar -->
+    <div class="dash-card dash-card-full">
+      <div class="dash-card-hd">
+        <span class="dash-card-title">จำนวนโครงการต่อผู้ใช้</span>
+        <span class="dash-card-badge" id="idxBarTotal">0 user</span>
+      </div>
+      <canvas id="idxBarChart" height="100"></canvas>
+    </div>
+
+    <!-- Table -->
     <div class="dash-card">
       <div class="dash-card-hd">
-        <span class="dash-card-title">โครงการรายเดือน (6 เดือนล่าสุด)</span>
-        <span class="dash-card-badge" id="idxLineTotal">0 โครงการ</span>
+        <span class="dash-card-title">โครงการล่าสุด</span>
+        <span class="dash-card-badge" id="idxTblBadge">—</span>
       </div>
-      <canvas id="idxLineChart" height="160"></canvas>
+      <div class="dash-tbl-wrap">
+        <table class="dash-tbl">
+          <thead>
+            <tr>
+              <th>#</th><th>ชื่อโครงการ</th><th>ผู้รับผิดชอบ</th>
+              <th>วันที่จัดโครงการ</th><th>สถานที่</th>
+              <th>อัปเดตล่าสุด</th><th>เอกสาร</th>
+            </tr>
+          </thead>
+          <tbody id="idxTBody">
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:#9ba3b2">กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
+  </div><!-- /tab-project -->
+
+  <!-- ── TAB: CPE ── -->
+  <div id="tab-cpe" style="display:none">
+
+    <!-- CPE KPI cards -->
+    <div class="dash-kpi-row">
+      <div class="dash-kpi dash-kpi-cpe">
+        <div class="dash-kpi-icon">🎓</div>
+        <div class="dash-kpi-val" id="idxKConfTotal">—</div>
+        <div class="dash-kpi-lbl">ประชุมทั้งหมด</div>
+        <div class="dash-kpi-sub" id="idxDConfTotal">—</div>
+      </div>
+      <div class="dash-kpi dash-kpi-cpe">
+        <div class="dash-kpi-icon">📤</div>
+        <div class="dash-kpi-val" id="idxKConfSent">—</div>
+        <div class="dash-kpi-lbl">ส่งผู้ทรงคุณวุฒิแล้ว</div>
+        <div class="dash-kpi-sub" id="idxDConfSent">—</div>
+      </div>
+      <div class="dash-kpi dash-kpi-cpe">
+        <div class="dash-kpi-icon">✅</div>
+        <div class="dash-kpi-val" id="idxKConfResult">—</div>
+        <div class="dash-kpi-lbl">ผลการพิจารณาออกแล้ว</div>
+        <div class="dash-kpi-sub" id="idxDConfResult">—</div>
+      </div>
+      <div class="dash-kpi dash-kpi-cpe">
+        <div class="dash-kpi-icon">⏳</div>
+        <div class="dash-kpi-val" id="idxKConfPending">—</div>
+        <div class="dash-kpi-lbl">รอการพิจารณา</div>
+        <div class="dash-kpi-sub" id="idxDConfPending">—</div>
+      </div>
+    </div>
+
+    <!-- CPE Charts -->
+    <div class="dash-chart-row">
+      <div class="dash-card">
+        <div class="dash-card-hd">
+          <span class="dash-card-title">สถานะประชุม CPE</span>
+          <span class="dash-card-badge" id="idxCpeDonutBadge">0 ประชุม</span>
+        </div>
+        <canvas id="idxCpeDonut" height="160"></canvas>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-hd">
+          <span class="dash-card-title">ประชุม CPE รายเดือน (6 เดือนล่าสุด)</span>
+          <span class="dash-card-badge" id="idxCpeBarBadge">0 ประชุม</span>
+        </div>
+        <canvas id="idxCpeBar" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- CPE Table -->
     <div class="dash-card">
       <div class="dash-card-hd">
-        <span class="dash-card-title">งบประมาณรายผู้ใช้</span>
-        <span class="dash-card-badge" id="idxDonutTotal">฿0</span>
+        <span class="dash-card-title">รายการประชุมวิชาการล่าสุด</span>
+        <span class="dash-card-badge" id="idxCpeTblBadge">—</span>
       </div>
-      <canvas id="idxDonutChart" height="160"></canvas>
+      <div class="dash-tbl-wrap">
+        <table class="dash-tbl">
+          <thead>
+            <tr>
+              <th>#</th><th>ชื่อประชุม</th><th>หน่วยงาน</th>
+              <th>วันที่เริ่ม</th><th>วันที่สิ้นสุด</th><th>สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="idxCpeTbody">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:#9ba3b2">กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- Bar -->
-  <div class="dash-card dash-card-full">
-    <div class="dash-card-hd">
-      <span class="dash-card-title">จำนวนโครงการต่อผู้ใช้</span>
-      <span class="dash-card-badge" id="idxBarTotal">0 user</span>
-    </div>
-    <canvas id="idxBarChart" height="100"></canvas>
-  </div>
-
-  <!-- Table -->
-  <div class="dash-card">
-    <div class="dash-card-hd">
-      <span class="dash-card-title">โครงการล่าสุด</span>
-      <span class="dash-card-badge" id="idxTblBadge">—</span>
-    </div>
-    <div class="dash-tbl-wrap">
-      <table class="dash-tbl">
-        <thead>
-          <tr>
-            <th>#</th><th>ชื่อโครงการ</th><th>ผู้รับผิดชอบ</th>
-            <th>วันที่จัดโครงการ</th><th>สถานที่</th>
-            <th>อัปเดตล่าสุด</th><th>เอกสาร</th>
-          </tr>
-        </thead>
-        <tbody id="idxTBody">
-          <tr><td colspan="7" style="text-align:center;padding:20px;color:#9ba3b2">กำลังโหลด...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  </div><!-- /tab-cpe -->
 
   <div class="dash-last-upd" id="idxLastUpd"></div>
 </div>
@@ -863,6 +922,30 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   });
 
+  /* CPE DONUT */
+  const cpeDonutChart = new Chart(document.getElementById('idxCpeDonut').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['รอการพิจารณา','ส่งผู้ทรงคุณวุฒิแล้ว','ผลการพิจารณาออกแล้ว'],
+      datasets:[{data:[0,0,0],backgroundColor:['#f59e0b','#22d3ee','#34d399'],borderWidth:2,borderColor:'rgba(255,255,255,.8)',hoverOffset:8}]
+    },
+    options:{
+      responsive:true,animation:{duration:500},cutout:'60%',
+      plugins:{legend:{position:'right',labels:{padding:10,boxWidth:10,font:{size:10}}},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed+' ประชุม'}}}
+    }
+  });
+
+  /* CPE BAR */
+  const cpeBarChart = new Chart(document.getElementById('idxCpeBar').getContext('2d'),{
+    type:'bar',
+    data:{labels:[],datasets:[{label:'ประชุม CPE',data:[],backgroundColor:'rgba(168,85,247,.65)',borderColor:'#a855f7',borderRadius:6,borderSkipped:false,borderWidth:1.5}]},
+    options:{
+      responsive:true,animation:{duration:500},
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:LG}},y:{grid:{color:LG},ticks:{stepSize:1,precision:0},beginAtZero:true}}
+    }
+  });
+
   /* process & render */
   function processData(rawData){
     const data = rawData||{};
@@ -964,11 +1047,65 @@ document.addEventListener('DOMContentLoaded',()=>{
     S('idxLastUpd','อัปเดตล่าสุด: '+new Date().toLocaleTimeString('th-TH'));
   }
 
+  /* ── processCPE ── */
+  function processCPE(confsObj){
+    const confList=Object.values(confsObj||{});
+    const total   = confList.length;
+    const sent    = confList.filter(c=>['sent_to_experts','result_confirmed'].includes(c.status)).length;
+    const result  = confList.filter(c=>c.status==='result_confirmed').length;
+    const pending = confList.filter(c=>!c.status||c.status==='pending_review').length;
+    const sentOnly= sent-result;
+
+    S('idxKConfTotal',total);  S('idxDConfTotal',total+' ประชุม');
+    S('idxKConfSent',sent);    S('idxDConfSent',sent+' ประชุม');
+    S('idxKConfResult',result);S('idxDConfResult',result+' ประชุม');
+    S('idxKConfPending',pending);S('idxDConfPending',pending+' ประชุม');
+    S('idxCpeDonutBadge',total+' ประชุม');
+    S('idxCpeBarBadge',total+' ประชุม');
+
+    cpeDonutChart.data.datasets[0].data=[pending,sentOnly,result];
+    cpeDonutChart.update();
+
+    const mths=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const mCounts={},now=new Date();
+    for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);mCounts[d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')]=0;}
+    confList.forEach(c=>{if(!c.dateStart)return;const k=c.dateStart.substring(0,7);if(k in mCounts)mCounts[k]++;});
+    cpeBarChart.data.labels=Object.keys(mCounts).map(k=>{const[y,m]=k.split('-');return mths[+m-1]+' '+(+y+543-2500);});
+    cpeBarChart.data.datasets[0].data=Object.values(mCounts);
+    cpeBarChart.update();
+
+    const sorted=[...confList].sort((a,b)=>(b.dateStart||'').localeCompare(a.dateStart||'')).slice(0,12);
+    S('idxCpeTblBadge',sorted.length+' รายการ');
+    const tb=document.getElementById('idxCpeTbody');
+    if(tb) tb.innerHTML=sorted.length?sorted.map((c,i)=>{
+      const sl=c.status==='result_confirmed'?{cls:'cpe-s-result',txt:'ผลออกแล้ว'}:c.status==='sent_to_experts'?{cls:'cpe-s-sent',txt:'ส่งผู้ทรงแล้ว'}:{cls:'cpe-s-pending',txt:'รอพิจารณา'};
+      return`<tr>
+        <td style="color:#9ba3b2">${i+1}</td>
+        <td><div class="dash-truncate" title="${c.confName||''}">${c.confName||'(ไม่มีชื่อ)'}</div></td>
+        <td><span class="cpe-org-chip" title="${c.orgName||''}">${c.orgName||'—'}</span></td>
+        <td style="color:#3f424b">${fmtDate(c.dateStart)}</td>
+        <td style="color:#3f424b">${fmtDate(c.dateEnd)}</td>
+        <td><span class="dash-badge ${sl.cls}">${sl.txt}</span></td>
+      </tr>`;
+    }).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ba3b2">ยังไม่มีข้อมูล</td></tr>';
+  }
+
+  /* ── tab switching ── */
+  window.switchDashTab = function(tab){
+    document.getElementById('tab-project').style.display = tab==='project'?'':'none';
+    document.getElementById('tab-cpe').style.display      = tab==='cpe'?'':'none';
+    document.getElementById('tabBtnProject').classList.toggle('active', tab==='project');
+    document.getElementById('tabBtnCpe').classList.toggle('active',     tab==='cpe');
+  };
+
   firebase.auth().onAuthStateChanged(user=>{
-    if(!user) return; // wait for auth
+    if(!user) return;
     db.ref('pharma-form').on('value',snap=>{
-      try{ processData(snap.val()); }
-      catch(e){
+      try{
+        const raw=snap.val()||{};
+        processData(raw);
+        processCPE(raw['_all_cpe_conferences']);
+      }catch(e){
         console.error(e);
         const pill=document.getElementById('idxStatusPill');
         if(pill){pill.className='dash-status-pill err';document.getElementById('idxStatusTxt').textContent='เกิดข้อผิดพลาด';}
