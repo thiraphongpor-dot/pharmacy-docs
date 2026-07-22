@@ -2517,7 +2517,7 @@ function loadAllCpeConferences(){
       if(st==='pending_review'){
         actionBtn='<button onclick="toggleExpertPanel(\''+safeCid+'\')" style="flex-shrink:0;font-size:.72rem;font-weight:700;color:#b45309;background:none;border:1px solid rgba(217,119,6,.4);border-radius:7px;padding:5px 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-family:inherit">📧 ส่งผู้ทรงฯ</button>';
       } else if(st==='sent_to_experts'){
-        actionBtn='<button onclick="toggleResultPanel(\''+safeCid+'\')" style="flex-shrink:0;font-size:.72rem;font-weight:700;color:#0369a1;background:none;border:1px solid rgba(14,165,233,.4);border-radius:7px;padding:5px 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-family:inherit">✅ ยืนยันผล CPE</button>';
+        actionBtn='<button onclick="openResultModal(\''+safeCid+'\',\''+cid+'\')" style="flex-shrink:0;font-size:.72rem;font-weight:700;color:#0369a1;background:none;border:1px solid rgba(14,165,233,.4);border-radius:7px;padding:5px 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-family:inherit">✅ ยืนยันผล CPE</button>';
       } else if(st==='result_confirmed'&&ps==='pending_receipt'){
         actionBtn='<button onclick="openPaymentReviewModal(\''+cid+'\')" style="flex-shrink:0;font-size:.72rem;font-weight:700;color:#b45309;background:none;border:1px solid rgba(217,119,6,.4);border-radius:7px;padding:5px 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-family:inherit">🔍 ตรวจสอบชำระเงิน</button>';
       }
@@ -2563,22 +2563,6 @@ function loadAllCpeConferences(){
             '<button onclick="toggleExpertPanel(\''+safeCid+'\')" style="background:transparent;color:#6b7280;border:1px solid rgba(200,210,230,.7);border-radius:8px;padding:8px 14px;font-size:.82rem;cursor:pointer">ยกเลิก</button>'+
           '</div>'+
         '</div>'+
-        (st==='sent_to_experts'?
-          '<div id="rp-'+safeCid+'" style="display:none;padding:14px 16px;background:#f0fdf4;border-top:1px solid #bbf7d0">'+
-            '<div style="font-size:.83rem;font-weight:700;color:#059669;margin-bottom:8px">✅ ยืนยันผลการพิจารณารับรองหน่วยกิต CPE</div>'+
-            '<div style="font-size:.77rem;color:#374151;margin-bottom:10px">แนบเอกสารผลการพิจารณา (ไฟล์ PDF) เพื่อส่งให้ผู้ส่งคำขอรับทราบทางอีเมล <span style="color:#6b7280">(ไม่บังคับ)</span></div>'+
-            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
-              '<label for="result-pdf-'+safeCid+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#fff;color:#059669;border:1px solid #86efac;border-radius:8px;padding:6px 14px;font-size:.77rem;font-weight:700">📎 แนบไฟล์ PDF</label>'+
-              '<input type="file" id="result-pdf-'+safeCid+'" accept=".pdf" style="display:none" onchange="previewResultFile(\''+safeCid+'\',this)">'+
-              '<span id="result-fname-'+safeCid+'" style="font-size:.74rem;color:#374151;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>'+
-              '<button id="result-clear-'+safeCid+'" onclick="clearResultFile(\''+safeCid+'\')" style="display:none;background:none;border:1px solid #fca5a5;border-radius:6px;color:#dc2626;font-size:.7rem;font-weight:700;padding:3px 8px;cursor:pointer;white-space:nowrap">✕ ล้างไฟล์</button>'+
-            '</div>'+
-            '<div style="display:flex;gap:8px">'+
-              '<button onclick="confirmCPEResult(\''+safeCid+'\',\''+cid+'\')" style="background:#059669;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:.8rem;font-weight:700;cursor:pointer">✅ ยืนยัน & แจ้ง User</button>'+
-              '<button onclick="toggleResultPanel(\''+safeCid+'\')" style="background:transparent;color:#6b7280;border:1px solid rgba(200,210,230,.7);border-radius:8px;padding:7px 13px;font-size:.8rem;cursor:pointer">ยกเลิก</button>'+
-            '</div>'+
-          '</div>'
-        :'')+
         (st==='result_confirmed'?
           '<div style="padding:8px 14px;border-top:1px solid rgba(200,210,230,.2);display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
             '<span style="font-size:.72rem;font-weight:700;color:#059669">✅ ยืนยันผลการพิจารณาแล้ว</span>'+
@@ -3044,6 +3028,125 @@ function closeConfDetailModal(){
 /* ════════════════════════════════
    ADMIN: PAYMENT REVIEW MODAL
 ════════════════════════════════ */
+// ── CPE Result Modal ──
+var _resultModalCid = null;
+var _resultModalFile = null;
+
+function openResultModal(safeCid, cid){
+  _resultModalCid = cid;
+  _resultModalFile = null;
+  var c = _adminConfs[cid];
+  if(!c){ return; }
+  function fd2(iso){ if(!iso) return '-'; return new Date(iso).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}); }
+  var dateRange = c.dateStart ? fd2(c.dateStart)+(c.dateEnd&&c.dateEnd!==c.dateStart?' – '+fd2(c.dateEnd):'') : '-';
+  document.getElementById('result-modal-confname').textContent = c.confName||'';
+  document.getElementById('result-modal-info').innerHTML =
+    '<span style="color:#6b7280">📅 '+dateRange+'</span>' +
+    ' &nbsp;·&nbsp; <span style="color:#6b7280">🏢 '+(c.orgName||'-')+'</span>' +
+    ' &nbsp;·&nbsp; <span style="color:#6b7280">ส่งโดย '+(c.createdBy||'-')+'</span>';
+  // reset file
+  document.getElementById('result-modal-file').value = '';
+  document.getElementById('result-modal-placeholder').style.display = 'block';
+  document.getElementById('result-modal-preview').style.display = 'none';
+  document.getElementById('result-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeResultModal(){
+  document.getElementById('result-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  _resultModalCid = null;
+  _resultModalFile = null;
+}
+
+function onResultModalFileChange(input){
+  var file = input.files[0];
+  if(!file) return;
+  _resultModalFile = file;
+  document.getElementById('result-modal-fname').textContent = file.name;
+  document.getElementById('result-modal-fsize').textContent = (file.size/1024).toFixed(1)+' KB';
+  document.getElementById('result-modal-placeholder').style.display = 'none';
+  document.getElementById('result-modal-preview').style.display = 'flex';
+}
+
+function onResultModalFileDrop(event){
+  var file = event.dataTransfer.files[0];
+  if(!file || file.type !== 'application/pdf'){ showToast('กรุณาเลือกไฟล์ PDF เท่านั้น','err'); return; }
+  _resultModalFile = file;
+  document.getElementById('result-modal-fname').textContent = file.name;
+  document.getElementById('result-modal-fsize').textContent = (file.size/1024).toFixed(1)+' KB';
+  document.getElementById('result-modal-placeholder').style.display = 'none';
+  document.getElementById('result-modal-preview').style.display = 'flex';
+}
+
+function clearResultModalFile(){
+  _resultModalFile = null;
+  document.getElementById('result-modal-file').value = '';
+  document.getElementById('result-modal-placeholder').style.display = 'block';
+  document.getElementById('result-modal-preview').style.display = 'none';
+}
+
+async function confirmCPEResultModal(){
+  var cid = _resultModalCid;
+  if(!cid){ return; }
+  var c = _adminConfs[cid];
+  if(!c){ showToast('ไม่พบข้อมูลประชุม','err'); return; }
+
+  var file = _resultModalFile;
+  var resultPdfUrl = '', resultPdfName = '';
+
+  if(file){
+    if(file.size > 20*1024*1024){ showToast('ไฟล์ใหญ่เกิน 20 MB','err'); return; }
+    document.getElementById('result-modal-confirm-btn').disabled = true;
+    showToast('⏳ กำลังอัพโหลดเอกสารผลการพิจารณา...');
+    try{
+      var b64 = await new Promise(function(resolve,reject){
+        var reader = new FileReader();
+        reader.onload = function(){ resolve(reader.result.split(',')[1]); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      var res = await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+        action:'upload', fileBase64:b64, fileName:file.name,
+        mimeType:file.type||'application/pdf', orgName:c.orgName||'ประชุมวิชาการ'
+      })});
+      var _t = await res.text(); var json;
+      try{ json=JSON.parse(_t); }catch(_){ json={error:'ตอบกลับไม่ถูกต้อง'}; }
+      if(json.success){ resultPdfUrl=json.url; resultPdfName=file.name; }
+      else{ showToast('อัพโหลดไม่สำเร็จ: '+(json.error||''),'err'); document.getElementById('result-modal-confirm-btn').disabled=false; return; }
+    }catch(err){ showToast('เกิดข้อผิดพลาด: '+err.message,'err'); document.getElementById('result-modal-confirm-btn').disabled=false; return; }
+  }
+
+  showToast('⏳ กำลังยืนยันผลการพิจารณา...');
+  var now = new Date().toISOString();
+
+  try{
+    await db.ref('pharma-form/_all_cpe_conferences/'+cid).update({ status:'result_confirmed', confirmedAt:now });
+    if(resultPdfUrl){
+      await db.ref('pharma-form/_all_cpe_conferences/'+cid+'/files/result_pdf').set({ url:resultPdfUrl, name:resultPdfName, uploadedAt:now });
+    }
+    var userKey = emailToFbKey(c.createdBy||'');
+    var uKey = c.id||cid;
+    if(userKey && uKey){
+      db.ref('pharma-form/'+userKey+'/cpe-conferences/'+uKey).update({ status:'result_confirmed', confirmedAt:now }).catch(function(){});
+      if(resultPdfUrl){
+        db.ref('pharma-form/'+userKey+'/cpe-conferences/'+uKey+'/files/result_pdf').set({ url:resultPdfUrl, name:resultPdfName, uploadedAt:now }).catch(function(){});
+      }
+    }
+    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+      action:'notify_cpe_result', confId:cid, confName:c.confName||'',
+      recipientEmail:c.createdBy||'', resultPdfUrl:resultPdfUrl||''
+    })}).catch(function(){});
+    closeResultModal();
+    showToast('✅ ยืนยันผลการพิจารณาเรียบร้อย และแจ้ง User แล้ว');
+  }catch(err){
+    showToast('เกิดข้อผิดพลาด: '+err.message,'err');
+    var btn = document.getElementById('result-modal-confirm-btn');
+    if(btn) btn.disabled = false;
+  }
+}
+
+// ── Payment Review Modal ──
 var _payReviewFile = null;
 
 function openPaymentReviewModal(cid){
@@ -3483,6 +3586,59 @@ document.addEventListener('keydown',function(e){
   }
 });
 </script>
+
+<!-- ── CPE Result Confirm Modal (Admin) ── -->
+<div id="result-modal" onclick="if(event.target===this)closeResultModal()"
+  style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.5);padding:20px 16px;overflow-y:auto;align-items:flex-start;justify-content:center">
+  <div style="max-width:460px;width:100%;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22)">
+    <!-- header -->
+    <div style="background:linear-gradient(135deg,#059669 0%,#047857 100%);padding:1.1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">✅</div>
+        <div>
+          <p style="margin:0;font-size:.92rem;font-weight:700;color:#fff">ยืนยันผลการพิจารณารับรองหน่วยกิต CPE</p>
+          <p id="result-modal-confname" style="margin:0;font-size:.71rem;color:rgba(255,255,255,.8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px"></p>
+        </div>
+      </div>
+      <button onclick="closeResultModal()" style="background:rgba(255,255,255,.2);border:none;cursor:pointer;width:28px;height:28px;border-radius:7px;color:#fff;font-size:14px">✕</button>
+    </div>
+    <!-- conf info -->
+    <div id="result-modal-info" style="padding:1rem 1.25rem;border-bottom:1px solid #e2e8f0;font-size:.8rem;color:#374151;line-height:1.7"></div>
+    <!-- file upload -->
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid #e2e8f0">
+      <p style="margin:0 0 10px;font-size:.76rem;font-weight:700;color:#64748b">📎 แนบเอกสารผลการพิจารณา (PDF) <span style="font-weight:400;color:#94a3b8">— ไม่บังคับ</span></p>
+      <input type="file" id="result-modal-file" accept=".pdf" style="display:none" onchange="onResultModalFileChange(this)"/>
+      <div id="result-modal-drop"
+        onclick="document.getElementById('result-modal-file').click()"
+        style="border:2px dashed #86efac;border-radius:9px;padding:16px 14px;text-align:center;cursor:pointer;background:#f0fdf4;transition:background .15s"
+        ondragover="event.preventDefault();this.style.background='#dcfce7'"
+        ondragleave="this.style.background='#f0fdf4'"
+        ondrop="event.preventDefault();this.style.background='#f0fdf4';onResultModalFileDrop(event)">
+        <div id="result-modal-placeholder">
+          <div style="font-size:20px;margin-bottom:4px">📄</div>
+          <div style="font-size:.78rem;font-weight:700;color:#059669">คลิกหรือลากไฟล์ PDF มาวางที่นี่</div>
+          <div style="font-size:.68rem;color:#94a3b8;margin-top:2px">ไฟล์ผลการพิจารณาหน่วยกิต CPE</div>
+        </div>
+        <div id="result-modal-preview" style="display:none;align-items:center;gap:8px;justify-content:center">
+          <span style="font-size:16px">✅</span>
+          <div style="text-align:left">
+            <div id="result-modal-fname" style="font-size:.77rem;font-weight:700;color:#065f46;word-break:break-all"></div>
+            <div id="result-modal-fsize" style="font-size:.68rem;color:#059669"></div>
+          </div>
+          <button onclick="event.stopPropagation();clearResultModalFile()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;margin-left:4px">✕</button>
+        </div>
+      </div>
+    </div>
+    <!-- footer -->
+    <div style="padding:.9rem 1.25rem 1.25rem;display:flex;gap:8px">
+      <button onclick="closeResultModal()" style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:8px;font-size:.83rem;font-weight:700;color:#64748b;cursor:pointer;font-family:inherit">ยกเลิก</button>
+      <button id="result-modal-confirm-btn" onclick="confirmCPEResultModal()"
+        style="flex:2;padding:9px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:8px;font-size:.83rem;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+        ✅ ยืนยัน &amp; แจ้ง User
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Payment Review Modal (Admin) ── -->
 <div id="pay-review-modal" onclick="if(event.target===this)closePaymentReviewModal()"
