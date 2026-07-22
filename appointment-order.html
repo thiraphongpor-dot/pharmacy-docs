@@ -913,11 +913,19 @@ async function _uploadApptToDrive(pid, data){
     const pdfB64 = await _generateApptPDF(data);
     if(!pdfB64){ showToast('สร้าง PDF ล้มเหลว','err'); return; }
 
+    // get หรือ create โฟลเดอร์ "คำสั่งแต่งตั้ง" ภายในโฟลเดอร์โครงการ
+    const subRes = await _apptDriveCall({
+      action:'getOrCreateSubfolder',
+      parentId: _apptDriveFolderId,
+      folderName: 'คำสั่งแต่งตั้ง'
+    });
+    const targetFolderId = subRes?.folderId || _apptDriveFolderId;
+
     const projName = data.projectName || pid;
     const filename = 'คำสั่งแต่งตั้ง_' + projName + '.pdf';
 
     const result = await _apptDriveCall({
-      action:'uploadFile', folderId:_apptDriveFolderId,
+      action:'uploadFile', folderId: targetFolderId,
       filename, base64:pdfB64, mimeType:'application/pdf'
     });
 

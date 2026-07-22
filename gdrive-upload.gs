@@ -116,6 +116,17 @@ function doGet(e) {
       return respond({ success:true });
     }
 
+    // action: 'getOrCreateSubfolder' → get หรือ create subfolder ภายใน parentFolderId
+    if (action === 'getOrCreateSubfolder') {
+      var parentId    = p.parentId    || '';
+      var folderName  = p.folderName  || 'คำสั่งแต่งตั้ง';
+      if (!parentId) return respond({ success:false, error:'ไม่มี parentId' });
+      var parent    = DriveApp.getFolderById(parentId);
+      var sub       = getOrCreate(folderName, parent);
+      sub.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return respond({ success:true, folderId: sub.getId(), folderUrl: sub.getUrl() });
+    }
+
     return respond({ status:'CPE Upload API running' });
   } catch(err) {
     return respond({ success:false, error:err.toString() });
