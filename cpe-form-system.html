@@ -450,8 +450,8 @@ body::before,body::after{display:none !important}
 
   <!-- Main Tab Bar (shown after login) -->
   <div id="main-tab-bar" style="display:none" class="main-tab-bar">
-    <button id="tab-btn-admin-conf"   onclick="switchTab('admin-conf')"   class="mtab" style="display:none">🎓 ประชุมวิชาการ</button>
     <button id="tab-btn-admin-manage" onclick="switchTab('admin-manage')" class="mtab" style="display:none">⚡ จัดการหน่วยงาน</button>
+    <button id="tab-btn-admin-conf"   onclick="switchTab('admin-conf')"   class="mtab" style="display:none">🎓 ประชุมวิชาการ</button>
     <button id="tab-btn-my-requests"  onclick="switchTab('my-requests')"  class="mtab" style="display:none">📋 คำขอของฉัน</button>
     <button id="tab-btn-search"       onclick="switchTab('search')"       class="mtab active">🔍 ค้นหาหน่วยงาน</button>
   </div>
@@ -1171,7 +1171,7 @@ var currentUser=null, isAdmin=false;
   if(isAdmin){
     document.getElementById('tab-btn-admin-conf').style.display   = 'flex';
     document.getElementById('tab-btn-admin-manage').style.display = 'flex';
-    switchTab('admin-conf');
+    switchTab('admin-manage');
     loadOrgRequests();
     loadAllCpeConferences();
   } else {
