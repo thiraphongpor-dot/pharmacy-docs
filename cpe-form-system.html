@@ -4381,35 +4381,41 @@ function loadAdminArticles(){
         +   (actionBtn ? '<div>'+actionBtn+'</div>' : '')
         + '</div>'
         + '<div class="art-card-files">'
-        +   '<div class="art-file-row-label">เอกสารจาก User</div>'
+        // ── Section 1: User docs (admin read only) ──
+        +   '<div class="art-file-row-label" style="color:#6b7280">เอกสารจาก User <span style="font-size:.65rem;background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">Admin ดูเท่านั้น</span></div>'
         +   '<div style="display:flex;gap:6px;flex-wrap:wrap">'
         +     fileLink('บทความเริ่มต้น', a.files&&a.files.userSubmission&&a.files.userSubmission.url, '📄')
         +     (a.files&&a.files.userRevision1&&a.files.userRevision1.url ? fileLink('แก้ไข รอบ 1',a.files.userRevision1.url,'📝','#059669') : '')
         +     (a.files&&a.files.userFinalRevision&&a.files.userFinalRevision.url ? fileLink('ฉบับสุดท้าย',a.files.userFinalRevision.url,'📝','#059669') : '')
         +   '</div>'
-        +   (a.files&&(a.files.adminDoc_pdf||a.files.adminDoc_word||a.files.expertFeedback1||a.files.expertCertification) ? (
-              '<div class="art-file-row-label" style="margin-top:8px">เอกสาร Admin / ผู้ทรงฯ</div>'
-              + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
-              + (a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url ? fileLink('เอกสารแนบ PDF',a.files.adminDoc_pdf.url,'📄','#c2410c') : '')
-              + (a.files.adminDoc_word&&a.files.adminDoc_word.url ? fileLink('เอกสารแนบ Word',a.files.adminDoc_word.url,'📝','#1d4ed8') : '')
-              + '<label for="adoc-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#fff7ed;color:#c2410c;border:1px dashed #fed7aa;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
-              +   (a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url?'🔄':'⬆') +' PDF</label>'
-              + '<input type="file" id="adoc-pdf-'+safeId+'" accept=".pdf" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'pdf\')">'
-              + '<label for="adoc-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px dashed #bfdbfe;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
-              +   (a.files.adminDoc_word&&a.files.adminDoc_word.url?'🔄':'⬆') +' Word</label>'
-              + '<input type="file" id="adoc-word-'+safeId+'" accept=".doc,.docx" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'word\')">'
-              + (a.files.expertFeedback1&&a.files.expertFeedback1.url ? fileLink('เอกสารรอบ 1',a.files.expertFeedback1.url,'📋','#d97706') : '')
-              + (a.files.expertCertification&&a.files.expertCertification.url ? fileLink('ใบรับรอง',a.files.expertCertification.url,'📜','#7c3aed') : '')
-              + '</div>'
-            ) : (
-              '<div class="art-file-row-label" style="margin-top:8px">เอกสาร Admin (แนบให้ผู้ทรงฯ)</div>'
-              + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
-              + '<label for="adoc-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#fff7ed;color:#c2410c;border:1px dashed #fed7aa;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">⬆ PDF</label>'
-              + '<input type="file" id="adoc-pdf-'+safeId+'" accept=".pdf" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'pdf\')">'
-              + '<label for="adoc-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px dashed #bfdbfe;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">⬆ Word</label>'
-              + '<input type="file" id="adoc-word-'+safeId+'" accept=".doc,.docx" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'word\')">'
-              + '</div>'
-            ))
+        // ── Divider ──
+        +   '<div style="border-top:2px solid #a5b4fc;margin:10px 0 8px;border-radius:2px"></div>'
+        // ── Section 2: Formatted doc (sent to experts) ──
+        +   '<div class="art-file-row-label">เอกสารที่จัดรูปแบบแล้ว <span style="font-size:.65rem;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">ส่งผู้ทรงฯ</span></div>'
+        +   '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+        +   (a.files&&a.files.formattedDoc_pdf&&a.files.formattedDoc_pdf.url ? fileLink('PDF จัดรูปแบบ',a.files.formattedDoc_pdf.url,'📄','#6d28d9') : '')
+        +   (a.files&&a.files.formattedDoc_word&&a.files.formattedDoc_word.url ? fileLink('Word จัดรูปแบบ',a.files.formattedDoc_word.url,'📝','#6d28d9') : '')
+        +   '<label for="fdoc-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#ede9fe;color:#6d28d9;border:1px dashed #c4b5fd;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
+        +     (a.files&&a.files.formattedDoc_pdf&&a.files.formattedDoc_pdf.url?'🔄':'⬆') +' PDF</label>'
+        +   '<input type="file" id="fdoc-pdf-'+safeId+'" accept=".pdf" style="display:none" onchange="uploadFormattedDoc(\''+safeId+'\',\''+aid+'\',this,\'pdf\')">'
+        +   '<label for="fdoc-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#ede9fe;color:#6d28d9;border:1px dashed #c4b5fd;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
+        +     (a.files&&a.files.formattedDoc_word&&a.files.formattedDoc_word.url?'🔄':'⬆') +' Word</label>'
+        +   '<input type="file" id="fdoc-word-'+safeId+'" accept=".doc,.docx" style="display:none" onchange="uploadFormattedDoc(\''+safeId+'\',\''+aid+'\',this,\'word\')">'
+        +   '</div>'
+        // ── Section 3: Admin docs for experts ──
+        +   '<div class="art-file-row-label" style="margin-top:8px">เอกสาร Admin <span style="font-size:.65rem;background:#fff7ed;color:#c2410c;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">แนบให้ผู้ทรงฯ</span></div>'
+        +   '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+        +   (a.files&&a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url ? fileLink('เอกสารแนบ PDF',a.files.adminDoc_pdf.url,'📄','#c2410c') : '')
+        +   (a.files&&a.files.adminDoc_word&&a.files.adminDoc_word.url ? fileLink('เอกสารแนบ Word',a.files.adminDoc_word.url,'📝','#1d4ed8') : '')
+        +   '<label for="adoc-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#fff7ed;color:#c2410c;border:1px dashed #fed7aa;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
+        +     (a.files&&a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url?'🔄':'⬆') +' PDF</label>'
+        +   '<input type="file" id="adoc-pdf-'+safeId+'" accept=".pdf" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'pdf\')">'
+        +   '<label for="adoc-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px dashed #bfdbfe;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
+        +     (a.files&&a.files.adminDoc_word&&a.files.adminDoc_word.url?'🔄':'⬆') +' Word</label>'
+        +   '<input type="file" id="adoc-word-'+safeId+'" accept=".doc,.docx" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'word\')">'
+        +   (a.files&&a.files.expertFeedback1&&a.files.expertFeedback1.url ? fileLink('เอกสารรอบ 1',a.files.expertFeedback1.url,'📋','#d97706') : '')
+        +   (a.files&&a.files.expertCertification&&a.files.expertCertification.url ? fileLink('ใบรับรอง',a.files.expertCertification.url,'📜','#7c3aed') : '')
+        +   '</div>'
         + '</div>'
         // Upload inline forms
         + '<div id="art-inline-'+safeId+'" style="display:none;padding:12px 14px;border-top:1px solid rgba(200,210,230,.25);background:#fafbff"></div>'
@@ -4550,6 +4556,24 @@ async function uploadAdminDoc(safeId, aid, input, type){
     await db.ref('pharma-form/_all_articles/'+aid).update(updates);
     if(userKey) await db.ref('pharma-form/'+userKey+'/articles/'+aid).update(updates).catch(function(){});
     showToast('✅ อัพโหลดเอกสารแนบสำเร็จ');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'err'); input.value=''; }
+}
+
+/* ── Admin: Upload formatted doc PDF/Word directly from card ── */
+async function uploadFormattedDoc(safeId, aid, input, type){
+  var file = input.files[0]; if(!file) return;
+  showToast('⏳ กำลังอัพโหลด...');
+  try {
+    var up  = await uploadToGDrive(file, 'บทความวิชาการ', 'formatted_doc_'+type);
+    var now = new Date().toISOString();
+    var key = type === 'pdf' ? 'formattedDoc_pdf' : 'formattedDoc_word';
+    var snap = await db.ref('pharma-form/_all_articles/'+aid).once('value');
+    var a = snap.val(); if(!a){ showToast('ไม่พบข้อมูลบทความ','err'); return; }
+    var userKey = a.userKey || emailToFbKey(a.userEmail||'');
+    var updates = {}; updates['files/'+key] = { url:up.url, name:up.name, uploadedAt:now };
+    await db.ref('pharma-form/_all_articles/'+aid).update(updates);
+    if(userKey) await db.ref('pharma-form/'+userKey+'/articles/'+aid).update(updates).catch(function(){});
+    showToast('✅ อัพโหลดเอกสารที่จัดรูปแบบแล้วสำเร็จ');
   } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'err'); input.value=''; }
 }
 
