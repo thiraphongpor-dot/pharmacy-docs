@@ -453,6 +453,7 @@ body::after{display:none}
   <div class="sidebar-section-label">ระบบ CPE</div>
   <button class="sidebar-item active" id="si-main" onclick="sidebarGo('main')">
     <span class="si-icon">🏥</span> หน้าหลัก CPE
+    <span id="tab-dot-admin-manage" style="display:none;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-left:auto;animation:pulse-dot 1.4s ease infinite"></span>
   </button>
   <div class="sidebar-divider"></div>
   <div class="sidebar-section-label">บริการ</div>
@@ -470,10 +471,6 @@ body::after{display:none}
   <!-- Admin items (shown after admin login) -->
   <div id="sb-admin-divider" class="sidebar-divider" style="display:none"></div>
   <div id="sb-admin-label" class="sidebar-section-label" style="display:none">Admin</div>
-  <button class="sidebar-item" id="si-manage" onclick="sidebarGo('manage')" style="display:none">
-    <span class="si-icon">⚡</span> จัดการหน่วยงาน
-    <span id="tab-dot-admin-manage" style="display:none;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-left:auto;animation:pulse-dot 1.4s ease infinite"></span>
-  </button>
   <button class="sidebar-item" id="si-requests" onclick="sidebarGo('my-requests')" style="display:none">
     <span class="si-icon">📋</span> คำขอของฉัน
   </button>
@@ -1468,9 +1465,8 @@ var currentUser=null, isAdmin=false;
     // Show admin section in sidebar
     document.getElementById('sb-admin-divider').style.display = 'block';
     document.getElementById('sb-admin-label').style.display   = 'block';
-    document.getElementById('si-manage').style.display        = 'flex';
     document.getElementById('si-requests').style.display      = 'flex';
-    sidebarGo('manage');
+    sidebarGo('main');
     loadOrgRequests();
     loadAllCpeConferences();
   } else {
