@@ -4081,7 +4081,7 @@ function renderArticleList(data){
   });
   wrap.innerHTML = entries.map(function(e, i){
     return buildUserArticleCard(e[0], e[1], i+1);
-  }).join('');
+  }).join('<hr style="border:none;border-top:1px solid rgba(200,210,230,.45);margin:28px 0">');
 }
 
 /* ── Build HTML card for one user article ── */
@@ -4127,7 +4127,7 @@ function buildUserArticleCard(key, art, idx){
   var isComplete = st === 'completed';
   var statusBar = isComplete ? '' : '<div style="margin-top:12px;font-size:.8rem;font-weight:600;color:#5a7bff;background:rgba(90,123,255,.07);border:1px solid rgba(90,123,255,.2);border-radius:8px;padding:7px 12px">'+statusMsg+'</div>';
 
-  return '<div class="fsec" style="border-left:3px solid rgba(90,123,255,.3);padding-left:14px;margin-bottom:12px">'
+  return '<div class="fsec" style="border-left:3px solid rgba(90,123,255,.3);padding-left:14px">'
     + header
     + '<div class="art-stepper" style="margin-top:4px">'+stepperHtml+'</div>'
     + actionHtml + statusBar
