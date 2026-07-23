@@ -4768,12 +4768,14 @@ function loadAdminArticles(){
         + '</div>';
     }
 
+    var _secDiv = '<hr style="border:none;border-top:1px solid rgba(200,210,230,.45);margin:28px 0">';
     var html = buildSection('ต้องดำเนินการ','#b45309','rgba(217,119,6,.1)','rgba(217,119,6,.3)',_need)
+             + _secDiv
              + buildSection('กำลังดำเนินการ','#0369a1','rgba(14,165,233,.1)','rgba(14,165,233,.3)',_waiting);
 
     if(_done.length){
       var doneId = 'artDone'+Date.now();
-      html += '<div style="margin-bottom:16px">'
+      html += _secDiv + '<div style="margin-bottom:16px">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">'
         +   '<span style="width:3px;height:15px;background:#059669;border-radius:2px;display:inline-block"></span>'
         +   '<span style="font-size:.78rem;font-weight:700;color:#059669">เสร็จสิ้น</span>'
