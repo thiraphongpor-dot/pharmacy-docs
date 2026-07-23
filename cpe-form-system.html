@@ -4653,6 +4653,20 @@ function loadAdminArticles(){
       return '<a href="'+url+'" target="_blank" class="art-file-link" style="color:'+color+';border-color:'+color+'30;background:'+color+'10">'+icon+' '+label+'</a>';
     }
 
+    function toggleArtCard(sid){
+      var body  = document.getElementById('art-body-'+sid);
+      var arrow = document.getElementById('art-tog-arrow-'+sid);
+      var btn   = document.getElementById('art-tog-'+sid);
+      if(!body) return;
+      var open = body.style.display !== 'none';
+      body.style.display = open ? 'none' : 'block';
+      if(arrow) arrow.textContent = open ? '▾' : '▴';
+      if(btn){
+        var txt = btn.childNodes[0];
+        if(txt) txt.nodeValue = open ? 'รายละเอียด ' : 'ซ่อน ';
+      }
+    }
+
     function buildArtCard(e){
       var aid=e[0], a=e[1];
       var safeId = aid.replace(/[^a-zA-Z0-9_-]/g,'_');
@@ -4702,8 +4716,12 @@ function loadAdminArticles(){
         +     (a.articleAuthor ? '<div style="font-size:.75rem;color:#374151;margin-bottom:2px">✍️ '+a.articleAuthor+'</div>' : '')
         +     '<div style="font-size:.72rem;color:#6b7280">📧 '+(a.userEmail||'-')+' · ส่งเมื่อ '+fd(a.submittedAt)+'</div>'
         +   '</div>'
-        +   (actionBtn ? '<div>'+actionBtn+'</div>' : '')
+        +   '<div style="display:flex;align-items:center;gap:7px;flex-shrink:0">'
+        +     (actionBtn ? actionBtn : '')
+        +     '<button id="art-tog-'+safeId+'" onclick="toggleArtCard(\''+safeId+'\')" style="display:inline-flex;align-items:center;gap:4px;font-size:.7rem;color:#6b7280;background:none;border:1px solid rgba(200,210,230,.7);border-radius:6px;padding:4px 9px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background=\'rgba(200,210,230,.2)\'" onmouseout="this.style.background=\'none\'">รายละเอียด <span id="art-tog-arrow-'+safeId+'">▾</span></button>'
+        +   '</div>'
         + '</div>'
+        + '<div id="art-body-'+safeId+'" style="display:none">'
         + '<div class="art-card-files">'
         // ── Section 1: User docs (admin read only) ──
         +   '<div>'
@@ -4753,6 +4771,7 @@ function loadAdminArticles(){
         + (st==='completed'?
             '<div class="art-card-act"><span style="font-size:.72rem;font-weight:700;color:#059669">✅ นำเข้าระบบ CCPE แล้ว</span>'+(a.creditUnits?'<span style="font-size:.72rem;color:#6b7280;margin-left:6px">💎 '+a.creditUnits+' หน่วยกิต</span>':'')+'</div>'
           : '')
+        + '</div>'
         + '</div>';
     }
 
