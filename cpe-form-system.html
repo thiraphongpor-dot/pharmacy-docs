@@ -4039,6 +4039,7 @@ var _heroMap = {
 };
 
 function _updateHero(section){
+  if(typeof _heroMap === 'undefined') return;
   var h = _heroMap[section]; if(!h) return;
   var t = document.getElementById('hero-title');
   var s = document.getElementById('hero-sub');
