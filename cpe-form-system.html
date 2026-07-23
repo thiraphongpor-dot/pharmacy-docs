@@ -1530,6 +1530,20 @@ function switchTab(id){
   document.querySelectorAll('.mtab').forEach(function(btn){ btn.classList.remove('active'); });
   var activeBtn = document.getElementById('tab-btn-'+id);
   if(activeBtn) activeBtn.classList.add('active');
+  // Update hero title/subtitle based on current tab
+  var _tabHero = {
+    'admin-manage': ['⚡ จัดการหน่วยงาน',  'เพิ่ม แก้ไข และจัดการข้อมูลหน่วยงาน CPE ทั้งหมด'],
+    'admin-conf':   ['🎓 ประชุมวิชาการ',    'ข้อมูลการจัดประชุมวิชาการที่ได้รับการยื่นคำขอในระบบ CPE'],
+    'search':       ['🔍 ค้นหาหน่วยงาน',   'ค้นหาหน่วยงานเพื่อตรวจสอบสถานะการรับรองหน่วยกิต CPE'],
+    'my-requests':  ['📋 คำขอของฉัน',       'ติดตามสถานะคำขอลงทะเบียนหน่วยงาน CPE ของท่าน']
+  };
+  var _hv = _tabHero[id];
+  if(_hv){
+    var _ht = document.getElementById('hero-title');
+    var _hs = document.getElementById('hero-sub');
+    if(_ht) _ht.textContent = _hv[0];
+    if(_hs) _hs.textContent = _hv[1];
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1556,7 +1570,13 @@ function showView(id, orgKey, orgName){
     document.getElementById('conf-org-label').textContent='หน่วยงาน: '+orgName;
   }
   if(id==='admin-renewals') loadAllRenewals();
-  if(id==='article') loadArticleView();
+  if(id==='article'){
+    loadArticleView();
+    var _ht3 = document.getElementById('hero-title');
+    var _hs3 = document.getElementById('hero-sub');
+    if(_ht3) _ht3.textContent = '📝 บทความวิชาการ';
+    if(_hs3) _hs3.textContent = 'ระบบนำส่งบทความวิชาการเพื่อขอรับหน่วยกิต CPE ทางเภสัชศาสตร์';
+  }
 }
 
 /* ════════════════════════════════
