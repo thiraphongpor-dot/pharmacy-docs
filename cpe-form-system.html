@@ -4479,29 +4479,10 @@ function artAdminSendToExperts(safeId, aid){
     +   '<span style="font-size:.77rem;color:#6b7280;min-width:80px;flex-shrink:0">ท่านที่ 2</span>'
     +   '<input type="email" id="artex2-'+safeId+'" placeholder="อีเมลผู้ทรงคุณวุฒิท่านที่ 2" style="flex:1;border:1px solid rgba(200,210,230,.7);border-radius:8px;padding:7px 12px;font-size:.82rem;outline:none;font-family:inherit">'
     + '</div>'
-    // เอกสารแนบ
-    + '<div style="font-size:.75rem;font-weight:700;color:#6b7280;margin-bottom:8px">📎 เอกสารแนบสำหรับผู้ทรงคุณวุฒิ (PDF และ/หรือ Word)</div>'
-    + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
-    +   '<label for="artex-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:#fff7ed;color:#c2410c;border:1.5px dashed #fed7aa;border-radius:8px;padding:6px 13px;font-size:.78rem;font-weight:700;white-space:nowrap">📄 แนบ PDF</label>'
-    +   '<input type="file" id="artex-pdf-'+safeId+'" accept=".pdf" style="display:none">'
-    +   '<span id="artex-pdf-name-'+safeId+'" style="font-size:.72rem;color:#059669"></span>'
-    + '</div>'
-    + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">'
-    +   '<label for="artex-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:#eff6ff;color:#1d4ed8;border:1.5px dashed #bfdbfe;border-radius:8px;padding:6px 13px;font-size:.78rem;font-weight:700;white-space:nowrap">📝 แนบ Word</label>'
-    +   '<input type="file" id="artex-word-'+safeId+'" accept=".doc,.docx" style="display:none">'
-    +   '<span id="artex-word-name-'+safeId+'" style="font-size:.72rem;color:#059669"></span>'
-    + '</div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
     +   '<button onclick="artConfirmSendToExperts(\''+safeId+'\',\''+aid+'\')" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit">📤 ยืนยันส่ง</button>'
     +   '<button onclick="document.getElementById(\'art-inline-'+safeId+'\').style.display=\'none\'" style="background:transparent;color:#6b7280;border:1px solid rgba(200,210,230,.7);border-radius:8px;padding:8px 14px;font-size:.82rem;cursor:pointer;font-family:inherit">ยกเลิก</button>'
     + '</div>';
-  // file preview listeners
-  setTimeout(function(){
-    var pdfInp  = document.getElementById('artex-pdf-'+safeId);
-    var wordInp = document.getElementById('artex-word-'+safeId);
-    if(pdfInp)  pdfInp.onchange  = function(){ var nm=document.getElementById('artex-pdf-name-'+safeId);  if(nm) nm.textContent = pdfInp.files[0]  ? '✓ '+pdfInp.files[0].name  : ''; };
-    if(wordInp) wordInp.onchange = function(){ var nm=document.getElementById('artex-word-name-'+safeId); if(nm) nm.textContent = wordInp.files[0] ? '✓ '+wordInp.files[0].name : ''; };
-  }, 50);
 }
 
 async function artConfirmSendToExperts(safeId, aid){
@@ -4509,11 +4490,6 @@ async function artConfirmSendToExperts(safeId, aid){
   var ex2 = (document.getElementById('artex2-'+safeId)||{}).value||'';
   var experts = [ex1,ex2].filter(function(e){ return e.trim(); });
   if(!experts.length){ showToast('กรุณาใส่อีเมลผู้ทรงคุณวุฒิอย่างน้อย 1 ท่าน','warn'); return; }
-
-  var pdfInp  = document.getElementById('artex-pdf-'+safeId);
-  var wordInp = document.getElementById('artex-word-'+safeId);
-  var pdfFile  = pdfInp  ? pdfInp.files[0]  : null;
-  var wordFile = wordInp ? wordInp.files[0] : null;
 
   showToast('⏳ กำลังดำเนินการ...');
   var now = new Date().toISOString();
@@ -4523,21 +4499,6 @@ async function artConfirmSendToExperts(safeId, aid){
   var userKey = a.userKey || emailToFbKey(a.userEmail||'');
 
   var updates = { status:'sent_to_experts', sentAt:now, sentToExperts:experts };
-
-  // Upload PDF if provided
-  if(pdfFile){
-    try {
-      var pdfUp = await uploadToGDrive(pdfFile, 'บทความวิชาการ', 'admin_doc_pdf');
-      updates['files/adminDoc_pdf'] = { url:pdfUp.url, name:pdfUp.name, uploadedAt:now };
-    } catch(e){ showToast('อัพโหลด PDF ไม่สำเร็จ: '+e.message,'err'); return; }
-  }
-  // Upload Word if provided
-  if(wordFile){
-    try {
-      var wordUp = await uploadToGDrive(wordFile, 'บทความวิชาการ', 'admin_doc_word');
-      updates['files/adminDoc_word'] = { url:wordUp.url, name:wordUp.name, uploadedAt:now };
-    } catch(e){ showToast('อัพโหลด Word ไม่สำเร็จ: '+e.message,'err'); return; }
-  }
 
   await db.ref('pharma-form/_all_articles/'+aid).update(updates);
   if(userKey) await db.ref('pharma-form/'+userKey+'/articles/'+aid).update(updates).catch(function(){});
