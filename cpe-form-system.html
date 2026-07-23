@@ -4374,6 +4374,8 @@ function loadAdminArticles(){
         actionBtn='<button onclick="artAdminUploadCert(\''+safeId+'\',\''+aid+'\')" style="font-size:.72rem;font-weight:700;color:#b45309;background:none;border:1px solid rgba(217,119,6,.4);border-radius:7px;padding:5px 12px;cursor:pointer;font-family:inherit">📜 แนบใบรับรอง + หน่วยกิต</button>';
       } else if(st==='user_final_revised'){
         actionBtn='<button onclick="artAdminMarkCcpe(\''+aid+'\')" style="font-size:.72rem;font-weight:700;color:#b45309;background:none;border:1px solid rgba(217,119,6,.4);border-radius:7px;padding:5px 12px;cursor:pointer;font-family:inherit">🌐 นำเข้าระบบ CCPE</button>';
+      } else if(st==='sent_to_experts'){
+        actionBtn='<button onclick="artAdminSendToExperts(\''+safeId+'\',\''+aid+'\')" style="font-size:.72rem;font-weight:700;color:#6d28d9;background:none;border:1px solid rgba(109,40,217,.4);border-radius:7px;padding:5px 12px;cursor:pointer;font-family:inherit">📧 ส่งผู้ทรงฯ ใหม่</button>';
       }
 
       return '<div class="art-admin-card">'
