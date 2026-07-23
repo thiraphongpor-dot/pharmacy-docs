@@ -409,12 +409,13 @@ body::after{display:none}
 .art-pipe-badge{font-size:.63rem;font-weight:700;border-radius:20px;padding:2px 8px;white-space:nowrap}
 .art-card-head{padding:10px 14px;display:flex;align-items:flex-start;gap:10px;
   border-bottom:1px solid rgba(200,210,230,.2)}
-.art-card-files{padding:10px 14px;display:flex;flex-direction:column;gap:8px;
+.art-card-files{padding:10px 14px;display:flex;flex-direction:column;gap:10px;
   border-bottom:1px solid rgba(200,210,230,.15)}
+.art-card-files-divider{border:none;border-top:1px solid rgba(200,210,230,.4);margin:0}
 .art-card-act{padding:9px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
   background:#fafbff}
-.art-file-row-label{font-size:.63rem;font-weight:700;color:#9ca3af;letter-spacing:.06em;
-  text-transform:uppercase;margin-bottom:5px}
+.art-file-row-label{font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:6px}
 .art-file-link{display:inline-flex;align-items:center;gap:5px;background:rgba(90,123,255,.09);
   color:#4f46e5;border:1px solid rgba(90,123,255,.3);border-radius:7px;padding:4px 10px;
   font-size:.73rem;font-weight:700;text-decoration:none;white-space:nowrap}
@@ -4388,38 +4389,46 @@ function loadAdminArticles(){
         + '</div>'
         + '<div class="art-card-files">'
         // ── Section 1: User docs (admin read only) ──
-        +   '<div class="art-file-row-label" style="color:#6b7280">เอกสารจาก User <span style="font-size:.65rem;background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">Admin ดูเท่านั้น</span></div>'
-        +   '<div style="display:flex;gap:6px;flex-wrap:wrap">'
-        +     fileLink('บทความเริ่มต้น', a.files&&a.files.userSubmission&&a.files.userSubmission.url, '📄')
-        +     (a.files&&a.files.userRevision1&&a.files.userRevision1.url ? fileLink('แก้ไข รอบ 1',a.files.userRevision1.url,'📝','#059669') : '')
-        +     (a.files&&a.files.userFinalRevision&&a.files.userFinalRevision.url ? fileLink('ฉบับสุดท้าย',a.files.userFinalRevision.url,'📝','#059669') : '')
+        +   '<div>'
+        +     '<div class="art-file-row-label">เอกสารจาก User <span style="font-size:9px;background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600;text-transform:none;letter-spacing:0">Admin ดูเท่านั้น</span></div>'
+        +     '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +       fileLink('บทความเริ่มต้น', a.files&&a.files.userSubmission&&a.files.userSubmission.url, '📄')
+        +       (a.files&&a.files.userRevision1&&a.files.userRevision1.url ? fileLink('แก้ไข รอบ 1',a.files.userRevision1.url,'📝','#059669') : '')
+        +       (a.files&&a.files.userFinalRevision&&a.files.userFinalRevision.url ? fileLink('ฉบับสุดท้าย',a.files.userFinalRevision.url,'📝','#059669') : '')
+        +     '</div>'
         +   '</div>'
         // ── Divider ──
-        +   '<div style="border-top:2px solid #a5b4fc;margin:10px 0 8px;border-radius:2px"></div>'
-        // ── Section 2: Formatted doc (sent to experts) — single upload button ──
-        +   '<div class="art-file-row-label">เอกสารที่จัดรูปแบบแล้ว <span style="font-size:.65rem;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">ส่งผู้ทรงฯ</span></div>'
-        +   '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
-        +   (fmtDoc
-              ? fileLink(fmtDoc.name, fmtDoc.url, fmtDoc.icon, '#6d28d9')
-                + '<label for="fdoc-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#ede9fe;color:#6d28d9;border:1px dashed #c4b5fd;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">🔄 เปลี่ยน</label>'
-                + '<button onclick="deleteFormattedDoc(\''+safeId+'\',\''+aid+'\')" style="display:inline-flex;align-items:center;gap:3px;background:#fef2f2;color:#dc2626;border:1px dashed #fca5a5;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">✕ ลบ</button>'
-              : '<label for="fdoc-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#ede9fe;color:#6d28d9;border:1px dashed #c4b5fd;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">⬆ แนบไฟล์ (PDF / Word)</label>'
-           )
-        +   '<input type="file" id="fdoc-'+safeId+'" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadFormattedDoc(\''+safeId+'\',\''+aid+'\',this)">'
+        +   '<hr class="art-card-files-divider">'
+        // ── Section 2: Formatted doc (sent to experts) ──
+        +   '<div>'
+        +     '<div class="art-file-row-label">เอกสารที่จัดรูปแบบแล้ว <span style="font-size:9px;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600;text-transform:none;letter-spacing:0">ส่งผู้ทรงฯ</span></div>'
+        +     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+        +     (fmtDoc
+                ? fileLink(fmtDoc.name, fmtDoc.url, fmtDoc.icon, '#6d28d9')
+                  + '<label for="fdoc-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#ede9fe;color:#6d28d9;border:1px dashed #c4b5fd;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">🔄 เปลี่ยน</label>'
+                  + '<button onclick="deleteFormattedDoc(\''+safeId+'\',\''+aid+'\')" style="display:inline-flex;align-items:center;gap:3px;background:#fef2f2;color:#dc2626;border:1px dashed #fca5a5;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">✕ ลบ</button>'
+                : '<label for="fdoc-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#ede9fe;color:#6d28d9;border:1px dashed #c4b5fd;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">⬆ แนบไฟล์ (PDF / Word)</label>'
+             )
+        +     '<input type="file" id="fdoc-'+safeId+'" accept=".pdf,.doc,.docx" style="display:none" onchange="uploadFormattedDoc(\''+safeId+'\',\''+aid+'\',this)">'
+        +     '</div>'
         +   '</div>'
+        // ── Divider ──
+        +   '<hr class="art-card-files-divider">'
         // ── Section 3: Admin docs for experts ──
-        +   '<div class="art-file-row-label" style="margin-top:8px">เอกสาร Admin <span style="font-size:.65rem;background:#fff7ed;color:#c2410c;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:600">แนบให้ผู้ทรงฯ</span></div>'
-        +   '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
-        +   (a.files&&a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url ? fileLink('เอกสารแนบ PDF',a.files.adminDoc_pdf.url,'📄','#c2410c') : '')
-        +   (a.files&&a.files.adminDoc_word&&a.files.adminDoc_word.url ? fileLink('เอกสารแนบ Word',a.files.adminDoc_word.url,'📝','#1d4ed8') : '')
-        +   '<label for="adoc-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#fff7ed;color:#c2410c;border:1px dashed #fed7aa;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
-        +     (a.files&&a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url?'🔄':'⬆') +' PDF</label>'
-        +   '<input type="file" id="adoc-pdf-'+safeId+'" accept=".pdf" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'pdf\')">'
-        +   '<label for="adoc-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px dashed #bfdbfe;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
-        +     (a.files&&a.files.adminDoc_word&&a.files.adminDoc_word.url?'🔄':'⬆') +' Word</label>'
-        +   '<input type="file" id="adoc-word-'+safeId+'" accept=".doc,.docx" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'word\')">'
-        +   (a.files&&a.files.expertFeedback1&&a.files.expertFeedback1.url ? fileLink('เอกสารรอบ 1',a.files.expertFeedback1.url,'📋','#d97706') : '')
-        +   (a.files&&a.files.expertCertification&&a.files.expertCertification.url ? fileLink('ใบรับรอง',a.files.expertCertification.url,'📜','#7c3aed') : '')
+        +   '<div>'
+        +     '<div class="art-file-row-label">เอกสาร Admin <span style="font-size:9px;background:#fff7ed;color:#c2410c;border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600;text-transform:none;letter-spacing:0">แนบให้ผู้ทรงฯ</span></div>'
+        +     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+        +     (a.files&&a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url ? fileLink('เอกสารแนบ PDF',a.files.adminDoc_pdf.url,'📄','#c2410c') : '')
+        +     (a.files&&a.files.adminDoc_word&&a.files.adminDoc_word.url ? fileLink('เอกสารแนบ Word',a.files.adminDoc_word.url,'📝','#1d4ed8') : '')
+        +     '<label for="adoc-pdf-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#fff7ed;color:#c2410c;border:1px dashed #fed7aa;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
+        +       (a.files&&a.files.adminDoc_pdf&&a.files.adminDoc_pdf.url?'🔄':'⬆') +' PDF</label>'
+        +     '<input type="file" id="adoc-pdf-'+safeId+'" accept=".pdf" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'pdf\')">'
+        +     '<label for="adoc-word-'+safeId+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px dashed #bfdbfe;border-radius:7px;padding:4px 9px;font-size:.7rem;font-weight:700;white-space:nowrap">'
+        +       (a.files&&a.files.adminDoc_word&&a.files.adminDoc_word.url?'🔄':'⬆') +' Word</label>'
+        +     '<input type="file" id="adoc-word-'+safeId+'" accept=".doc,.docx" style="display:none" onchange="uploadAdminDoc(\''+safeId+'\',\''+aid+'\',this,\'word\')">'
+        +     (a.files&&a.files.expertFeedback1&&a.files.expertFeedback1.url ? fileLink('เอกสารรอบ 1',a.files.expertFeedback1.url,'📋','#d97706') : '')
+        +     (a.files&&a.files.expertCertification&&a.files.expertCertification.url ? fileLink('ใบรับรอง',a.files.expertCertification.url,'📜','#7c3aed') : '')
+        +     '</div>'
         +   '</div>'
         + '</div>'
         // Upload inline forms
