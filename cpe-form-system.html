@@ -1547,9 +1547,29 @@ function switchTab(id){
     if(_ht) _ht.textContent = _hv[0];
     if(_hs) _hs.textContent = _hv[1];
   }
-  // ซ่อน reg-card เมื่ออยู่ใน my-requests (ไม่จำเป็นต้องลงทะเบียนอีก)
+  // จัดการ reg-card ตาม tab
   var _rc = document.querySelector('.reg-card');
-  if(_rc) _rc.style.display = (id === 'my-requests') ? 'none' : '';
+  if(_rc){
+    if(id === 'my-requests'){
+      _rc.style.display = 'none';
+    } else if(id === 'user-conf'){
+      _rc.style.display = '';
+      _rc.setAttribute('onclick','openUserConfForm()');
+      var _rci=_rc.querySelector('.reg-card-icon'); if(_rci) _rci.textContent='🎓';
+      var _rch=_rc.querySelector('.reg-card-text h3'); if(_rch) _rch.textContent='ลงทะเบียนประชุมวิชาการ';
+      var _rcp=_rc.querySelector('.reg-card-text p'); if(_rcp) _rcp.textContent='ยื่นคำขอจัดประชุมวิชาการเพื่อขอรับการรับรองหน่วยกิต CPE';
+      var _rcb=_rc.querySelector('.reg-card-btn');
+      if(_rcb){ _rcb.textContent='ลงทะเบียน →'; _rcb.setAttribute('onclick','openUserConfForm();event.stopPropagation()'); }
+    } else {
+      _rc.style.display = '';
+      _rc.setAttribute('onclick','showRegisterModal()');
+      var _rci2=_rc.querySelector('.reg-card-icon'); if(_rci2) _rci2.textContent='📋';
+      var _rch2=_rc.querySelector('.reg-card-text h3'); if(_rch2) _rch2.textContent='ลงทะเบียนหน่วยงาน CPE';
+      var _rcp2=_rc.querySelector('.reg-card-text p'); if(_rcp2) _rcp2.textContent='หน่วยงานที่ต้องการขอรับรองหน่วยกิตการศึกษาต่อเนื่อง กรอกข้อมูลเพื่อยื่นคำขอ';
+      var _rcb2=_rc.querySelector('.reg-card-btn');
+      if(_rcb2){ _rcb2.textContent='ลงทะเบียน →'; _rcb2.setAttribute('onclick','showRegisterModal();event.stopPropagation()'); }
+    }
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -2025,6 +2045,11 @@ function loadMyOrgRequests(){
       return (e[1].submittedBy||'').toLowerCase() === myEmail;
     }).sort(function(a,b){ return (b[1].submittedAt||'').localeCompare(a[1].submittedAt||''); });
 
+    // เก็บ approved orgs สำหรับใช้ใน openUserConfForm
+    _myApprovedOrgs = myReqs.filter(function(e){ return e[1].status === 'อนุมัติแล้ว'; }).map(function(e){
+      return { orgKey: e[1].orgKey||'', orgName: e[1].name||'' };
+    });
+
     var section = document.getElementById('my-requests-section');
     var wrap    = document.getElementById('my-requests-wrap');
     if(!section||!wrap) return;
@@ -2137,27 +2162,6 @@ function loadMyOrgRequests(){
           extraHtml += '<div style="font-size:.75rem;color:#059669;margin-top:6px">'+
             'หน่วยงานนี้สามารถยื่นเอกสารต่ออายุ CPE ได้แล้ว</div>';
         }
-        // ปุ่มประชุมวิชาการ + ผลการพิจารณาหน่วยกิต
-        var _ck=(req.orgKey||'').replace(/'/g,"\\'");
-        var _cn=(req.name||'').replace(/'/g,"\\'");
-        var _orgNameId=(req.name||'').replace(/[^a-zA-Z0-9_-]/g,'_');
-        extraHtml +=
-          '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(16,185,129,.18)">'+
-            '<button class="btn btn-sm" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;'+
-              'background:rgba(90,123,255,.08);color:#4f46e5;border:1px solid rgba(90,123,255,.3);'+
-              'font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer" '+
-              'onclick="goToConfFromMyRequest(\''+_ck+'\',\''+_cn+'\')">'+
-              '🎓 กรอกข้อมูลประชุมวิชาการ</button>'+
-            '<div style="display:flex;align-items:center;gap:10px;margin:12px 0 6px;cursor:pointer" onclick="toggleConfStatus(\''+_orgNameId+'\')">'+
-              '<div style="flex:1;height:1px;background:rgba(200,210,230,.5)"></div>'+
-              '<span style="font-size:.7rem;color:#94a3b8;white-space:nowrap;letter-spacing:.03em;display:flex;align-items:center;gap:5px;user-select:none">'+
-                'ผลการพิจารณาหน่วยกิต'+
-                '<span id="cstoggle-'+_orgNameId+'" style="font-size:.65rem;color:#cbd5e1">▼</span>'+
-              '</span>'+
-              '<div style="flex:1;height:1px;background:rgba(200,210,230,.5)"></div>'+
-            '</div>'+
-            '<div id="conf-status-'+_orgNameId+'" style="display:block"></div>'+
-          '</div>';
       } else if(st==='ปฏิเสธ'){
         extraHtml = '<div style="font-size:.76rem;color:#dc2626;margin-top:6px">'+
           '❌ ถูกปฏิเสธเมื่อ '+fmtDate(req.rejectedAt)+
@@ -2183,7 +2187,6 @@ function loadMyOrgRequests(){
           extraHtml+
         '</div>';
     }).join('<hr style="border:none;border-top:1px solid rgba(200,210,230,.45);margin:28px 0">');
-    injectConfStatuses(); // ใส่ status badge ข้าง ๆ ปุ่มประชุม
   });
 }
 
@@ -2192,6 +2195,7 @@ function loadMyOrgRequests(){
 ════════════════════════════════ */
 var _myConfs = {};      // orgNameId → [conference, ...]
 var _myConfsById = {};  // confId    → conference
+var _myApprovedOrgs = []; // [{orgKey, orgName}] — populated by loadMyOrgRequests
 
 function injectConfStatuses(){
   function _fd(iso){
@@ -2594,6 +2598,15 @@ function toggleConfStatus(id){
   var hidden = el.style.display === 'none';
   el.style.display = hidden ? 'block' : 'none';
   if(arrow) arrow.textContent = hidden ? '▲' : '▼';
+}
+
+function openUserConfForm(){
+  if(!_myApprovedOrgs.length){
+    showToast('กรุณาลงทะเบียนหน่วยงาน CPE และรอการอนุมัติก่อน','warn');
+    return;
+  }
+  var org = _myApprovedOrgs[0];
+  goToConfFromMyRequest(org.orgKey, org.orgName);
 }
 
 function goToConfFromMyRequest(orgKey, orgName){
