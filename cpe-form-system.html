@@ -4609,6 +4609,20 @@ async function submitArtRevision(){
 /* ════════════════════════════════
    ADMIN: บทความวิชาการ
 ════════════════════════════════ */
+function toggleArtCard(sid){
+  var body  = document.getElementById('art-body-'+sid);
+  var arrow = document.getElementById('art-tog-arrow-'+sid);
+  var btn   = document.getElementById('art-tog-'+sid);
+  if(!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if(arrow) arrow.textContent = open ? '▾' : '▴';
+  if(btn){
+    var txt = btn.childNodes[0];
+    if(txt) txt.nodeValue = open ? 'รายละเอียด ' : 'ซ่อน ';
+  }
+}
+
 function loadAdminArticles(){
   if(!isAdmin) return;
   var wrap = document.getElementById('art-admin-wrap');
@@ -4651,20 +4665,6 @@ function loadAdminArticles(){
       color=color||'#4f46e5';
       if(!url) return '<span class="art-file-missing">'+icon+' ไม่มีไฟล์</span>';
       return '<a href="'+url+'" target="_blank" class="art-file-link" style="color:'+color+';border-color:'+color+'30;background:'+color+'10">'+icon+' '+label+'</a>';
-    }
-
-    function toggleArtCard(sid){
-      var body  = document.getElementById('art-body-'+sid);
-      var arrow = document.getElementById('art-tog-arrow-'+sid);
-      var btn   = document.getElementById('art-tog-'+sid);
-      if(!body) return;
-      var open = body.style.display !== 'none';
-      body.style.display = open ? 'none' : 'block';
-      if(arrow) arrow.textContent = open ? '▾' : '▴';
-      if(btn){
-        var txt = btn.childNodes[0];
-        if(txt) txt.nodeValue = open ? 'รายละเอียด ' : 'ซ่อน ';
-      }
     }
 
     function buildArtCard(e){
