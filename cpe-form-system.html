@@ -624,6 +624,9 @@ body::after{display:none}
       <div class="sc-btns" id="sc-btns"></div>
     </div>
 
+    <!-- Renewal status banner (user-side) -->
+    <div id="renewal-status-banner" style="display:none;margin-bottom:16px"></div>
+
   </div>
 </div>
 </div>
@@ -2717,6 +2720,8 @@ function showStatus(org){
       <button class="btn btn-primary" onclick="goConference()">🎓 ไปหน้าประชุมวิชาการ</button>
       ${statusClass==='warning'?'<button class="btn btn-outline" onclick="goRenew()">🔄 ต่ออายุล่วงหน้า</button>':''}`;
   }
+  // แสดงสถานะต่ออายุ (ถ้ามี)
+  if(!isAdmin && org._key) loadMyRenewalStatus(org._key);
 }
 
 function goRenew(){
@@ -2842,43 +2847,92 @@ function loadAllRenewals(){
     unsubscribe();
     if(!user){ list.innerHTML='<div style="color:#ef4444;font-size:.85rem">กรุณาล็อกอินใหม่</div>'; return; }
     try{
-    db.ref('pharma-form/_cpe_renewals').once('value',function(snap){
-      var data=snap.val()||{};
-      var rows=[];
-      Object.entries(data).forEach(function(e){
-        var orgKey=e[0], subs=e[1]||{};
-        Object.entries(subs).forEach(function(se){
-          var ts=se[0], v=se[1]||{};
-          rows.push(Object.assign({},v,{_orgKey:orgKey,_ts:parseInt(ts)||0}));
+      db.ref('pharma-form/_cpe_renewals').once('value',function(snap){
+        var data=snap.val()||{};
+        var rows=[];
+        Object.entries(data).forEach(function(e){
+          var orgKey=e[0], subs=e[1]||{};
+          Object.entries(subs).forEach(function(se){
+            var ts=se[0], v=se[1]||{};
+            rows.push(Object.assign({},v,{_orgKey:orgKey,_ts:parseInt(ts)||0,_tsStr:ts}));
+          });
         });
+        if(!rows.length){
+          list.innerHTML='<div style="color:var(--sub);font-size:.85rem;padding:16px 0">ยังไม่มีการส่งเอกสาร</div>';
+          return;
+        }
+        rows.sort(function(a,b){return b._ts-a._ts;});
+
+        var html=rows.map(function(v){
+          var dt=v.submittedAt?new Date(v.submittedAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+          var orgLabel=v.orgName||v._orgKey||'—';
+          var ts=v._tsStr, orgKey=v._orgKey;
+          var status=v.status||'รอตรวจสอบ';
+
+          // เอกสารที่ user ส่ง
+          var fileLinks=['letter','form59','payment'].map(function(t){
+            if(!v[t]||!v[t].name) return '';
+            return v[t].url
+              ?'<a href="'+v[t].url+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:#5a7bff;text-decoration:none;padding:4px 8px;border:1px solid rgba(90,123,255,.3);border-radius:6px;white-space:nowrap">📎 '+labels[t]+'</a>'
+              :'<span style="font-size:.75rem;color:#999;padding:4px 8px;border:1px solid rgba(200,210,230,.3);border-radius:6px;white-space:nowrap">📄 '+labels[t]+'</span>';
+          }).filter(Boolean).join('');
+
+          // Status badge
+          var statusBadge='';
+          if(status==='รอตรวจสอบ')
+            statusBadge='<span style="font-size:.72rem;font-weight:700;color:#b45309;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:20px;padding:3px 10px">⏳ รอตรวจสอบ</span>';
+          else if(status==='กำลังดำเนินการ')
+            statusBadge='<span style="font-size:.72rem;font-weight:700;color:#1d4ed8;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.3);border-radius:20px;padding:3px 10px">📋 กำลังดำเนินการ</span>';
+          else if(status==='ต่ออายุแล้ว')
+            statusBadge='<span style="font-size:.72rem;font-weight:700;color:#065f46;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.3);border-radius:20px;padding:3px 10px">✅ ต่ออายุแล้ว</span>';
+
+          // Admin action area
+          var actionHtml='';
+          var safeTs=ts.replace(/[^a-z0-9_]/gi,'_');
+          if(status==='รอตรวจสอบ'){
+            actionHtml='<div style="margin-top:10px">'
+              +'<button class="btn btn-green btn-sm" onclick="adminConfirmRenewal(\''+orgKey+'\',\''+ts+'\')">✅ ยืนยันรับเอกสาร</button>'
+              +'</div>';
+          } else if(status==='กำลังดำเนินการ'){
+            var confAt=v.confirmedAt?'รับเอกสารเมื่อ: '+new Date(v.confirmedAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+            actionHtml='<div style="margin-top:10px;padding:12px 14px;background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.2);border-radius:10px">'
+              +(confAt?'<div style="font-size:.72rem;color:#6a6d77;margin-bottom:8px">'+confAt+'</div>':'')
+              +'<div style="font-weight:600;font-size:.82rem;color:var(--txt);margin-bottom:10px">📜 เอกสารรับรองการต่ออายุ</div>'
+              +'<div style="margin-bottom:8px"><label style="font-size:.72rem;font-weight:600;color:#6a6d77;display:block;margin-bottom:4px">ไฟล์ PDF</label>'
+              +'<input type="file" id="rcert-pdf-'+safeTs+'" accept=".pdf" style="font-size:.8rem" onchange="handleRenewCertFile(\'pdf\',\''+ts+'\',this)">'
+              +'<div id="rcert-pdf-name-'+safeTs+'" style="font-size:.72rem;color:#059669;margin-top:2px"></div></div>'
+              +'<div style="margin-bottom:10px"><label style="font-size:.72rem;font-weight:600;color:#6a6d77;display:block;margin-bottom:4px">ไฟล์ Word</label>'
+              +'<input type="file" id="rcert-word-'+safeTs+'" accept=".doc,.docx" style="font-size:.8rem" onchange="handleRenewCertFile(\'word\',\''+ts+'\',this)">'
+              +'<div id="rcert-word-name-'+safeTs+'" style="font-size:.72rem;color:#059669;margin-top:2px"></div></div>'
+              +'<button class="btn btn-primary btn-sm" onclick="adminCompleteRenewal(\''+orgKey+'\',\''+ts+'\')">📤 ส่งเอกสารรับรองการต่ออายุ</button>'
+              +'</div>';
+          } else if(status==='ต่ออายุแล้ว'){
+            var certLinks='';
+            if(v.certPdf&&v.certPdf.url) certLinks+='<a href="'+v.certPdf.url+'" target="_blank" style="font-size:.75rem;color:#5a7bff;text-decoration:none;padding:4px 8px;border:1px solid rgba(90,123,255,.3);border-radius:6px">📄 เอกสาร PDF</a>';
+            if(v.certWord&&v.certWord.url) certLinks+=' <a href="'+v.certWord.url+'" target="_blank" style="font-size:.75rem;color:#5a7bff;text-decoration:none;padding:4px 8px;border:1px solid rgba(90,123,255,.3);border-radius:6px">📝 เอกสาร Word</a>';
+            var compAt=v.completedAt?'ดำเนินการต่ออายุเมื่อ: '+new Date(v.completedAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+            if(certLinks||compAt){
+              actionHtml='<div style="margin-top:10px;padding:8px 12px;background:rgba(5,150,105,.04);border:1px solid rgba(5,150,105,.2);border-radius:8px">'
+                +(compAt?'<div style="font-size:.72rem;color:#6a6d77;margin-bottom:6px">'+compAt+'</div>':'')
+                +(certLinks?'<div style="display:flex;flex-wrap:wrap;gap:6px">'+certLinks+'</div>':'')
+                +'</div>';
+            }
+          }
+
+          return '<div style="padding:14px 16px;border:1px solid rgba(200,210,230,.4);border-radius:12px;margin-bottom:10px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
+            +'<div style="font-weight:700;font-size:.88rem;color:var(--txt)">'+orgLabel+'</div>'
+            +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+statusBadge+'<span style="font-size:.73rem;color:var(--sub)">'+dt+'</span></div>'
+            +'</div>'
+            +(fileLinks?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">'+fileLinks+'</div>':'')
+            +actionHtml
+            +'</div>';
+        }).join('');
+        list.innerHTML=html;
+      },function(err){
+        list.innerHTML='<div style="color:#ef4444;font-size:.85rem">โหลดไม่ได้: '+err.code+'</div>';
       });
-      if(!rows.length){
-        list.innerHTML='<div style="color:var(--sub);font-size:.85rem;padding:16px 0">ยังไม่มีการส่งเอกสาร</div>';
-        return;
-      }
-      rows.sort(function(a,b){return b._ts-a._ts;});
-      var html=rows.map(function(v){
-        var dt=v.submittedAt?new Date(v.submittedAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
-        var orgLabel=v.orgName||v._orgKey||'—';
-        var fileLinks=['letter','form59','payment'].map(function(t){
-          if(!v[t]||!v[t].name) return '';
-          return v[t].url
-            ?'<a href="'+v[t].url+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:#5a7bff;text-decoration:none;padding:4px 8px;border:1px solid rgba(90,123,255,.3);border-radius:6px;white-space:nowrap">📎 '+labels[t]+'</a>'
-            :'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.75rem;color:#999;padding:4px 8px;border:1px solid rgba(200,210,230,.3);border-radius:6px;white-space:nowrap" title="'+v[t].name+'">📄 '+labels[t]+' (ไม่มีลิงก์)</span>';
-        }).filter(Boolean).join('');
-        return '<div style="padding:12px 14px;border:1px solid rgba(200,210,230,.4);border-radius:10px;margin-bottom:8px">'
-          +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
-          +'<div style="font-weight:700;font-size:.85rem;color:var(--txt)">'+orgLabel+'</div>'
-          +'<div style="font-size:.73rem;color:var(--sub)">'+dt+'</div>'
-          +'</div>'
-          +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+( fileLinks||'<span style="font-size:.75rem;color:#999">ไม่มีไฟล์</span>')+'</div>'
-          +'</div>';
-      }).join('');
-      list.innerHTML=html;
-    },function(err){
-      list.innerHTML='<div style="color:#ef4444;font-size:.85rem">โหลดไม่ได้: '+err.code+'</div>';
-    });
-  }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:.85rem">เกิดข้อผิดพลาด</div>'; }
+    }catch(e){ list.innerHTML='<div style="color:#ef4444;font-size:.85rem">เกิดข้อผิดพลาด</div>'; }
   }); // end onAuthStateChanged
 }
 
@@ -2907,6 +2961,96 @@ function loadRenewSubmissions(orgKey){
       list.innerHTML=html;
     });
   }catch(e){ console.warn(e); }
+}
+
+/* ════════════════════════════════
+   RENEWAL ADMIN ACTIONS
+════════════════════════════════ */
+async function adminConfirmRenewal(orgKey, ts){
+  if(!confirm('ยืนยันว่าได้รับเอกสารต่ออายุจากหน่วยงานนี้แล้ว?')) return;
+  try{
+    await db.ref('pharma-form/_cpe_renewals/'+orgKey+'/'+ts).update({
+      status: 'กำลังดำเนินการ',
+      confirmedAt: new Date().toISOString()
+    });
+    showToast('✅ ยืนยันรับเอกสารแล้ว');
+    loadAllRenewals();
+  }catch(e){ showToast('❌ '+e.message,'err'); }
+}
+
+var _renewCertStore = {}; // { [ts]: { pdf:{file,name}, word:{file,name} } }
+function handleRenewCertFile(type, ts, input){
+  var file = input.files[0]; if(!file) return;
+  if(!_renewCertStore[ts]) _renewCertStore[ts]={};
+  _renewCertStore[ts][type] = { file:file, name:file.name };
+  var safeTs = ts.replace(/[^a-z0-9_]/gi,'_');
+  var el = document.getElementById('rcert-'+type+'-name-'+safeTs);
+  if(el) el.textContent = '✓ '+file.name;
+}
+
+async function adminCompleteRenewal(orgKey, ts){
+  var store = _renewCertStore[ts]||{};
+  if(!store.pdf && !store.word){
+    showToast('กรุณาอัปโหลดเอกสารรับรองอย่างน้อย 1 ไฟล์','err'); return;
+  }
+  showToast('⏳ กำลังอัปโหลดเอกสาร...');
+  var update = { status:'ต่ออายุแล้ว', completedAt:new Date().toISOString() };
+  try{
+    if(store.pdf && store.pdf.file){
+      var r = await uploadToGDrive(store.pdf.file, orgKey, 'เอกสารรับรองต่ออายุ-PDF');
+      update.certPdf = { url:r.url, name:store.pdf.name };
+    }
+    if(store.word && store.word.file){
+      var r2 = await uploadToGDrive(store.word.file, orgKey, 'เอกสารรับรองต่ออายุ-Word');
+      update.certWord = { url:r2.url, name:store.word.name };
+    }
+    await db.ref('pharma-form/_cpe_renewals/'+orgKey+'/'+ts).update(update);
+    showToast('✅ ส่งเอกสารรับรองการต่ออายุเรียบร้อยแล้ว');
+    delete _renewCertStore[ts];
+    loadAllRenewals();
+  }catch(e){ showToast('❌ '+e.message,'err'); }
+}
+
+/* ════════════════════════════════
+   RENEWAL STATUS (USER SIDE)
+════════════════════════════════ */
+function loadMyRenewalStatus(orgKey){
+  var banner = document.getElementById('renewal-status-banner');
+  if(!banner || !orgKey) return;
+  banner.style.display = 'none';
+  try{
+    db.ref('pharma-form/_cpe_renewals/'+orgKey).orderByKey().limitToLast(1).once('value', function(snap){
+      var data = snap.val();
+      if(!data) return;
+      var entries = Object.entries(data);
+      if(!entries.length) return;
+      var latest = entries[0][1];
+      var status = latest.status || 'รอตรวจสอบ';
+      var bgColor='', borderColor='', icon='', msg='', extra='';
+      if(status==='รอตรวจสอบ'){
+        bgColor='rgba(217,119,6,.06)'; borderColor='rgba(217,119,6,.3)';
+        icon='📋'; msg='อยู่ระหว่างรอการยืนยันจากเจ้าหน้าที่';
+      } else if(status==='กำลังดำเนินการ'){
+        bgColor='rgba(37,99,235,.06)'; borderColor='rgba(37,99,235,.3)';
+        icon='⏳'; msg='เจ้าหน้าที่ได้รับเอกสารเรียบร้อยแล้ว อยู่ระหว่างดำเนินการต่ออายุ';
+      } else if(status==='ต่ออายุแล้ว'){
+        bgColor='rgba(5,150,105,.06)'; borderColor='rgba(5,150,105,.3)';
+        icon='✅'; msg='หน่วยงานนี้ได้ดำเนินการต่ออายุเป็นที่เรียบร้อยแล้ว';
+        var certLinks='';
+        if(latest.certPdf&&latest.certPdf.url)
+          certLinks+='<a href="'+latest.certPdf.url+'" target="_blank" style="font-size:.78rem;color:#5a7bff;text-decoration:none;padding:5px 12px;border:1px solid rgba(90,123,255,.3);border-radius:8px">📄 ดาวน์โหลดเอกสาร PDF</a>';
+        if(latest.certWord&&latest.certWord.url)
+          certLinks+=' <a href="'+latest.certWord.url+'" target="_blank" style="font-size:.78rem;color:#5a7bff;text-decoration:none;padding:5px 12px;border:1px solid rgba(90,123,255,.3);border-radius:8px">📝 ดาวน์โหลดเอกสาร Word</a>';
+        if(certLinks) extra='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+certLinks+'</div>';
+      } else { return; }
+      banner.style.display='block';
+      banner.innerHTML='<div style="padding:14px 18px;background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:12px;margin-bottom:16px">'
+        +'<div style="font-size:.88rem;font-weight:700;color:var(--txt);margin-bottom:4px">'+icon+' สถานะการต่ออายุ</div>'
+        +'<div style="font-size:.84rem;color:var(--txt)">'+msg+'</div>'
+        +extra
+        +'</div>';
+    });
+  }catch(e){ console.warn('[loadMyRenewalStatus]',e); }
 }
 
 /* ════════════════════════════════
